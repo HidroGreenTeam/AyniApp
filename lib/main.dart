@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/di/service_locator.dart';
-import 'auth/presentation/blocs/auth_bloc.dart';
-import 'auth/presentation/pages/login_page.dart';
-import 'auth/presentation/pages/home_page.dart';
+import 'auth/presentation/pages/splash_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,27 +10,16 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => serviceLocator<AuthBloc>()..add(const AuthCheckStatus()),
-      child: MaterialApp(
-        title: 'Ayni',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-          useMaterial3: true,
-        ),
-        home: BlocBuilder<AuthBloc, AuthState>(
-          builder: (context, state) {
-            if (state.status == AuthStatus.authenticated) {
-              return const HomePage();
-            }
-            return const LoginPage();
-          },
-        ),
+    return MaterialApp(
+      title: 'Ayni',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        useMaterial3: true,
       ),
+      home: const SplashPage(),
     );
   }
 }
