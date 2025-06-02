@@ -9,8 +9,11 @@ import '../../auth/domain/usecases/sign_in_use_case.dart';
 import '../../auth/domain/usecases/check_auth_status_use_case.dart';
 import '../../auth/domain/usecases/get_current_user_use_case.dart';
 import '../../auth/domain/usecases/sign_out_use_case.dart';
+import '../../auth/domain/usecases/walkthrough_use_case.dart';
 import '../../auth/presentation/blocs/auth_bloc.dart';
+import '../../auth/presentation/blocs/walkthrough_bloc.dart';
 import '../../auth/presentation/viewmodels/login_viewmodel.dart';
+import '../../auth/presentation/viewmodels/walkthrough_viewmodel.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -51,22 +54,35 @@ Future<void> initDependencies() async {
     serviceLocator.registerFactory<GetCurrentUserUseCase>(
     () => GetCurrentUserUseCase(serviceLocator<AuthRepository>()),
   );
-  
-  serviceLocator.registerFactory<SignOutUseCase>(
+    serviceLocator.registerFactory<SignOutUseCase>(
     () => SignOutUseCase(serviceLocator<AuthRepository>()),
   );
-    // ViewModels
+  
+  serviceLocator.registerFactory<WalkthroughUseCase>(
+    () => WalkthroughUseCase(serviceLocator<StorageService>()),
+  );
+  
+  // ViewModels
   serviceLocator.registerFactory<LoginViewModel>(() =>
     LoginViewModel(
       signInUseCase: serviceLocator<SignInUseCase>(),
       checkAuthStatusUseCase: serviceLocator<CheckAuthStatusUseCase>(),
       getCurrentUserUseCase: serviceLocator<GetCurrentUserUseCase>(),
-      signOutUseCase: serviceLocator<SignOutUseCase>(),
+      signOutUseCase: serviceLocator<SignOutUseCase>(),    ),
+  );
+  
+  serviceLocator.registerFactory<WalkthroughViewModel>(() =>
+    WalkthroughViewModel(
+      walkthroughUseCase: serviceLocator<WalkthroughUseCase>(),
     ),
   );
   
   // Blocs
   serviceLocator.registerFactory<AuthBloc>(() => 
     AuthBloc(loginViewModel: serviceLocator<LoginViewModel>()),
+  );
+  
+  serviceLocator.registerFactory<WalkthroughBloc>(() => 
+    WalkthroughBloc(walkthroughViewModel: serviceLocator<WalkthroughViewModel>()),
   );
 }

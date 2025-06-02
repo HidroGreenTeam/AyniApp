@@ -16,14 +16,30 @@ class StorageService {
   String? getToken() {
     return _prefs.getString(_tokenKey);
   }
-  
-  // User data management
+    // User data management
   Future<void> saveUserData(String userData) async {
     await _prefs.setString(_userDataKey, userData);
   }
   
   String? getUserData() {
     return _prefs.getString(_userDataKey);
+  }
+  
+  // General key-value storage
+  Future<void> setBool(String key, bool value) async {
+    await _prefs.setBool(key, value);
+  }
+  
+  bool? getBool(String key) {
+    return _prefs.getBool(key);
+  }
+  
+  Future<void> setString(String key, String value) async {
+    await _prefs.setString(key, value);
+  }
+  
+  String? getString(String key) {
+    return _prefs.getString(key);
   }
   
   // Clear all stored data for logout

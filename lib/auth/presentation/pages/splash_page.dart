@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:math' as math;
 import '../../../core/di/service_locator.dart';
 import '../blocs/auth_bloc.dart';
-import 'login_page.dart';
+import '../viewmodels/walkthrough_viewmodel.dart';
 import 'home_page.dart';
+import 'walkthrough_page.dart';
+import './auth_method_selection_page.dart';
 
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
@@ -125,36 +127,56 @@ class _SplashViewState extends State<SplashView>
     _loadingController.dispose();
     _rotationController.dispose();
     super.dispose();
-  }
-  @override
+  }  @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-      listenWhen: (previous, current) => previous.status != current.status,
-      listener: (context, state) {
+      listenWhen: (previous, current) => previous.status != current.status,      listener: (context, state) {
         // Agregar un pequeño delay para mostrar el splash
         if (state.status != AuthStatus.initial) {
           Future.delayed(const Duration(milliseconds: 1500), () {
-            if (mounted) {
-              if (state.status == AuthStatus.authenticated) {
-                Navigator.of(context).pushReplacement(
-                  PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => const HomePage(),
-                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                      return FadeTransition(opacity: animation, child: child);
-                    },
-                    transitionDuration: const Duration(milliseconds: 500),
-                  ),
-                );
-              } else if (state.status == AuthStatus.unauthenticated) {
-                Navigator.of(context).pushReplacement(
-                  PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => const LoginPage(),
-                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                      return FadeTransition(opacity: animation, child: child);
-                    },
-                    transitionDuration: const Duration(milliseconds: 500),
-                  ),
-                );
+            if (mounted && context.mounted) {              if (state.status == AuthStatus.authenticated) {
+                if (context.mounted) {
+                  Navigator.of(context).pushReplacement(
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => const HomePage(),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        return FadeTransition(opacity: animation, child: child);
+                      },
+                      transitionDuration: const Duration(milliseconds: 500),
+                    ),
+                  );
+                }              } else if (state.status == AuthStatus.unauthenticated) {
+                // Check if walkthrough has been completed
+                final walkthroughViewModel = serviceLocator<WalkthroughViewModel>();
+                final isWalkthroughCompleted = walkthroughViewModel.isWalkthroughCompleted();
+                
+                if (isWalkthroughCompleted) {
+                  // Go to auth method selection
+                  if (context.mounted) {
+                    Navigator.of(context).pushReplacement(
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) => const AuthMethodSelectionPage(),
+                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                          return FadeTransition(opacity: animation, child: child);
+                        },
+                        transitionDuration: const Duration(milliseconds: 500),
+                      ),
+                    );
+                  }
+                } else {
+                  // Show walkthrough first
+                  if (context.mounted) {
+                    Navigator.of(context).pushReplacement(
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) => const WalkthroughPage(),
+                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                          return FadeTransition(opacity: animation, child: child);
+                        },
+                        transitionDuration: const Duration(milliseconds: 500),
+                      ),
+                    );
+                  }
+                }
               }
             }
           });
@@ -230,12 +252,12 @@ class _SplashViewState extends State<SplashView>
                                   Shadow(
                                     offset: const Offset(0, 4),
                                     blurRadius: 12,
-                                    color: Colors.black.withOpacity(0.3),
+                                    color: Colors.black.withValues(alpha: 0.3),
                                   ),
                                   Shadow(
                                     offset: const Offset(0, 2),
                                     blurRadius: 6,
-                                    color: Colors.black.withOpacity(0.2),
+                                    color: Colors.black.withValues(alpha: 0.2),
                                   ),
                                 ],
                               ),
@@ -264,7 +286,7 @@ class _SplashViewState extends State<SplashView>
                                   value: null, // Animación continua
                                   valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                                   strokeWidth: 3,
-                                  backgroundColor: Colors.white.withOpacity(0.3),
+                                  backgroundColor: Colors.white.withValues(alpha: 0.3),
                                 ),
                               ),
                             );
@@ -292,9 +314,9 @@ class _SplashViewState extends State<SplashView>
           height: 140,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white.withOpacity(0.15),
+            color: Colors.white.withValues(alpha: 0.15),
             border: Border.all(
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha: 0.3),
               width: 2,
             ),
           ),
@@ -307,9 +329,8 @@ class _SplashViewState extends State<SplashView>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+            boxShadow: [              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 15,
                 spreadRadius: 2,
                 offset: const Offset(0, 5),
@@ -412,10 +433,9 @@ class WavesPainter extends CustomPainter {
   WavesPainter(this.animationValue);
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
+  void paint(Canvas canvas, Size size) {    final paint = Paint()
       ..style = PaintingStyle.fill
-      ..color = Colors.white.withOpacity(0.1);
+      ..color = Colors.white.withValues(alpha: 0.1);
 
     final path = Path();
     final waveHeight = 20.0;
@@ -431,12 +451,10 @@ class WavesPainter extends CustomPainter {
     path.lineTo(0, size.height);
     path.close();
 
-    canvas.drawPath(path, paint);
-
-    // Segunda onda (más sutil)
+    canvas.drawPath(path, paint);    // Segunda onda (más sutil)
     final paint2 = Paint()
       ..style = PaintingStyle.fill
-      ..color = Colors.white.withOpacity(0.05);
+      ..color = Colors.white.withValues(alpha: 0.05);
 
     final path2 = Path();
     path2.moveTo(-waveLength - offset, size.height * 0.7);
