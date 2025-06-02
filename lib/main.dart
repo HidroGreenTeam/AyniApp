@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/di/service_locator.dart';
-import 'presentation/blocs/auth_bloc.dart';
-import 'presentation/pages/login_page.dart';
-import 'presentation/pages/home_page.dart';
+import 'auth/presentation/blocs/auth_bloc.dart';
+import 'auth/presentation/pages/login_page.dart';
+import 'auth/presentation/pages/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

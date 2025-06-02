@@ -1,4 +1,4 @@
-import '../../core/network/network_client.dart';
+import '../../../core/network/network_client.dart';
 import '../../data/models/auth_models.dart';
 import '../../data/repositories/auth_repository.dart';
 

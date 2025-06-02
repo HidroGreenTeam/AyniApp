@@ -1,6 +1,6 @@
 import '../../data/models/auth_models.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../../core/network/network_client.dart';
+import '../../../core/network/network_client.dart';
 
 /// Sign In Use Case - MVVM pattern
 /// Handles the business logic for user sign in

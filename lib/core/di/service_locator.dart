@@ -3,14 +3,14 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../network/network_client.dart';
 import '../services/storage_service.dart';
-import '../../data/datasources/auth_data_source.dart';
-import '../../data/repositories/auth_repository.dart';
-import '../../domain/usecases/sign_in_use_case.dart';
-import '../../domain/usecases/check_auth_status_use_case.dart';
-import '../../domain/usecases/get_current_user_use_case.dart';
-import '../../domain/usecases/sign_out_use_case.dart';
-import '../../presentation/blocs/auth_bloc.dart';
-import '../../presentation/viewmodels/login_viewmodel.dart';
+import '../../auth/data/datasources/auth_data_source.dart';
+import '../../auth/data/repositories/auth_repository.dart';
+import '../../auth/domain/usecases/sign_in_use_case.dart';
+import '../../auth/domain/usecases/check_auth_status_use_case.dart';
+import '../../auth/domain/usecases/get_current_user_use_case.dart';
+import '../../auth/domain/usecases/sign_out_use_case.dart';
+import '../../auth/presentation/blocs/auth_bloc.dart';
+import '../../auth/presentation/viewmodels/login_viewmodel.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 

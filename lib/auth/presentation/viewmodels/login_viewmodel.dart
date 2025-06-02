@@ -1,5 +1,5 @@
 import '../../data/models/auth_models.dart';
-import '../../core/network/network_client.dart';
+import '../../../core/network/network_client.dart';
 import '../../domain/usecases/sign_in_use_case.dart';
 import '../../domain/usecases/check_auth_status_use_case.dart';
 import '../../domain/usecases/get_current_user_use_case.dart';
