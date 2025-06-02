@@ -25,7 +25,7 @@ class PasswordInput extends FormzInput<String, String> {
   @override
   String? validator(String value) {
     if (value.isEmpty) return 'Password cannot be empty';
-    if (value.length < 6) return 'Password must be at least 6 characters';
+    if (value.length < 5) return 'Password must be at least 6 characters';
     return null;
   }
 }

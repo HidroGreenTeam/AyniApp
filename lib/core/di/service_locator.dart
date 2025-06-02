@@ -5,7 +5,10 @@ import '../network/network_client.dart';
 import '../services/storage_service.dart';
 import '../../data/datasources/auth_data_source.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../../domain/usecases/auth_usecases.dart';
+import '../../domain/usecases/sign_in_use_case.dart';
+import '../../domain/usecases/check_auth_status_use_case.dart';
+import '../../domain/usecases/get_current_user_use_case.dart';
+import '../../domain/usecases/sign_out_use_case.dart';
 import '../../presentation/blocs/auth_bloc.dart';
 import '../../presentation/viewmodels/login_viewmodel.dart';
 

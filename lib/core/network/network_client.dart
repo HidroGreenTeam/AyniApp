@@ -54,8 +54,7 @@ class NetworkClient {
             headers: requestHeaders,
             body: data != null ? jsonEncode(data) : null,
           );
-          break;
-        case RequestMethod.delete:
+          break;        case RequestMethod.delete:
           response = await _client.delete(
             url,
             headers: requestHeaders,
@@ -66,13 +65,29 @@ class NetworkClient {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (fromJson != null && response.body.isNotEmpty) {
-          final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-          return ApiResponse<T>(
-            data: fromJson(jsonData),
-            success: true,
-          );
+          try {
+            final jsonData = jsonDecode(response.body);
+            // Check if the response is a Map before casting
+            if (jsonData is Map<String, dynamic>) {
+              return ApiResponse<T>(
+                data: fromJson(jsonData),
+                success: true,
+              );            } else {
+              // Handle case where response might be a different format
+              return ApiResponse<T>(
+                error: 'Invalid response format',
+                success: false,
+              );
+            }
+          } catch (e) {
+            return ApiResponse<T>(
+              error: 'Failed to parse response: $e',
+              success: false,
+            );
+          }
         }
-        return ApiResponse<T>(success: true);      } else {
+        return ApiResponse<T>(success: true);
+      } else {
         String errorMessage = 'Request failed with status: ${response.statusCode}';
         try {
           if (response.body.isNotEmpty) {

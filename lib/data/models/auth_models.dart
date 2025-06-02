@@ -24,13 +24,32 @@ class AuthResponse {
   AuthResponse({
     required this.token,
     required this.user,
-  });
-
-  factory AuthResponse.fromJson(Map<String, dynamic> json) {
-    return AuthResponse(
-      token: json['token'],
-      user: UserModel.fromJson(json['user']),
-    );
+  });  factory AuthResponse.fromJson(Map<String, dynamic> json) {
+    try {
+      // Handle case where id might be an int or could be 0 from the API
+      String userId = json['id'] != null ? json['id'].toString() : '0';
+      
+      return AuthResponse(
+        token: json['token'] ?? '',
+        user: UserModel.fromJson({
+          'id': userId, 
+          'email': json['email'] ?? '',
+          'name': null, // API doesn't provide name
+          'profilePicture': null, // API doesn't provide profilePicture
+        }),
+      );
+    } catch (e) {
+      // Return a default response in case of parsing error
+      return AuthResponse(
+        token: json['token'] ?? '',
+        user: UserModel.fromJson({
+          'id': '0',
+          'email': json['email'] ?? '',
+          'name': null,
+          'profilePicture': null,
+        }),
+      );
+    }
   }
 }
 
@@ -40,14 +59,12 @@ class UserModel extends User {
     required super.email,
     super.name,
     super.profilePicture,
-  });
-
-  factory UserModel.fromJson(Map<String, dynamic> json) {
+  });  factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'],
-      email: json['email'],
-      name: json['name'],
-      profilePicture: json['profilePicture'],
+      id: json['id'] != null ? json['id'].toString() : '0',
+      email: json['email']?.toString() ?? '',
+      name: json['name']?.toString(),
+      profilePicture: json['profilePicture']?.toString(),
     );
   }
 
