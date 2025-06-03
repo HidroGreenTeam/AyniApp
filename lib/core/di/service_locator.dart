@@ -6,6 +6,7 @@ import '../services/storage_service.dart';
 import '../../auth/data/datasources/auth_data_source.dart';
 import '../../auth/data/repositories/auth_repository.dart';
 import '../../auth/domain/usecases/sign_in_use_case.dart';
+import '../../auth/domain/usecases/sign_up_use_case.dart';
 import '../../auth/domain/usecases/check_auth_status_use_case.dart';
 import '../../auth/domain/usecases/get_current_user_use_case.dart';
 import '../../auth/domain/usecases/sign_out_use_case.dart';
@@ -48,6 +49,10 @@ Future<void> initDependencies() async {
     () => SignInUseCase(serviceLocator<AuthRepository>()),
   );
   
+  serviceLocator.registerFactory<SignUpUseCase>(
+    () => SignUpUseCase(serviceLocator<AuthRepository>()),
+  );
+  
   serviceLocator.registerFactory<CheckAuthStatusUseCase>(
     () => CheckAuthStatusUseCase(serviceLocator<AuthRepository>()),
   );
@@ -61,14 +66,15 @@ Future<void> initDependencies() async {
   serviceLocator.registerFactory<WalkthroughUseCase>(
     () => WalkthroughUseCase(serviceLocator<StorageService>()),
   );
-  
-  // ViewModels
+    // ViewModels
   serviceLocator.registerFactory<LoginViewModel>(() =>
     LoginViewModel(
       signInUseCase: serviceLocator<SignInUseCase>(),
+      signUpUseCase: serviceLocator<SignUpUseCase>(),
       checkAuthStatusUseCase: serviceLocator<CheckAuthStatusUseCase>(),
       getCurrentUserUseCase: serviceLocator<GetCurrentUserUseCase>(),
-      signOutUseCase: serviceLocator<SignOutUseCase>(),    ),
+      signOutUseCase: serviceLocator<SignOutUseCase>(),
+    ),
   );
   
   serviceLocator.registerFactory<WalkthroughViewModel>(() =>

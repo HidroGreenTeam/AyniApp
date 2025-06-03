@@ -3,4 +3,5 @@ class ApiConstants {
   
   // Auth endpoints
   static const String signIn = 'api/v1/auth/sign-in';
+  static const String signUp = 'api/v1/auth/sign-up';
 }

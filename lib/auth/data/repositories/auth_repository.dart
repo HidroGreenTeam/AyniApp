@@ -23,6 +23,24 @@ class AuthRepository {
     return response;
   }
 
+  Future<ApiResponse<AuthResponse>> signUp(String fullName, String email, String password) async {
+    final request = SignUpRequest(
+      fullName: fullName, 
+      email: email, 
+      password: password,
+      roles: ["ROLE_USER"] // Default role for new users
+    );
+    final response = await _authDataSource.signUp(request);
+
+    if (response.success && response.data != null) {
+      // Save token and user data
+      await _storageService.saveToken(response.data!.token);
+      await _storageService.saveUserData(jsonEncode(response.data!.user.toJson()));
+    }
+
+    return response;
+  }
+
   Future<void> signOut() async {
     await _storageService.clearAll();
   }

@@ -15,4 +15,13 @@ class AuthDataSource {
       fromJson: (json) => AuthResponse.fromJson(json),
     );
   }
+
+  Future<ApiResponse<AuthResponse>> signUp(SignUpRequest request) async {
+    return await _networkClient.request<AuthResponse>(
+      endpoint: ApiConstants.signUp,
+      method: RequestMethod.post,
+      data: request.toJson(),
+      fromJson: (json) => AuthResponse.fromJson(json),
+    );
+  }
 }

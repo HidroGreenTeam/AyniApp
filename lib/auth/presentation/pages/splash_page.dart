@@ -148,10 +148,8 @@ class _SplashViewState extends State<SplashView>
                 }              } else if (state.status == AuthStatus.unauthenticated) {
                 // Check if walkthrough has been completed
                 final walkthroughViewModel = serviceLocator<WalkthroughViewModel>();
-                final isWalkthroughCompleted = walkthroughViewModel.isWalkthroughCompleted();
-                
-                if (isWalkthroughCompleted) {
-                  // Go to auth method selection
+                final isWalkthroughCompleted = walkthroughViewModel.isWalkthroughCompleted();                if (isWalkthroughCompleted) {
+                  // Go to auth method selection 
                   if (context.mounted) {
                     Navigator.of(context).pushReplacement(
                       PageRouteBuilder(

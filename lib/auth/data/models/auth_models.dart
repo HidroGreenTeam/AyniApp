@@ -77,3 +77,26 @@ class UserModel extends User {
     };
   }
 }
+
+class SignUpRequest {
+  final String fullName;
+  final String email;
+  final String password;
+  final List<String> roles;
+
+  SignUpRequest({
+    required this.fullName,
+    required this.email,
+    required this.password,
+    required this.roles,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'fullName': fullName,
+      'email': email,
+      'password': password,
+      'roles': roles,
+    };
+  }
+}

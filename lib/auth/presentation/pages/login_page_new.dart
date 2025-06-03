@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/di/service_locator.dart';
 import '../blocs/auth_bloc.dart';
 import 'home_page.dart';
+import 'register_page_new.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -57,8 +58,8 @@ class LoginView extends StatelessWidget {
                 return Form(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 20),                      // Profile icon
+                    children: [                      const SizedBox(height: 20),
+                      // Profile icon
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -115,15 +116,15 @@ class LoginView extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      _PasswordInput(),
-                      const SizedBox(height: 20),                      // Don't have account text
+                      _PasswordInput(),                      const SizedBox(height: 20),
+                      // Don't have account text
                       Center(
                         child: TextButton(
                           onPressed: () {
                             // Navigate to register page for new users
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (_) => const Text('Registration Page - Coming Soon'),
+                                builder: (_) => const RegisterPage(),
                               ),
                             );
                           },
@@ -140,9 +141,61 @@ class LoginView extends StatelessWidget {
                             ),
                           ),
                         ),
-                      ),                      const SizedBox(height: 32),
-                      // Login button
-                      _LoginButton(),
+                      ),
+                      const SizedBox(height: 10),
+                      const Center(
+                        child: Text(
+                          'or',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      // Social login section
+                      _SocialLoginButton(
+                        text: 'Continue with Google',
+                        icon: Icon(Icons.public, size: 24),
+                        onPressed: null, // Social logins not implemented yet
+                      ),
+                      const SizedBox(height: 12),
+                      
+                      _SocialLoginButton(
+                        text: 'Continue with Apple',
+                        icon: Icon(Icons.apple, size: 24),
+                        onPressed: null, // Social logins not implemented yet
+                      ),
+                      const SizedBox(height: 12),
+                      
+                      _SocialLoginButton(
+                        text: 'Continue with Facebook',
+                        icon: Icon(Icons.facebook, size: 24),
+                        onPressed: null, // Social logins not implemented yet
+                      ),
+                      const SizedBox(height: 24),                      // Log in button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton(
+                          key: const Key('loginForm_continue_raisedButton'),
+                          onPressed: state.isFormValid && state.status != AuthStatus.loading
+                              ? () {
+                                  // Trigger login action
+                                  context.read<AuthBloc>().add(const AuthLoginSubmitted());
+                                }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.teal,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: const Text(
+                            'Log in',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                        ),
+                      ),
                       if (state.status == AuthStatus.loading)
                         const Center(
                           child: Padding(
@@ -202,10 +255,15 @@ class _PasswordInput extends StatelessWidget {
           onChanged: (password) => context.read<AuthBloc>().add(AuthPasswordChanged(password)),
           obscureText: true,
           decoration: InputDecoration(
-            labelText: 'Password',
-            hintText: 'Enter your password',
-            prefixIcon: const Icon(Icons.lock),
-            border: const OutlineInputBorder(),
+            hintText: 'Password',
+            prefixIcon: const Icon(Icons.lock, color: Colors.grey),
+            suffixIcon: const Icon(Icons.visibility_off, color: Colors.grey),
+            filled: true,
+            fillColor: Colors.grey.shade100,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
             errorText: state.password.isNotValid && state.password.value.isNotEmpty 
                 ? 'Password must be at least 6 characters' 
                 : null,
@@ -216,42 +274,34 @@ class _PasswordInput extends StatelessWidget {
   }
 }
 
-class _LoginButton extends StatelessWidget {
+class _SocialLoginButton extends StatelessWidget {
+  final String text;
+  final Widget icon;
+  final VoidCallback? onPressed;
+
+  const _SocialLoginButton({
+    required this.text,
+    required this.icon,
+    required this.onPressed,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      buildWhen: (previous, current) => 
-          previous.status != current.status || 
-          previous.isFormValid != current.isFormValid,
-      builder: (context, state) {
-        return SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(
-            key: const Key('loginForm_submit_button'),
-            onPressed: state.isFormValid && state.status != AuthStatus.loading
-                ? () => context.read<AuthBloc>().add(const AuthLoginSubmitted())
-                : null,
-            style: ElevatedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),            child: state.status == AuthStatus.loading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2.0,
-                    ),
-                  )
-                : const Text(
-                    'LOGIN',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: OutlinedButton.icon(
+        icon: icon,
+        label: Text(text),
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.black87,
+          side: BorderSide(color: Colors.grey.shade300),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
