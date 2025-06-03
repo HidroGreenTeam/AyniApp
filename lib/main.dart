@@ -16,10 +16,16 @@ class MyApp extends StatelessWidget {
       title: 'Ayni',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        primaryColor: const Color(0xFF00C851),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF00C851)),
         useMaterial3: true,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black87,
+          elevation: 0,
+        ),
       ),
-      home: const SplashPage(),
+      home: const SplashPage(), // Starting with splash page
     );
   }
 }

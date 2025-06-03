@@ -4,7 +4,7 @@ import 'dart:math' as math;
 import '../../../core/di/service_locator.dart';
 import '../blocs/auth_bloc.dart';
 import '../viewmodels/walkthrough_viewmodel.dart';
-import 'home_page.dart';
+import '../../../shared/presentation/pages/main_app.dart';
 import 'walkthrough_page.dart';
 import 'login_page.dart';
 
@@ -138,14 +138,14 @@ class _SplashViewState extends State<SplashView>
                 if (context.mounted) {
                   Navigator.of(context).pushReplacement(
                     PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const HomePage(),
+                      pageBuilder: (context, animation, secondaryAnimation) => const MainApp(),
                       transitionsBuilder: (context, animation, secondaryAnimation, child) {
                         return FadeTransition(opacity: animation, child: child);
                       },
                       transitionDuration: const Duration(milliseconds: 500),
                     ),
                   );
-                }              } else if (state.status == AuthStatus.unauthenticated) {
+                }} else if (state.status == AuthStatus.unauthenticated) {
                 // Check if walkthrough has been completed
                 final walkthroughViewModel = serviceLocator<WalkthroughViewModel>();
                 final isWalkthroughCompleted = walkthroughViewModel.isWalkthroughCompleted();                if (isWalkthroughCompleted) {

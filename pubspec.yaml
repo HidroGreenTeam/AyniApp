@@ -30,17 +30,17 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-    # State management using BLoC pattern
+  # State management using BLoC pattern
   flutter_bloc: ^9.1.1
   bloc: ^9.0.0
   equatable: ^2.0.7
-  
-  # HTTP client for API requests
+  # HTTP client and path handling  # HTTP client for API requests
   http: ^1.4.0
+  path_provider: ^2.1.2
+  path: ^1.9.0
   
   # For local storage (tokens, user data)
   shared_preferences: ^2.5.3

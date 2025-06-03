@@ -4,7 +4,7 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/constants/walkthrough_config.dart';
 import '../blocs/walkthrough_bloc.dart';
-import './auth_method_selection_page.dart';
+import '../../../shared/presentation/pages/main_app.dart';
 
 class WalkthroughPage extends StatelessWidget {
   const WalkthroughPage({super.key});
@@ -89,11 +89,10 @@ class _WalkthroughViewState extends State<WalkthroughView>
     return BlocListener<WalkthroughBloc, WalkthroughState>(
       listenWhen: (previous, current) => 
           previous.status != current.status ||
-          previous.currentPageIndex != current.currentPageIndex,
-      listener: (context, state) {        if (state.status == WalkthroughStatus.completed) {
+          previous.currentPageIndex != current.currentPageIndex,      listener: (context, state) {        if (state.status == WalkthroughStatus.completed) {
           Navigator.of(context).pushReplacement(
             PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) => const AuthMethodSelectionPage(),
+              pageBuilder: (context, animation, secondaryAnimation) => const MainApp(),
               transitionsBuilder: (context, animation, secondaryAnimation, child) {
                 return FadeTransition(opacity: animation, child: child);
               },
