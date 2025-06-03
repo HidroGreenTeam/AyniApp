@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'login_page_new.dart' as login_new;
-import 'register_page_new.dart' as register_new;
+import 'login_page.dart';
+import 'register_page.dart';
 
 class AuthMethodSelectionPage extends StatelessWidget {
   const AuthMethodSelectionPage({super.key});
@@ -86,7 +86,7 @@ class AuthMethodSelectionPage extends StatelessWidget {
                       child: ElevatedButton(                        onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => const register_new.RegisterPage(),
+                              builder: (context) => const RegisterPage(),
                             ),
                           );
                         },
@@ -118,7 +118,7 @@ class AuthMethodSelectionPage extends StatelessWidget {
                       child: OutlinedButton(                        onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => const login_new.LoginPage(),
+                              builder: (context) => const LoginPage(),
                             ),
                           );
                         },

@@ -6,7 +6,7 @@ import '../blocs/auth_bloc.dart';
 import '../viewmodels/walkthrough_viewmodel.dart';
 import 'home_page.dart';
 import 'walkthrough_page.dart';
-import './auth_method_selection_page.dart';
+import 'login_page.dart';
 
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
@@ -153,7 +153,7 @@ class _SplashViewState extends State<SplashView>
                   if (context.mounted) {
                     Navigator.of(context).pushReplacement(
                       PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) => const AuthMethodSelectionPage(),
+                        pageBuilder: (context, animation, secondaryAnimation) => const LoginPage(),
                         transitionsBuilder: (context, animation, secondaryAnimation, child) {
                           return FadeTransition(opacity: animation, child: child);
                         },
