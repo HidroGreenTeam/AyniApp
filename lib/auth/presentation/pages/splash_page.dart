@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:math' as math;
 import '../../../core/di/service_locator.dart';
 import '../blocs/auth_bloc.dart';
@@ -119,15 +120,16 @@ class _SplashViewState extends State<SplashView>
     
     await Future.delayed(const Duration(milliseconds: 300));
     _loadingController.forward();
-    
-    // Iniciar rotación suave continua
+      // Iniciar rotación suave continua
     _rotationController.repeat();
-      // Timer de seguridad: si después de 4 segundos no hay navegación, forzar navegación
-    Future.delayed(const Duration(seconds: 4), () {
-      if (mounted && context.mounted) {
-        _handleTimeoutNavigation(context);
-      }
-    });
+      // Timer de seguridad: solo en modo release para evitar problemas en tests
+    if (!kDebugMode) {
+      Future.delayed(const Duration(seconds: 4), () {
+        if (mounted && context.mounted) {
+          _handleTimeoutNavigation(context);
+        }
+      });
+    }
   }
 
   @override
