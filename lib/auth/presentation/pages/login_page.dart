@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/di/service_locator.dart';
 import '../blocs/auth_bloc.dart';
-import 'home_page.dart';
+import '../../../shared/presentation/pages/main_app.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatelessWidget {
@@ -23,11 +23,10 @@ class LoginView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-      listenWhen: (previous, current) => previous.status != current.status,
-      listener: (context, state) {
+      listenWhen: (previous, current) => previous.status != current.status,      listener: (context, state) {
         if (state.status == AuthStatus.authenticated) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const HomePage()),
+            MaterialPageRoute(builder: (_) => const MainApp()),
           );
         }
         if (state.status == AuthStatus.failure) {

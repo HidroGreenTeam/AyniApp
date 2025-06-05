@@ -40,9 +40,8 @@ class AuthRepository {
 
     return response;
   }
-
   Future<void> signOut() async {
-    await _storageService.clearAll();
+    await _storageService.clearAuthData();
   }
 
   bool isAuthenticated() {

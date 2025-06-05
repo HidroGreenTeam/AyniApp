@@ -8,8 +8,7 @@ class SignInUseCase {
   final AuthRepository _authRepository;
 
   SignInUseCase(this._authRepository);
-
-  Future<ApiResponse<AuthResponse>> execute(String email, String password) async {
+  Future<ApiResponse<AuthResponse>> call(String email, String password) async {
     return await _authRepository.signIn(email, password);
   }
 }
@@ -20,8 +19,7 @@ class CheckAuthStatusUseCase {
   final AuthRepository _authRepository;
 
   CheckAuthStatusUseCase(this._authRepository);
-
-  bool execute() {
+  bool call() {
     return _authRepository.isAuthenticated();
   }
 }
@@ -32,8 +30,7 @@ class GetCurrentUserUseCase {
   final AuthRepository _authRepository;
 
   GetCurrentUserUseCase(this._authRepository);
-
-  UserModel? execute() {
+  UserModel? call() {
     return _authRepository.getCurrentUser();
   }
 }
@@ -44,8 +41,7 @@ class SignOutUseCase {
   final AuthRepository _authRepository;
 
   SignOutUseCase(this._authRepository);
-
-  Future<void> execute() async {
+  Future<void> call() async {
     await _authRepository.signOut();
   }
 }

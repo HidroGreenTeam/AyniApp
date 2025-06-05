@@ -41,9 +41,14 @@ class StorageService {
   String? getString(String key) {
     return _prefs.getString(key);
   }
-  
-  // Clear all stored data for logout
+    // Clear all stored data for logout
   Future<void> clearAll() async {
     await _prefs.clear();
+  }
+  
+  // Clear only authentication data (preserves walkthrough status)
+  Future<void> clearAuthData() async {
+    await _prefs.remove(_tokenKey);
+    await _prefs.remove(_userDataKey);
   }
 }

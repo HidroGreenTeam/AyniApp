@@ -15,6 +15,8 @@ import '../../auth/presentation/blocs/auth_bloc.dart';
 import '../../auth/presentation/blocs/walkthrough_bloc.dart';
 import '../../auth/presentation/viewmodels/login_viewmodel.dart';
 import '../../auth/presentation/viewmodels/walkthrough_viewmodel.dart';
+import '../../profile/presentation/blocs/account_bloc.dart';
+import '../../profile/presentation/viewmodels/account_viewmodel.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -76,10 +78,16 @@ Future<void> initDependencies() async {
       signOutUseCase: serviceLocator<SignOutUseCase>(),
     ),
   );
-  
-  serviceLocator.registerFactory<WalkthroughViewModel>(() =>
+    serviceLocator.registerFactory<WalkthroughViewModel>(() =>
     WalkthroughViewModel(
       walkthroughUseCase: serviceLocator<WalkthroughUseCase>(),
+    ),
+  );
+  
+  serviceLocator.registerFactory<AccountViewModel>(() =>
+    AccountViewModel(
+      signOutUseCase: serviceLocator<SignOutUseCase>(),
+      getCurrentUserUseCase: serviceLocator<GetCurrentUserUseCase>(),
     ),
   );
   
@@ -90,5 +98,9 @@ Future<void> initDependencies() async {
   
   serviceLocator.registerFactory<WalkthroughBloc>(() => 
     WalkthroughBloc(walkthroughViewModel: serviceLocator<WalkthroughViewModel>()),
+  );
+  
+  serviceLocator.registerFactory<AccountBloc>(() => 
+    AccountBloc(accountViewModel: serviceLocator<AccountViewModel>()),
   );
 }

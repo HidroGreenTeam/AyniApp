@@ -14,9 +14,8 @@ class WalkthroughUseCase {
   Future<void> markWalkthroughCompleted() async {
     await _storageService.setBool(_walkthroughCompletedKey, true);
   }
-
   /// Resetea el estado del walkthrough (útil para testing)
   Future<void> resetWalkthrough() async {
-    await _storageService.clearAll();
+    await _storageService.setBool(_walkthroughCompletedKey, false);
   }
 }

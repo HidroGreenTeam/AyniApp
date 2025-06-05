@@ -26,8 +26,7 @@ class LoginViewModel {
     _checkAuthStatusUseCase = checkAuthStatusUseCase,
     _getCurrentUserUseCase = getCurrentUserUseCase,
     _signOutUseCase = signOutUseCase;
-    
-  /// Attempts to sign in a user with email and password
+      /// Attempts to sign in a user with email and password
   /// Returns an ApiResponse containing auth data or error
   Future<ApiResponse<AuthResponse>> signIn(String email, String password) async {
     return await _signInUseCase.call(email, password);
@@ -37,18 +36,15 @@ class LoginViewModel {
   Future<ApiResponse<AuthResponse>> signUp(String fullName, String email, String password) async {
     return await _signUpUseCase.call(fullName, email, password);
   }
-
   /// Checks if the user is currently authenticated
   /// Returns true if there is a valid token stored, false otherwise
   bool isAuthenticated() {
     return _checkAuthStatusUseCase.call();
-  }
-  /// Gets the current authenticated user, if available
+  }  /// Gets the current authenticated user, if available
   /// Returns a UserModel if a user is authenticated, null otherwise
   UserModel? getCurrentUser() {
     return _getCurrentUserUseCase.call();
   }
-
   /// Signs out the current user by clearing stored credentials
   /// This is essential for the MVVM pattern as it encapsulates the
   /// business logic for sign-out functionality

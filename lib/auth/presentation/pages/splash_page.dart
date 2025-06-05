@@ -6,7 +6,7 @@ import '../blocs/auth_bloc.dart';
 import '../viewmodels/walkthrough_viewmodel.dart';
 import '../../../shared/presentation/pages/main_app.dart';
 import 'walkthrough_page.dart';
-import 'login_page.dart';
+import 'auth_method_selection_page.dart';
 
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
@@ -28,7 +28,8 @@ class SplashView extends StatefulWidget {
 }
 
 class _SplashViewState extends State<SplashView>
-    with TickerProviderStateMixin {  late AnimationController _logoController;
+    with TickerProviderStateMixin {
+  late AnimationController _logoController;
   late AnimationController _textController;
   late AnimationController _loadingController;
   late AnimationController _rotationController;
@@ -42,7 +43,8 @@ class _SplashViewState extends State<SplashView>
   @override
   void initState() {
     super.initState();
-      // Configurar controladores de animación
+    
+    // Configurar controladores de animación
     _logoController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
@@ -107,6 +109,7 @@ class _SplashViewState extends State<SplashView>
     // Iniciar animaciones en secuencia
     _startAnimations();
   }
+
   void _startAnimations() async {
     await Future.delayed(const Duration(milliseconds: 300));
     _logoController.forward();
@@ -119,7 +122,14 @@ class _SplashViewState extends State<SplashView>
     
     // Iniciar rotación suave continua
     _rotationController.repeat();
+      // Timer de seguridad: si después de 4 segundos no hay navegación, forzar navegación
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted && context.mounted) {
+        _handleTimeoutNavigation(context);
+      }
+    });
   }
+
   @override
   void dispose() {
     _logoController.dispose();
@@ -127,55 +137,18 @@ class _SplashViewState extends State<SplashView>
     _loadingController.dispose();
     _rotationController.dispose();
     super.dispose();
-  }  @override
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-      listenWhen: (previous, current) => previous.status != current.status,      listener: (context, state) {
+      listenWhen: (previous, current) => previous.status != current.status,
+      listener: (context, state) {
         // Agregar un pequeño delay para mostrar el splash
-        if (state.status != AuthStatus.initial) {
+        if (state.status != AuthStatus.initial && state.status != AuthStatus.loading) {
           Future.delayed(const Duration(milliseconds: 1500), () {
-            if (mounted && context.mounted) {              if (state.status == AuthStatus.authenticated) {
-                if (context.mounted) {
-                  Navigator.of(context).pushReplacement(
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const MainApp(),
-                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                        return FadeTransition(opacity: animation, child: child);
-                      },
-                      transitionDuration: const Duration(milliseconds: 500),
-                    ),
-                  );
-                }} else if (state.status == AuthStatus.unauthenticated) {
-                // Check if walkthrough has been completed
-                final walkthroughViewModel = serviceLocator<WalkthroughViewModel>();
-                final isWalkthroughCompleted = walkthroughViewModel.isWalkthroughCompleted();                if (isWalkthroughCompleted) {
-                  // Go to auth method selection 
-                  if (context.mounted) {
-                    Navigator.of(context).pushReplacement(
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) => const LoginPage(),
-                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                          return FadeTransition(opacity: animation, child: child);
-                        },
-                        transitionDuration: const Duration(milliseconds: 500),
-                      ),
-                    );
-                  }
-                } else {
-                  // Show walkthrough first
-                  if (context.mounted) {
-                    Navigator.of(context).pushReplacement(
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) => const WalkthroughPage(),
-                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                          return FadeTransition(opacity: animation, child: child);
-                        },
-                        transitionDuration: const Duration(milliseconds: 500),
-                      ),
-                    );
-                  }
-                }
-              }
+            if (mounted && context.mounted) {
+              _navigateBasedOnAuthStatus(context, state.status);
             }
           });
         }
@@ -301,6 +274,63 @@ class _SplashViewState extends State<SplashView>
       ),
     );
   }
+  void _navigateBasedOnAuthStatus(BuildContext context, AuthStatus authStatus) {
+    if (authStatus == AuthStatus.authenticated) {
+      if (context.mounted) {
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => const MainApp(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 500),
+          ),
+        );
+      }
+    } else if (authStatus == AuthStatus.unauthenticated || authStatus == AuthStatus.failure) {
+      _navigateToUnauthenticatedFlow(context);
+    }
+  }
+
+  void _navigateToUnauthenticatedFlow(BuildContext context) {
+    // Check if walkthrough has been completed
+    final walkthroughViewModel = serviceLocator<WalkthroughViewModel>();
+    final isWalkthroughCompleted = walkthroughViewModel.isWalkthroughCompleted();
+    
+    if (isWalkthroughCompleted) {
+      // Go directly to AuthMethodSelectionPage instead of LoginPage
+      // This gives users the choice between login and register
+      if (context.mounted) {
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => const AuthMethodSelectionPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 500),
+          ),
+        );
+      }
+    } else {
+      // Show walkthrough first
+      if (context.mounted) {
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => const WalkthroughPage(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 500),
+          ),
+        );
+      }
+    }
+  }
+
+  void _handleTimeoutNavigation(BuildContext context) {
+    // Fallback navigation if auth check doesn't complete in time
+    _navigateToUnauthenticatedFlow(context);
+  }
 
   Widget _buildCustomLogo() {
     return Stack(
@@ -327,7 +357,8 @@ class _SplashViewState extends State<SplashView>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white,
-            boxShadow: [              BoxShadow(
+            boxShadow: [
+              BoxShadow(
                 color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 15,
                 spreadRadius: 2,
@@ -431,14 +462,17 @@ class WavesPainter extends CustomPainter {
   WavesPainter(this.animationValue);
 
   @override
-  void paint(Canvas canvas, Size size) {    final paint = Paint()
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
       ..style = PaintingStyle.fill
       ..color = Colors.white.withValues(alpha: 0.1);
 
     final path = Path();
     final waveHeight = 20.0;
     final waveLength = size.width / 2;
-    final offset = animationValue * waveLength;    // Primera onda
+    final offset = animationValue * waveLength;
+
+    // Primera onda
     path.moveTo(-waveLength + offset, size.height * 0.3);
     for (double x = -waveLength + offset; x <= size.width + waveLength; x += waveLength / 50) {
       final y = size.height * 0.3 + 
@@ -449,7 +483,9 @@ class WavesPainter extends CustomPainter {
     path.lineTo(0, size.height);
     path.close();
 
-    canvas.drawPath(path, paint);    // Segunda onda (más sutil)
+    canvas.drawPath(path, paint);
+
+    // Segunda onda (más sutil)
     final paint2 = Paint()
       ..style = PaintingStyle.fill
       ..color = Colors.white.withValues(alpha: 0.05);
