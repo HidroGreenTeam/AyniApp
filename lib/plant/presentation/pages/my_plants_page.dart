@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 
 class MyPlantsPage extends StatelessWidget {
   const MyPlantsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+    return Scaffold(      appBar: AppBar(
         title: const Text('My Plants'),
-        backgroundColor: const Color(0xFF00C851),
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.primaryGreen,
+        foregroundColor: AppColors.white,
         elevation: 0,
         actions: [
           IconButton(
@@ -20,18 +20,17 @@ class MyPlantsPage extends StatelessWidget {
           ),
         ],
       ),
-      body: Center(
-        child: Column(
+      body: Center(        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.eco_outlined, size: 80, color: Colors.grey[400]),
+            Icon(Icons.eco_outlined, size: 80, color: AppColors.grey400),
             const SizedBox(height: 16),
             Text(
               'No Plants Added Yet',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
+                color: AppColors.grey800,
               ),
             ),
             const SizedBox(height: 8),
@@ -42,15 +41,14 @@ class MyPlantsPage extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.grey[600],
+                  color: AppColors.grey600,
                 ),
               ),
             ),
             const SizedBox(height: 40),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00C851),
-                foregroundColor: Colors.white,
+            ElevatedButton.icon(              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                foregroundColor: AppColors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:math' as math;
 import '../../../core/di/service_locator.dart';
+import '../../../core/theme/app_theme.dart';
 import '../blocs/auth_bloc.dart';
 import '../viewmodels/walkthrough_viewmodel.dart';
 import '../../../shared/presentation/pages/main_app.dart';
@@ -162,11 +163,10 @@ class _SplashViewState extends State<SplashView>
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFF00C851), // Verde más brillante arriba
-                Color(0xFF007E33), // Verde más oscuro abajo
-              ],
+              end: Alignment.bottomCenter,            colors: [
+              Color(0xFF04A033), // Updated to Style Guide primary
+              Color(0xFFDDFFE7), // Updated to Style Guide secondary
+            ],
             ),
           ),
           child: Stack(
@@ -219,18 +219,17 @@ class _SplashViewState extends State<SplashView>
                               style: TextStyle(
                                 fontSize: 64,
                                 fontWeight: FontWeight.w900,
-                                color: const Color(0xFF2E7D32), // Verde más oscuro como en la imagen
-                                letterSpacing: 3,
-                                shadows: [
+                                color: AppColors.textPrimary, // Updated to Style Guide black
+                                letterSpacing: 3,                                shadows: [
                                   Shadow(
                                     offset: const Offset(0, 4),
                                     blurRadius: 12,
-                                    color: Colors.black.withValues(alpha: 0.3),
+                                    color: AppColors.black.withValues(alpha: 0.3),
                                   ),
                                   Shadow(
                                     offset: const Offset(0, 2),
                                     blurRadius: 6,
-                                    color: Colors.black.withValues(alpha: 0.2),
+                                    color: AppColors.black.withValues(alpha: 0.2),
                                   ),
                                 ],
                               ),
@@ -254,12 +253,11 @@ class _SplashViewState extends State<SplashView>
                               scale: 1.0 + (0.1 * (1.0 + (_rotationAnimation.value * 2 - 1).abs())), // Efecto de pulsación
                               child: SizedBox(
                                 width: 32,
-                                height: 32,
-                                child: CircularProgressIndicator(
+                                height: 32,                                child: CircularProgressIndicator(
                                   value: null, // Animación continua
-                                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.white),
                                   strokeWidth: 3,
-                                  backgroundColor: Colors.white.withValues(alpha: 0.3),
+                                  backgroundColor: AppColors.white.withValues(alpha: 0.3),
                                 ),
                               ),
                             );
@@ -337,16 +335,15 @@ class _SplashViewState extends State<SplashView>
   Widget _buildCustomLogo() {
     return Stack(
       alignment: Alignment.center,
-      children: [
-        // Contenedor principal del logo
+      children: [        // Contenedor principal del logo
         Container(
           width: 140,
           height: 140,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: 0.15),
+            color: AppColors.white.withValues(alpha: 0.15),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.3),
+              color: AppColors.white.withValues(alpha: 0.3),
               width: 2,
             ),
           ),
@@ -358,10 +355,10 @@ class _SplashViewState extends State<SplashView>
           height: 120,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white,
+            color: AppColors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
+                color: AppColors.black.withValues(alpha: 0.2),
                 blurRadius: 15,
                 spreadRadius: 2,
                 offset: const Offset(0, 5),
@@ -379,9 +376,8 @@ class _SplashViewState extends State<SplashView>
                   angle: -0.3,
                   child: Container(
                     width: 35,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade600,
+                    height: 50,                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen,
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(25),
                         topRight: Radius.circular(25),
@@ -402,18 +398,17 @@ class _SplashViewState extends State<SplashView>
                 bottom: 25,
                 child: Container(
                   width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
+                  height: 40,                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.green.shade700,
+                    color: AppColors.primaryGreen,
                     border: Border.all(
-                      color: Colors.white,
+                      color: AppColors.white,
                       width: 2,
                     ),
                   ),
                   child: Icon(
                     Icons.search,
-                    color: Colors.white,
+                    color: AppColors.white,
                     size: 20,
                   ),
                 ),
@@ -434,13 +429,12 @@ class _SplashViewState extends State<SplashView>
 
   Widget _buildConnectivityDots() {
     return Column(
-      children: [
-        Container(
+      children: [        Container(
           width: 4,
           height: 4,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.green.shade600,
+            color: AppColors.primaryGreen,
           ),
         ),
         const SizedBox(height: 2),
@@ -449,7 +443,7 @@ class _SplashViewState extends State<SplashView>
           height: 3,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.green.shade600,
+            color: AppColors.primaryGreen,
           ),
         ),
       ],
@@ -464,10 +458,9 @@ class WavesPainter extends CustomPainter {
   WavesPainter(this.animationValue);
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
+  void paint(Canvas canvas, Size size) {    final paint = Paint()
       ..style = PaintingStyle.fill
-      ..color = Colors.white.withValues(alpha: 0.1);
+      ..color = AppColors.white.withValues(alpha: 0.1);
 
     final path = Path();
     final waveHeight = 20.0;
@@ -485,12 +478,10 @@ class WavesPainter extends CustomPainter {
     path.lineTo(0, size.height);
     path.close();
 
-    canvas.drawPath(path, paint);
-
-    // Segunda onda (más sutil)
+    canvas.drawPath(path, paint);    // Segunda onda (más sutil)
     final paint2 = Paint()
       ..style = PaintingStyle.fill
-      ..color = Colors.white.withValues(alpha: 0.05);
+      ..color = AppColors.white.withValues(alpha: 0.05);
 
     final path2 = Path();
     path2.moveTo(-waveLength - offset, size.height * 0.7);
@@ -514,9 +505,8 @@ class WavesPainter extends CustomPainter {
 // Custom painter para dibujar las venas de la hoja
 class LeafVeinsPainter extends CustomPainter {
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.green.shade800
+  void paint(Canvas canvas, Size size) {    final paint = Paint()
+      ..color = AppColors.primaryGreen
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/di/service_locator.dart';
+import 'core/theme/app_theme.dart';
 import 'auth/presentation/pages/splash_page.dart';
 
 void main() async {
@@ -16,16 +17,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Ayni',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primaryColor: const Color(0xFF00C851),
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF00C851)),
-        useMaterial3: true,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black87,
-          elevation: 0,
-        ),
-      ),
+      theme: AppTheme.lightTheme,
       home: const SplashPage(),
     );
   }

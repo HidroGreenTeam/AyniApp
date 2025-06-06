@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 import 'login_page.dart';
 import 'register_page.dart';
 
@@ -14,8 +15,7 @@ class AuthMethodSelectionPage extends StatelessWidget {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
+            end: Alignment.bottomCenter,            colors: [
               Color(0xFF00C851), // Verde brillante
               Color(0xFF007E33), // Verde oscuro
             ],
@@ -34,18 +34,17 @@ class AuthMethodSelectionPage extends StatelessWidget {
                   height: 120,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white,                    boxShadow: [
+                    color: AppColors.white,                    boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
+                        color: AppColors.black.withValues(alpha: 0.2),
                         blurRadius: 15,
                         spreadRadius: 2,
                         offset: const Offset(0, 5),
                       ),
                     ],
-                  ),
-                  child: const Icon(
+                  ),                  child: const Icon(
                     Icons.eco,
-                    color: Color(0xFF00C851),
+                    color: AppColors.primaryGreen,
                     size: 60,
                   ),
                 ),
@@ -53,23 +52,21 @@ class AuthMethodSelectionPage extends StatelessWidget {
                 const SizedBox(height: 32),
                 
                 const Text(
-                  'Ayni',
-                  style: TextStyle(
+                  'Ayni',                  style: TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AppColors.white,
                     letterSpacing: 2,
                   ),
                 ),
                 
                 const SizedBox(height: 16),
-                
-                const Text(
+                  Text(
                   'Conectando agricultores\ncon tecnología sostenible',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 18,
-                    color: Colors.white70,
+                    color: AppColors.white.withValues(alpha: 0.7),
                     height: 1.4,
                   ),
                 ),
@@ -89,12 +86,11 @@ class AuthMethodSelectionPage extends StatelessWidget {
                               builder: (context) => const RegisterPage(),
                             ),
                           );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF00C851),
+                        },                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.white,
+                          foregroundColor: AppColors.primaryGreen,
                           elevation: 4,
-                          shadowColor: Colors.black26,
+                          shadowColor: AppColors.black.withValues(alpha: 0.26),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(28),
                           ),
@@ -121,11 +117,10 @@ class AuthMethodSelectionPage extends StatelessWidget {
                               builder: (context) => const LoginPage(),
                             ),
                           );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(
-                            color: Colors.white,
+                        },                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.white,
+                          side: BorderSide(
+                            color: AppColors.white,
                             width: 2,
                           ),
                           shape: RoundedRectangleBorder(
@@ -145,25 +140,24 @@ class AuthMethodSelectionPage extends StatelessWidget {
                 ),
                 
                 const SizedBox(height: 32),
-                
-                // Enlaces de términos y políticas
-                const Row(
+                  // Enlaces de términos y políticas
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       'Política de Privacidad',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.white70,
+                        color: AppColors.white.withValues(alpha: 0.7),
                         decoration: TextDecoration.underline,
                       ),
                     ),
-                    SizedBox(width: 16),
+                    const SizedBox(width: 16),
                     Text(
                       'Términos de Servicio',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.white70,
+                        color: AppColors.white.withValues(alpha: 0.7),
                         decoration: TextDecoration.underline,
                       ),
                     ),

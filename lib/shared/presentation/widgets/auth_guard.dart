@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/di/service_locator.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/blocs/auth_bloc.dart';
 import '../../../auth/presentation/pages/splash_page.dart';
 
@@ -31,25 +32,23 @@ class AuthGuard extends StatelessWidget {
         },
         buildWhen: (previous, current) => previous.status != current.status,
         builder: (context, state) {
-          switch (state.status) {
-            case AuthStatus.initial:
+          switch (state.status) {            case AuthStatus.initial:
             case AuthStatus.loading:
               return const Scaffold(
                 body: Center(
                   child: CircularProgressIndicator(
-                    color: Color(0xFF00C851),
+                    color: AppColors.primaryGreen,
                   ),
                 ),
               );
             case AuthStatus.authenticated:
-              return child;
-            case AuthStatus.unauthenticated:
+              return child;            case AuthStatus.unauthenticated:
             case AuthStatus.failure:
               // Show loading while redirecting
               return const Scaffold(
                 body: Center(
                   child: CircularProgressIndicator(
-                    color: Color(0xFF00C851),
+                    color: AppColors.primaryGreen,
                   ),
                 ),
               );

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 /// Configuración del Walkthrough de Ayni
 /// 
 /// Esta clase centraliza todas las configuraciones visuales y de contenido
 /// del walkthrough para mantener consistencia con el diseño de Figma.
-class WalkthroughConfig {
-  // === COLORES ===
-  static const Color primaryGreen = Color(0xFF00C851);
-  static const Color secondaryGreen = Color(0xFF007E33);
-  static const Color logoGreen = Color(0xFF2E7D32);
-  static const Color textColor = Color(0xFF2E7D32);
-  static const Color backgroundColor = Color(0xFFF8F9FA);
-  static const Color indicatorActiveColor = Color(0xFF00C851);
+class WalkthroughConfig {  // === COLORES ===
+  static const Color primaryGreen = Color(0xFF04A033);        // Updated to Style Guide
+  static const Color secondaryGreen = Color(0xFFDDFFE7);      // Updated to Style Guide
+  static const Color logoGreen = Color(0xFF04A033);           // Updated to Style Guide
+  static const Color textColor = Color(0xFF000000);           // Updated to Style Guide
+  static const Color backgroundColor = Color(0xFFFFFFFF);     // Updated to Style Guide
+  static const Color indicatorActiveColor = Color(0xFF04A033); // Updated to Style Guide
   static const Color indicatorInactiveColor = Color(0xFFE0E0E0);
   
   // === TIMING DE ANIMACIONES ===
@@ -40,11 +40,10 @@ class WalkthroughConfig {
       Color(0xFFE8F5E8),
     ],
   );
-  
-  // === SOMBRAS ===
+    // === SOMBRAS ===
   static final List<BoxShadow> cardShadows = [
     BoxShadow(
-      color: Colors.black.withValues(alpha: 0.08),
+      color: AppColors.black.withValues(alpha: 0.08),
       blurRadius: 20,
       spreadRadius: 0,
       offset: const Offset(0, 4),

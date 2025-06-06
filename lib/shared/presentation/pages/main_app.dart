@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../detection/presentation/pages/diagnose_page.dart';
 import '../../../plant/presentation/pages/my_plants_page.dart';
 import '../../../profile/presentation/pages/account_page.dart';
@@ -41,9 +42,8 @@ class _MainAppState extends State<MainApp> {
         ),
         bottomNavigationBar: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
-          currentIndex: _selectedIndex,
-          selectedItemColor: const Color(0xFF00C851),
-          unselectedItemColor: Colors.grey,
+          currentIndex: _selectedIndex,          selectedItemColor: AppColors.primaryGreen,
+          unselectedItemColor: AppColors.grey500,
           showSelectedLabels: true,
           showUnselectedLabels: true,
           onTap: _onItemTapped,
@@ -61,20 +61,18 @@ class _MainAppState extends State<MainApp> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFF00C851),
+                  shape: BoxShape.circle,                  color: AppColors.primaryGreen,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
+                      color: AppColors.black.withValues(alpha: 0.2),
                       spreadRadius: 2,
                       blurRadius: 5,
                       offset: const Offset(0, 2),
                     ),
                   ],
-                ),
-                child: const Icon(
+                ),                child: const Icon(
                   Icons.camera_alt,
-                  color: Colors.white,
+                  color: AppColors.white,
                   size: 28,
                 ),
               ),

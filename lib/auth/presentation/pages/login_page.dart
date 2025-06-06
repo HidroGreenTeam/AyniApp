@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/di/service_locator.dart';
+import '../../../core/theme/app_theme.dart';
 import '../blocs/auth_bloc.dart';
 import '../../../shared/presentation/pages/main_app.dart';
 import 'register_page.dart';
@@ -31,21 +32,19 @@ class LoginView extends StatelessWidget {
         }
         if (state.status == AuthStatus.failure) {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(            SnackBar(
               content: Text(state.errorMessage ?? 'Authentication failed'),
-              backgroundColor: Colors.red.shade800,
+              backgroundColor: AppColors.error,
               behavior: SnackBarBehavior.floating,
             ),
           );
         }
       },
-      child: Scaffold(
-        appBar: AppBar(
+      child: Scaffold(        appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black54),
+            icon: const Icon(Icons.arrow_back, color: AppColors.textSecondary),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
@@ -67,19 +66,19 @@ class LoginView extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           Container(
                             width: 50,
                             height: 50,
                             decoration: const BoxDecoration(
-                              color: Colors.teal,
+                              color: AppColors.primaryGreen,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
                               Icons.login,
-                              color: Colors.white,
+                              color: AppColors.white,
                               size: 30,
                             ),
                           ),
@@ -91,7 +90,7 @@ class LoginView extends StatelessWidget {
                         'Sign in to your account',
                         style: TextStyle(
                           fontSize: 18,
-                          color: Colors.grey,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 40),
@@ -130,11 +129,11 @@ class LoginView extends StatelessWidget {
                           child: RichText(
                             text: const TextSpan(
                               text: "Don't have an account? ",
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(color: AppColors.textSecondary),
                               children: [
                                 TextSpan(
                                   text: 'Sign up',
-                                  style: TextStyle(color: Colors.teal),
+                                  style: TextStyle(color: AppColors.primaryGreen),
                                 ),
                               ],
                             ),
@@ -145,7 +144,7 @@ class LoginView extends StatelessWidget {
                       const Center(
                         child: Text(
                           'or',
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: AppColors.textSecondary),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -181,9 +180,8 @@ class LoginView extends StatelessWidget {
                                   context.read<AuthBloc>().add(const AuthLoginSubmitted());
                                 }
                               : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.teal,
-                            foregroundColor: Colors.white,
+                          style: ElevatedButton.styleFrom(                            backgroundColor: AppColors.primaryGreen,
+                            foregroundColor: AppColors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
@@ -223,12 +221,11 @@ class _EmailInput extends StatelessWidget {
         return TextFormField(
           key: const Key('loginForm_emailInput_textField'),
           onChanged: (email) => context.read<AuthBloc>().add(AuthEmailChanged(email)),
-          keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(
+          keyboardType: TextInputType.emailAddress,          decoration: InputDecoration(
             hintText: 'Email',
-            prefixIcon: const Icon(Icons.email, color: Colors.grey),
+            prefixIcon: const Icon(Icons.email, color: AppColors.grey500),
             filled: true,
-            fillColor: Colors.grey.shade100,
+            fillColor: AppColors.grey100,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide.none,
@@ -252,13 +249,12 @@ class _PasswordInput extends StatelessWidget {
         return TextFormField(
           key: const Key('loginForm_passwordInput_textField'),
           onChanged: (password) => context.read<AuthBloc>().add(AuthPasswordChanged(password)),
-          obscureText: true,
-          decoration: InputDecoration(
+          obscureText: true,          decoration: InputDecoration(
             hintText: 'Password',
-            prefixIcon: const Icon(Icons.lock, color: Colors.grey),
-            suffixIcon: const Icon(Icons.visibility_off, color: Colors.grey),
+            prefixIcon: const Icon(Icons.lock, color: AppColors.grey500),
+            suffixIcon: const Icon(Icons.visibility_off, color: AppColors.grey500),
             filled: true,
-            fillColor: Colors.grey.shade100,
+            fillColor: AppColors.grey100,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide.none,
@@ -292,10 +288,9 @@ class _SocialLoginButton extends StatelessWidget {
       child: OutlinedButton.icon(
         icon: icon,
         label: Text(text),
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.black87,
-          side: BorderSide(color: Colors.grey.shade300),
+        onPressed: onPressed,        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.textPrimary,
+          side: BorderSide(color: AppColors.grey300),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),

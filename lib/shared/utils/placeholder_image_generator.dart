@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import '../../core/theme/app_theme.dart';
 
 // This is a utility class to create placeholder images for plant categories
 class PlaceholderImageGenerator {
@@ -31,11 +32,10 @@ class PlaceholderImageGenerator {
       
       // Draw a colored rectangle with text
       final paint = Paint()..color = _getColorForCategory(category);
-      final textPainter = TextPainter(
-        text: TextSpan(
+      final textPainter = TextPainter(        text: TextSpan(
           text: category.toUpperCase(),
           style: const TextStyle(
-            color: Colors.white,
+            color: AppColors.white,
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
@@ -74,29 +74,28 @@ class PlaceholderImageGenerator {
     
     debugPrint('Done! Copy these images to your assets/images directory');
   }
-  
   static Color _getColorForCategory(String category) {
     switch (category) {
       case 'flowering':
-        return Colors.pink[200]!;
+        return AppColors.flowering;
       case 'foliage':
-        return Colors.green[200]!;
+        return AppColors.foliage;
       case 'trees':
-        return Colors.green[400]!;
+        return AppColors.trees;
       case 'shrubs':
-        return Colors.teal[200]!;
+        return AppColors.shrubs;
       case 'fruits':
-        return Colors.deepOrange[200]!;
+        return AppColors.fruits;
       case 'vegetables':
-        return Colors.lightGreen[300]!;
+        return AppColors.vegetables;
       case 'herbs':
-        return Colors.lightGreen[100]!;
+        return AppColors.herbs;
       case 'mushrooms':
-        return Colors.brown[200]!;
+        return AppColors.mushrooms;
       case 'toxic':
-        return Colors.red[200]!;
+        return AppColors.toxic;
       default:
-        return Colors.grey[400]!;
+        return AppColors.grey400;
     }
   }
 }

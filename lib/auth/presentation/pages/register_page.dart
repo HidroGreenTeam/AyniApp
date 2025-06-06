@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/theme/app_theme.dart';
 import 'login_page.dart';
 
 class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
@@ -204,10 +205,9 @@ class RegisterView extends StatelessWidget {
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
         if (state.status == RegisterStatus.success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(            const SnackBar(
               content: Text('Registration successful! Please log in.'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppColors.success,
             ),
           );
           // Navigate to the login page after successful registration
@@ -216,10 +216,9 @@ class RegisterView extends StatelessWidget {
           );
         }
         if (state.status == RegisterStatus.failure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(            SnackBar(
               content: Text(state.errorMessage ?? 'Registration failed'),
-              backgroundColor: Colors.red.shade800,
+              backgroundColor: AppColors.error,
             ),
           );
         }
@@ -227,9 +226,8 @@ class RegisterView extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black54),
+          elevation: 0,          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.textSecondary),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
@@ -252,19 +250,18 @@ class RegisterView extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           Container(
                             width: 50,
                             height: 50,
                             decoration: const BoxDecoration(
-                              color: Colors.lightBlue,
+                              color: AppColors.primaryGreen,
                               shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
+                            ),                            child: const Icon(
                               Icons.person_outline,
-                              color: Colors.white,
+                              color: AppColors.white,
                               size: 30,
                             ),
                           ),
@@ -276,7 +273,7 @@ class RegisterView extends StatelessWidget {
                         'Create Your Blooming Account',
                         style: TextStyle(
                           fontSize: 18,
-                          color: Colors.grey,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 40),
@@ -339,9 +336,8 @@ class RegisterView extends StatelessWidget {
                                   context.read<RegisterBloc>().add(RegisterSubmitted());
                                 }
                               : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.teal,
-                            foregroundColor: Colors.white,
+                          style: ElevatedButton.styleFrom(                            backgroundColor: AppColors.primaryGreen,
+                            foregroundColor: AppColors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
@@ -350,9 +346,8 @@ class RegisterView extends StatelessWidget {
                           child: state.status == RegisterStatus.loading
                               ? const SizedBox(
                                   height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
+                                  width: 20,                                  child: CircularProgressIndicator(
+                                    color: AppColors.white,
                                     strokeWidth: 2.0,
                                   ),
                                 )
@@ -375,14 +370,13 @@ class RegisterView extends StatelessWidget {
                               ),
                             );
                           },
-                          child: RichText(
-                            text: const TextSpan(
+                          child: RichText(                            text: const TextSpan(
                               text: 'Already have an account? ',
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(color: AppColors.textSecondary),
                               children: [
                                 TextSpan(
                                   text: 'Log in',
-                                  style: TextStyle(color: Colors.teal),
+                                  style: TextStyle(color: AppColors.primaryGreen),
                                 ),
                               ],
                             ),
@@ -408,12 +402,11 @@ class _NameInput extends StatelessWidget {
       buildWhen: (previous, current) => previous.name != current.name,
       builder: (context, state) {
         return TextFormField(
-          onChanged: (name) => context.read<RegisterBloc>().add(NameChanged(name)),
-          decoration: InputDecoration(
+          onChanged: (name) => context.read<RegisterBloc>().add(NameChanged(name)),          decoration: InputDecoration(
             hintText: 'Enter your full name',
-            prefixIcon: const Icon(Icons.person, color: Colors.grey),
+            prefixIcon: const Icon(Icons.person, color: AppColors.grey500),
             filled: true,
-            fillColor: Colors.grey.shade100,
+            fillColor: AppColors.grey100,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide.none,
@@ -436,12 +429,11 @@ class _EmailInput extends StatelessWidget {
       builder: (context, state) {
         return TextFormField(
           onChanged: (email) => context.read<RegisterBloc>().add(EmailChanged(email)),
-          keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(
+          keyboardType: TextInputType.emailAddress,          decoration: InputDecoration(
             hintText: 'Enter your email',
-            prefixIcon: const Icon(Icons.email, color: Colors.grey),
+            prefixIcon: const Icon(Icons.email, color: AppColors.grey500),
             filled: true,
-            fillColor: Colors.grey.shade100,
+            fillColor: AppColors.grey100,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide.none,
@@ -465,12 +457,11 @@ class _PasswordInput extends StatelessWidget {
         return TextFormField(
           onChanged: (password) => context.read<RegisterBloc>().add(PasswordChanged(password)),
           obscureText: true,
-          decoration: InputDecoration(
-            hintText: 'Enter your password',
-            prefixIcon: const Icon(Icons.lock, color: Colors.grey),
-            suffixIcon: const Icon(Icons.visibility_off, color: Colors.grey),
+          decoration: InputDecoration(            hintText: 'Enter your password',
+            prefixIcon: const Icon(Icons.lock, color: AppColors.grey500),
+            suffixIcon: const Icon(Icons.visibility_off, color: AppColors.grey500),
             filled: true,
-            fillColor: Colors.grey.shade100,
+            fillColor: AppColors.grey100,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide.none,
@@ -497,12 +488,11 @@ class _ConfirmPasswordInput extends StatelessWidget {
           onChanged: (confirmPassword) => 
               context.read<RegisterBloc>().add(ConfirmPasswordChanged(confirmPassword)),
           obscureText: true,
-          decoration: InputDecoration(
-            hintText: 'Confirm your password',
-            prefixIcon: const Icon(Icons.lock, color: Colors.grey),
-            suffixIcon: const Icon(Icons.visibility_off, color: Colors.grey),
+          decoration: InputDecoration(            hintText: 'Confirm your password',
+            prefixIcon: const Icon(Icons.lock, color: AppColors.grey500),
+            suffixIcon: const Icon(Icons.visibility_off, color: AppColors.grey500),
             filled: true,
-            fillColor: Colors.grey.shade100,
+            fillColor: AppColors.grey100,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide.none,

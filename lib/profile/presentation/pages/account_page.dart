@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/di/service_locator.dart';
+import '../../../core/theme/app_theme.dart';
 import '../blocs/account_bloc.dart';
 import '../../../auth/presentation/pages/splash_page.dart';
 
@@ -30,18 +31,16 @@ class AccountView extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const SplashPage()),
             (route) => false,
           );
-        }
-        if (state.status == AccountStatus.failure) {
+        }        if (state.status == AccountStatus.failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.errorMessage ?? 'An error occurred'),
-              backgroundColor: Colors.red.shade800,
+              backgroundColor: AppColors.error,
             ),
           );
         }
       },
-      child: Scaffold(
-        backgroundColor: Colors.white,
+      child: Scaffold(        backgroundColor: AppColors.white,
         appBar: AppBar(
           title: Row(
             children: [
@@ -49,12 +48,12 @@ class AccountView extends StatelessWidget {
                 width: 24,
                 height: 24,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF00C851),
+                  color: AppColors.primaryGreen,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.eco,
-                  color: Colors.white,
+                  color: AppColors.white,
                   size: 16,
                 ),
               ),
@@ -64,12 +63,12 @@ class AccountView extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.white,
           elevation: 0,
           automaticallyImplyLeading: false,
         ),
@@ -180,14 +179,13 @@ class AccountView extends StatelessWidget {
     final email = user?.email ?? 'test1@test1.com';
     
     return Row(
-      children: [
-        CircleAvatar(
+      children: [        CircleAvatar(
           radius: 30,
-          backgroundColor: Colors.grey[300],
+          backgroundColor: AppColors.grey300,
           child: Icon(
             Icons.person,
             size: 40,
-            color: Colors.grey[600],
+            color: AppColors.grey600,
           ),
         ),
         const SizedBox(width: 16),
@@ -199,7 +197,7 @@ class AccountView extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                color: Colors.black,
+                color: AppColors.textPrimary,
               ),
             ),
           ],
@@ -208,7 +206,7 @@ class AccountView extends StatelessWidget {
         Icon(
           Icons.arrow_forward_ios,
           size: 16,
-          color: Colors.grey[400],
+          color: AppColors.grey400,
         ),
       ],
     );
@@ -217,23 +215,21 @@ class AccountView extends StatelessWidget {
   Widget _buildUpgradePlanCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF00C851),
+      padding: const EdgeInsets.all(20),      decoration: BoxDecoration(
+        color: AppColors.primaryGreen,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
           Container(
             width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            height: 40,            decoration: const BoxDecoration(
+              color: AppColors.white,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.emoji_events,
-              color: Color(0xFF00C851),
+              color: AppColors.primaryGreen,
               size: 24,
             ),
           ),
@@ -243,28 +239,25 @@ class AccountView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
                 Text(
-                  '¡Mejora tu plan para desbloquear más!',
-                  style: TextStyle(
-                    color: Colors.white,
+                  '¡Mejora tu plan para desbloquear más!',                  style: TextStyle(
+                    color: AppColors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Disfruta de todos los beneficios y explora más posibilidades',
-                  style: TextStyle(
-                    color: Colors.white,
+                  'Disfruta de todos los beneficios y explora más posibilidades',                  style: TextStyle(
+                    color: AppColors.white,
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
               ],
             ),
-          ),
-          Icon(
+          ),          Icon(
             Icons.arrow_forward_ios,
-            color: Colors.white,
+            color: AppColors.white,
             size: 16,
           ),
         ],
@@ -289,34 +282,31 @@ class AccountView extends StatelessWidget {
               if (isLoading)
                 const SizedBox(
                   width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
+                  height: 24,                  child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.red,
+                    color: AppColors.error,
                   ),
                 )
               else
                 const Icon(
                   Icons.logout,
                   size: 24,
-                  color: Colors.red,
+                  color: AppColors.error,
                 ),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
-                  isLoading ? 'Cerrando sesión...' : 'Cerrar Sesión',
-                  style: const TextStyle(
+                  isLoading ? 'Cerrando sesión...' : 'Cerrar Sesión',                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: Colors.red,
+                    color: AppColors.error,
                   ),
                 ),
               ),
-              if (!isLoading)
-                Icon(
+              if (!isLoading)                Icon(
                   Icons.arrow_forward_ios,
                   size: 16,
-                  color: Colors.grey[400],
+                  color: AppColors.grey400,
                 ),
             ],
           ),
@@ -343,10 +333,9 @@ class AccountView extends StatelessWidget {
               onPressed: () {
                 Navigator.of(dialogContext).pop();
                 context.read<AccountBloc>().add(const AccountSignOutRequested());
-              },
-              child: const Text(
+              },              child: const Text(
                 'Cerrar Sesión',
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(color: AppColors.error),
               ),
             ),
           ],        );
@@ -368,11 +357,10 @@ class AccountView extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
           child: Row(
-            children: [
-              Icon(
+            children: [              Icon(
                 icon,
                 size: 24,
-                color: isSignOut ? Colors.red : Colors.grey[600],
+                color: isSignOut ? AppColors.error : AppColors.grey600,
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -381,13 +369,13 @@ class AccountView extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: isSignOut ? Colors.red : Colors.black,
+                    color: isSignOut ? AppColors.error : AppColors.textPrimary,
                   ),
                 ),
               ),              Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
-                color: Colors.grey[400],
+                color: AppColors.grey400,
               ),
             ],
           ),

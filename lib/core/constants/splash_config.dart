@@ -4,12 +4,11 @@ import 'package:flutter/material.dart';
 /// 
 /// Esta clase centraliza todas las configuraciones visuales y de timing
 /// del splash screen para facilitar futuras personalizaciones.
-class SplashConfig {
-  // === COLORES ===
-  static const Color primaryGreen = Color(0xFF00C851);
-  static const Color secondaryGreen = Color(0xFF007E33);
-  static const Color logoGreen = Color(0xFF2E7D32);
-  static const Color textColor = Color(0xFF2E7D32);
+class SplashConfig {  // === COLORES ===
+  static const Color primaryGreen = Color(0xFF04A033);      // Updated to Style Guide
+  static const Color secondaryGreen = Color(0xFFDDFFE7);    // Updated to Style Guide
+  static const Color logoGreen = Color(0xFF04A033);         // Updated to Style Guide
+  static const Color textColor = Color(0xFF000000);         // Updated to Style Guide
   
   // === TIMING DE ANIMACIONES ===
   static const Duration logoAnimationDuration = Duration(milliseconds: 1000);

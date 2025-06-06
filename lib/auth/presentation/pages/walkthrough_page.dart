@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/constants/walkthrough_config.dart';
+import '../../../core/theme/app_theme.dart';
 import '../blocs/walkthrough_bloc.dart';
 import 'auth_method_selection_page.dart';
 
@@ -256,10 +257,9 @@ class _WalkthroughViewState extends State<WalkthroughView>
           scale: value,
           child: Container(
             width: WalkthroughConfig.iconSize,
-            height: WalkthroughConfig.iconSize,
-            decoration: BoxDecoration(
+            height: WalkthroughConfig.iconSize,            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white,
+              color: AppColors.white,
               boxShadow: WalkthroughConfig.cardShadows,
             ),
             child: Icon(
@@ -347,8 +347,7 @@ class _WalkthroughViewState extends State<WalkthroughView>
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: WalkthroughConfig.primaryGreen,
-          foregroundColor: Colors.white,
+          backgroundColor: WalkthroughConfig.primaryGreen,              foregroundColor: AppColors.white,
           elevation: 0,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
