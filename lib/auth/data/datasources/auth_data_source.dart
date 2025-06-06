@@ -6,13 +6,13 @@ class AuthDataSource {
   final NetworkClient _networkClient;
 
   AuthDataSource(this._networkClient);
-
   Future<ApiResponse<AuthResponse>> signIn(AuthRequest request) async {
     return await _networkClient.request<AuthResponse>(
       endpoint: ApiConstants.signIn,
       method: RequestMethod.post,
       data: request.toJson(),
       fromJson: (json) => AuthResponse.fromJson(json),
+      requiresAuth: false, // Login does not require authentication
     );
   }
 
@@ -22,6 +22,7 @@ class AuthDataSource {
       method: RequestMethod.post,
       data: request.toJson(),
       fromJson: (json) => AuthResponse.fromJson(json),
+      requiresAuth: false, // Registration does not require authentication
     );
   }
 }

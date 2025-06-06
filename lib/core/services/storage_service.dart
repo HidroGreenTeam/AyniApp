@@ -45,10 +45,14 @@ class StorageService {
   Future<void> clearAll() async {
     await _prefs.clear();
   }
-  
-  // Clear only authentication data (preserves walkthrough status)
+    // Clear only authentication data (preserves walkthrough status)
   Future<void> clearAuthData() async {
     await _prefs.remove(_tokenKey);
     await _prefs.remove(_userDataKey);
+  }
+  
+  // Remove specific key
+  Future<void> remove(String key) async {
+    await _prefs.remove(key);
   }
 }

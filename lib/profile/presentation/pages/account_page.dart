@@ -4,6 +4,9 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../blocs/account_bloc.dart';
 import '../../../auth/presentation/pages/splash_page.dart';
+import 'profile_management_page.dart';
+import 'profile_search_page.dart';
+import 'profile_page.dart';
 
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
@@ -78,19 +81,42 @@ class AccountView extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                  crossAxisAlignment: CrossAxisAlignment.start,                  children: [
                     // Profile Section
-                    _buildProfileSection(state),
+                    _buildProfileSection(context, state),
 
                     const SizedBox(height: 30),
 
                     // Upgrade Plan Card
                     _buildUpgradePlanCard(),
 
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 30),                    // Menu Options
+                    _buildMenuItem(
+                      icon: Icons.person_outline,
+                      title: 'Gestionar Perfil',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ProfileManagementPage(),
+                          ),
+                        );
+                      },
+                    ),
 
-                    // Menu Options
+                    _buildMenuItem(
+                      icon: Icons.search_outlined,
+                      title: 'Buscar Perfiles',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ProfileSearchPage(),
+                          ),
+                        );
+                      },
+                    ),
+
                     _buildMenuItem(
                       icon: Icons.notifications_outlined,
                       title: 'Notificaciones',
@@ -172,43 +198,59 @@ class AccountView extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Widget _buildProfileSection(AccountState state) {
+  }  Widget _buildProfileSection(BuildContext context, AccountState state) {
     final user = state.user;
     final email = user?.email ?? 'test1@test1.com';
     
-    return Row(
-      children: [        CircleAvatar(
-          radius: 30,
-          backgroundColor: AppColors.grey300,
-          child: Icon(
-            Icons.person,
-            size: 40,
-            color: AppColors.grey600,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const ProfilePage(),
           ),
-        ),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              email,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
+        );
+      },
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: AppColors.grey300,
+            child: Icon(
+              Icons.person,
+              size: 40,
+              color: AppColors.grey600,
             ),
-          ],
-        ),
-        const Spacer(),
-        Icon(
-          Icons.arrow_forward_ios,
-          size: 16,
-          color: AppColors.grey400,
-        ),
-      ],
+          ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                email,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Text(
+                'Ver mi perfil',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.grey600,
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          Icon(
+            Icons.arrow_forward_ios,
+            size: 16,
+            color: AppColors.grey400,
+          ),
+        ],
+      ),
     );
   }
 

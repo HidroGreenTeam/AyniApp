@@ -14,9 +14,15 @@ import '../../auth/domain/usecases/walkthrough_use_case.dart';
 import '../../auth/presentation/blocs/auth_bloc.dart';
 import '../../auth/presentation/blocs/walkthrough_bloc.dart';
 import '../../auth/presentation/viewmodels/login_viewmodel.dart';
+import '../../profile/data/datasources/profile_data_source.dart';
+import '../../profile/domain/repositories/profile_repository.dart';
+import '../../profile/data/repositories/profile_repository_impl.dart';
 import '../../auth/presentation/viewmodels/walkthrough_viewmodel.dart';
+import '../../profile/domain/usecases/profile_usecases.dart';
 import '../../profile/presentation/blocs/account_bloc.dart';
+import '../../profile/presentation/blocs/profile_bloc.dart';
 import '../../profile/presentation/viewmodels/account_viewmodel.dart';
+import '../../profile/presentation/viewmodels/profile_viewmodel.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -26,25 +32,37 @@ Future<void> initDependencies() async {
   serviceLocator.registerSingleton<SharedPreferences>(sharedPreferences);
   serviceLocator.registerSingleton<http.Client>(http.Client());
 
-  // Core
-  serviceLocator.registerSingleton<NetworkClient>(
-    NetworkClient(client: serviceLocator<http.Client>()),
-  );
+  // Core - Register StorageService first
   serviceLocator.registerSingleton<StorageService>(
     StorageService(serviceLocator<SharedPreferences>()),
   );
-
+  
+  serviceLocator.registerSingleton<NetworkClient>(
+    NetworkClient(
+      client: serviceLocator<http.Client>(),
+      storageService: serviceLocator<StorageService>(),
+    ),
+  );
   // Data sources
   serviceLocator.registerSingleton<AuthDataSource>(
     AuthDataSource(serviceLocator<NetworkClient>()),
   );
 
+  serviceLocator.registerSingleton<ProfileDataSource>(
+    ProfileDataSource(serviceLocator<NetworkClient>()),
+  );
   // Repositories
   serviceLocator.registerSingleton<AuthRepository>(
     AuthRepository(
       serviceLocator<AuthDataSource>(),
       serviceLocator<StorageService>(),
     ),  );
+  serviceLocator.registerSingleton<ProfileRepository>(
+    ProfileRepositoryImpl(
+      serviceLocator<ProfileDataSource>(),
+      serviceLocator<StorageService>(),
+    ),
+  );
   
   // Domain - Use Cases
   serviceLocator.registerFactory<SignInUseCase>(
@@ -64,9 +82,44 @@ Future<void> initDependencies() async {
     serviceLocator.registerFactory<SignOutUseCase>(
     () => SignOutUseCase(serviceLocator<AuthRepository>()),
   );
-  
-  serviceLocator.registerFactory<WalkthroughUseCase>(
+    serviceLocator.registerFactory<WalkthroughUseCase>(
     () => WalkthroughUseCase(serviceLocator<StorageService>()),
+  );
+
+  // Profile Use Cases
+  serviceLocator.registerFactory<GetProfileUseCase>(
+    () => GetProfileUseCase(serviceLocator<ProfileRepository>()),
+  );
+
+  serviceLocator.registerFactory<GetCurrentProfileUseCase>(
+    () => GetCurrentProfileUseCase(serviceLocator<ProfileRepository>()),
+  );
+
+  serviceLocator.registerFactory<CreateProfileUseCase>(
+    () => CreateProfileUseCase(serviceLocator<ProfileRepository>()),
+  );
+
+  serviceLocator.registerFactory<UpdateProfileUseCase>(
+    () => UpdateProfileUseCase(serviceLocator<ProfileRepository>()),
+  );
+
+  serviceLocator.registerFactory<DeleteProfileUseCase>(
+    () => DeleteProfileUseCase(serviceLocator<ProfileRepository>()),
+  );
+
+  serviceLocator.registerFactory<UploadProfilePictureUseCase>(
+    () => UploadProfilePictureUseCase(serviceLocator<ProfileRepository>()),
+  );
+
+  serviceLocator.registerFactory<SearchProfilesUseCase>(
+    () => SearchProfilesUseCase(serviceLocator<ProfileRepository>()),
+  );
+  serviceLocator.registerFactory<GetCachedProfileUseCase>(
+    () => GetCachedProfileUseCase(serviceLocator<ProfileRepository>()),
+  );
+
+  serviceLocator.registerFactory<ClearProfileCacheUseCase>(
+    () => ClearProfileCacheUseCase(serviceLocator<ProfileRepository>()),
   );
     // ViewModels
   serviceLocator.registerFactory<LoginViewModel>(() =>
@@ -83,11 +136,23 @@ Future<void> initDependencies() async {
       walkthroughUseCase: serviceLocator<WalkthroughUseCase>(),
     ),
   );
-  
-  serviceLocator.registerFactory<AccountViewModel>(() =>
+    serviceLocator.registerFactory<AccountViewModel>(() =>
     AccountViewModel(
       signOutUseCase: serviceLocator<SignOutUseCase>(),
       getCurrentUserUseCase: serviceLocator<GetCurrentUserUseCase>(),
+    ),
+  );
+  serviceLocator.registerFactory<ProfileViewModel>(() =>
+    ProfileViewModel(
+      getProfileUseCase: serviceLocator<GetProfileUseCase>(),
+      getCurrentProfileUseCase: serviceLocator<GetCurrentProfileUseCase>(),
+      createProfileUseCase: serviceLocator<CreateProfileUseCase>(),
+      updateProfileUseCase: serviceLocator<UpdateProfileUseCase>(),
+      deleteProfileUseCase: serviceLocator<DeleteProfileUseCase>(),
+      uploadProfilePictureUseCase: serviceLocator<UploadProfilePictureUseCase>(),
+      searchProfilesUseCase: serviceLocator<SearchProfilesUseCase>(),
+      getCachedProfileUseCase: serviceLocator<GetCachedProfileUseCase>(),
+      clearProfileCacheUseCase: serviceLocator<ClearProfileCacheUseCase>(),
     ),
   );
   
@@ -99,8 +164,11 @@ Future<void> initDependencies() async {
   serviceLocator.registerFactory<WalkthroughBloc>(() => 
     WalkthroughBloc(walkthroughViewModel: serviceLocator<WalkthroughViewModel>()),
   );
-  
-  serviceLocator.registerFactory<AccountBloc>(() => 
+    serviceLocator.registerFactory<AccountBloc>(() => 
     AccountBloc(accountViewModel: serviceLocator<AccountViewModel>()),
+  );
+
+  serviceLocator.registerFactory<ProfileBloc>(() => 
+    ProfileBloc(profileViewModel: serviceLocator<ProfileViewModel>()),
   );
 }

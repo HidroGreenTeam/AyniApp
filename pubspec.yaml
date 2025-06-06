@@ -44,13 +44,15 @@ dependencies:
   
   # For local storage (tokens, user data)
   shared_preferences: ^2.5.3
-  
-  # For dependency injection
+    # For dependency injection
   get_it: ^8.0.3
     # For form validation
   formz: ^0.8.0
     # For smooth page indicator in walkthrough
   smooth_page_indicator: ^1.2.0
+  
+  # For image picking (profile pictures)
+  image_picker: ^1.1.2
   
   # Google Fonts for Nunito typography
   google_fonts: ^6.2.1
@@ -64,6 +66,10 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+    # Testing dependencies
+  bloc_test: ^10.0.0
+  mockito: ^5.4.4
+  build_runner: ^2.4.9
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

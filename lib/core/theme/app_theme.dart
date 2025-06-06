@@ -356,12 +356,13 @@ class AppColors {
   static const Color textPrimary = Color(0xFF000000);      // Black
   static const Color textSecondary = Color(0xFF666666);    // Grey
   static const Color textDisabled = Color(0xFF9E9E9E);     // Light grey
-
   // Background colors
   static const Color backgroundColor = Color(0xFFFFFFFF);   // White background
   static const Color background = Color(0xFFFFFFFF);       // Main background
   static const Color white = Color(0xFFFFFFFF);            // Pure white
   static const Color inputBackground = Color(0xFFF5F5F5);   // Input field background
+  static const Color lightGray = Color(0xFFF0F0F0);        // Light gray for backgrounds
+  static const Color lightGreen = Color(0xFFE8F5E8);       // Light green for highlights
 
   // State colors from Style Guide
   static const Color info = Color(0xFFC2BFBF);             // Info state

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
+import '../services/storage_service.dart';
 
 enum RequestMethod { get, post, put, delete }
 
@@ -18,21 +19,34 @@ class ApiResponse<T> {
 
 class NetworkClient {
   final http.Client _client;
+  final StorageService _storageService;
 
-  NetworkClient({http.Client? client}) : _client = client ?? http.Client();
-
+  NetworkClient({
+    http.Client? client,
+    required StorageService storageService,
+  }) : _client = client ?? http.Client(),
+       _storageService = storageService;
   Future<ApiResponse<T>> request<T>({
     required String endpoint,
     required RequestMethod method,
     Map<String, dynamic>? data,
     Map<String, String>? headers,
     T Function(Map<String, dynamic>)? fromJson,
+    bool requiresAuth = true,
   }) async {
     final url = Uri.parse(ApiConstants.baseUrl + endpoint);
     final requestHeaders = {
       'Content-Type': 'application/json',
       ...?headers,
     };
+
+    // Add authorization header if authentication is required
+    if (requiresAuth) {
+      final token = _storageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        requestHeaders['Authorization'] = 'Bearer $token';
+      }
+    }
 
     http.Response response;
 
