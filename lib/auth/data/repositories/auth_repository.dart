@@ -11,15 +11,12 @@ class AuthRepository {
   AuthRepository(this._authDataSource, this._storageService);
 
   Future<ApiResponse<AuthResponse>> signIn(String email, String password) async {
-    final request = AuthRequest(email: email, password: password);
-    final response = await _authDataSource.signIn(request);
-
+    final response = await _authDataSource.signIn(AuthRequest(email: email, password: password));
     if (response.success && response.data != null) {
-      // Save token and user data
       await _storageService.saveToken(response.data!.token);
       await _storageService.saveUserData(jsonEncode(response.data!.user.toJson()));
+      await _storageService.setString('user_id', response.data!.user.id.toString());
     }
-
     return response;
   }
 
@@ -36,6 +33,8 @@ class AuthRepository {
       // Save token and user data
       await _storageService.saveToken(response.data!.token);
       await _storageService.saveUserData(jsonEncode(response.data!.user.toJson()));
+      // Save user id as string (for profile CRUD)
+      await _storageService.setString('user_id', response.data!.user.id.toString());
     }
 
     return response;

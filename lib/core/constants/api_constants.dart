@@ -5,7 +5,7 @@ class ApiConstants {
   static const String signIn = 'api/v1/auth/sign-in';
   static const String signUp = 'api/v1/auth/sign-up';
   
-  // Profile endpoints
-  static const String profiles = 'api/v1/profiles';
-  static const String currentProfile = 'api/v1/profiles/me';
+  // Farmer endpoints (backend uses farmers instead of profiles)
+  static const String farmers = 'api/v1/farmers';
+  static const String profiles = 'api/v1/farmers'; // Alias for compatibility
 }

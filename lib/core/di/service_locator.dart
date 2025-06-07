@@ -49,7 +49,10 @@ Future<void> initDependencies() async {
   );
 
   serviceLocator.registerSingleton<ProfileDataSource>(
-    ProfileDataSource(serviceLocator<NetworkClient>()),
+    ProfileDataSource(
+      serviceLocator<NetworkClient>(),
+      serviceLocator<StorageService>(), // Add the missing argument here
+    ),
   );
   // Repositories
   serviceLocator.registerSingleton<AuthRepository>(

@@ -1,139 +1,42 @@
+import 'dart:convert';
+
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/network_client.dart' as network;
+import '../../../core/services/storage_service.dart';
 import '../../../core/utils/api_response.dart';
 import '../models/profile_models.dart';
 
 class ProfileDataSource {
   final network.NetworkClient _networkClient;
+  final StorageService _storageService;
 
-  ProfileDataSource(this._networkClient);
+  ProfileDataSource(this._networkClient, this._storageService);
 
-  /// Get profile by user ID
-  Future<ApiResponse<ProfileModel>> getProfileById(String userId) async {
+  /// Obtener farmer/profile por ID
+  Future<ApiResponse<ProfileModel>>    getProfileById(String farmerId) async {
     final response = await _networkClient.request<ProfileModel>(
-      endpoint: '${ApiConstants.profiles}/$userId',
+      endpoint: '${ApiConstants.farmers}/$farmerId',
       method: network.RequestMethod.get,
       fromJson: (json) => ProfileModel.fromJson(json),
     );
-    
     if (response.success && response.data != null) {
+      print('[DEBUG] ProfileDataSource.getProfileById: ${response.data}');
       return ApiResponse.success(response.data!);
     } else {
       return ApiResponse.error(response.error ?? 'Unknown error');
     }
   }
 
-  /// Get current user's profile
-  Future<ApiResponse<ProfileModel>> getCurrentProfile() async {
-    final response = await _networkClient.request<ProfileModel>(
-      endpoint: '${ApiConstants.profiles}/me',
-      method: network.RequestMethod.get,
-      fromJson: (json) => ProfileModel.fromJson(json),
-    );
-    
-    if (response.success && response.data != null) {
-      return ApiResponse.success(response.data!);
-    } else {
-      return ApiResponse.error(response.error ?? 'Unknown error');
-    }
-  }
-
-  /// Create a new profile
-  Future<ApiResponse<ProfileModel>> createProfile(CreateProfileRequest request) async {
-    final response = await _networkClient.request<ProfileModel>(
-      endpoint: ApiConstants.profiles,
-      method: network.RequestMethod.post,
-      data: request.toJson(),
-      fromJson: (json) => ProfileModel.fromJson(json),
-    );
-    
-    if (response.success && response.data != null) {
-      return ApiResponse.success(response.data!);
-    } else {
-      return ApiResponse.error(response.error ?? 'Unknown error');
-    }
-  }
-
-  /// Update existing profile
-  Future<ApiResponse<ProfileModel>> updateProfile(String profileId, UpdateProfileRequest request) async {
-    final response = await _networkClient.request<ProfileModel>(
-      endpoint: '${ApiConstants.profiles}/$profileId',
-      method: network.RequestMethod.put,
-      data: request.toJson(),
-      fromJson: (json) => ProfileModel.fromJson(json),
-    );
-    
-    if (response.success && response.data != null) {
-      return ApiResponse.success(response.data!);
-    } else {
-      return ApiResponse.error(response.error ?? 'Unknown error');
-    }
-  }
-
-  /// Delete profile
-  Future<ApiResponse<void>> deleteProfile(String profileId) async {
-    final response = await _networkClient.request<void>(
-      endpoint: '${ApiConstants.profiles}/$profileId',
-      method: network.RequestMethod.delete,
-    );
-    
-    if (response.success) {
-      return ApiResponse.success(null);
-    } else {
-      return ApiResponse.error(response.error ?? 'Unknown error');
-    }
-  }
-  /// Upload profile picture
-  Future<ApiResponse<ProfileModel>> uploadProfilePicture(String profileId, String imagePath) async {
-    final response = await _networkClient.request<ProfileModel>(
-      endpoint: '${ApiConstants.profiles}/$profileId/picture',
-      method: network.RequestMethod.post,
-      data: {'profilePicture': imagePath},
-      fromJson: (json) => ProfileModel.fromJson(json),
-    );
-    
-    if (response.success && response.data != null) {
-      return ApiResponse.success(response.data!);
-    } else {
-      return ApiResponse.error(response.error ?? 'Unknown error');
-    }
-  }
-  /// Search profiles by criteria
-  Future<ApiResponse<List<ProfileModel>>> searchProfiles({
-    String? search,
-    String? location,
-    List<String>? interests,
-    int page = 1,
-    int limit = 10,
-  }) async {
-    final queryParams = <String, String>{};
-    
-    if (search != null && search.isNotEmpty) {
-      queryParams['search'] = search;
-    }
-    if (location != null && location.isNotEmpty) {
-      queryParams['location'] = location;
-    }
-    if (interests != null && interests.isNotEmpty) {
-      queryParams['interests'] = interests.join(',');
-    }
-    queryParams['page'] = page.toString();
-    queryParams['limit'] = limit.toString();
-
-    // Build query string
-    String endpoint = '${ApiConstants.profiles}/search';
-    if (queryParams.isNotEmpty) {
-      final queryString = queryParams.entries
-          .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
-          .join('&');
-      endpoint = '$endpoint?$queryString';
-    }
-
+  /// Obtener todos los farmers/perfiles
+  Future<ApiResponse<List<ProfileModel>>> getAllProfiles() async {
     final response = await _networkClient.request<List<ProfileModel>>(
-      endpoint: endpoint,
+      endpoint: ApiConstants.farmers,
       method: network.RequestMethod.get,
       fromJson: (json) {
-        if (json['data'] is List) {
+        if (json is List) {
+          return (json as List).map<ProfileModel>((item) => ProfileModel.fromJson(item as Map<String, dynamic>)).toList();
+        }
+        if (json['data'] != null && json['data'] is List) {
           return (json['data'] as List)
               .map((item) => ProfileModel.fromJson(item as Map<String, dynamic>))
               .toList();
@@ -141,7 +44,6 @@ class ProfileDataSource {
         return <ProfileModel>[];
       },
     );
-    
     if (response.success && response.data != null) {
       return ApiResponse.success(response.data!);
     } else {
@@ -149,35 +51,115 @@ class ProfileDataSource {
     }
   }
 
-  /// Get cached profiles (for offline usage)
-  List<ProfileModel> getCachedProfiles() {
-    // Implementation would depend on local storage solution
-    // For now, return empty list
-    return [];
+  /// Crear un nuevo farmer/profile
+  Future<ApiResponse<ProfileModel>> createProfile(CreateProfileRequest request) async {
+    final response = await _networkClient.request<ProfileModel>(
+      endpoint: ApiConstants.farmers,
+      method: network.RequestMethod.post,
+      data: request.toJson(),
+      fromJson: (json) => ProfileModel.fromJson(json),
+    );
+    if (response.success && response.data != null) {
+      return ApiResponse.success(response.data!);
+    } else {
+      return ApiResponse.error(response.error ?? 'Unknown error');
+    }
   }
 
-  /// Cache profiles locally
-  void cacheProfiles(List<ProfileModel> profiles) {
-    // Implementation would depend on local storage solution
-    // For now, do nothing
+  /// Actualizar farmer/profile existente
+  Future<ApiResponse<ProfileModel>> updateProfile(String farmerId, UpdateProfileRequest request) async {
+    final response = await _networkClient.request<ProfileModel>(
+      endpoint: '${ApiConstants.farmers}/$farmerId',
+      method: network.RequestMethod.put,
+      data: request.toJson(),
+      fromJson: (json) => ProfileModel.fromJson(json),
+    );
+    if (response.success && response.data != null) {
+      return ApiResponse.success(response.data!);
+    } else {
+      return ApiResponse.error(response.error ?? 'Unknown error');
+    }
   }
 
-  /// Clear cached profiles
-  void clearCache() {
-    // Implementation would depend on local storage solution
-    // For now, do nothing
+  /// Eliminar farmer/profile
+  Future<ApiResponse<void>> deleteProfile(String farmerId) async {
+    final response = await _networkClient.request<void>(
+      endpoint: '${ApiConstants.farmers}/$farmerId',
+      method: network.RequestMethod.delete,
+    );
+    if (response.success) {
+      return ApiResponse.success(null);
+    } else {
+      return ApiResponse.error(response.error ?? 'Unknown error');
+    }
   }
 
-  /// Get cached profile by ID
-  ProfileModel? getCachedProfileById(String profileId) {
-    // Implementation would depend on local storage solution
-    // For now, return null
-    return null;
+  /// Buscar farmers (perfiles) localmente por nombre o email
+  Future<ApiResponse<List<ProfileModel>>> searchProfiles({
+    String? search,
+    String? location, // No usado, pero mantenido para compatibilidad
+    List<String>? interests, // No usado, pero mantenido para compatibilidad
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final response = await getAllProfiles();
+    if (!response.success || response.data == null) {
+      return ApiResponse.error(response.error ?? 'Error al buscar farmers');
+    }
+    var list = response.data!;
+    if (search != null && search.isNotEmpty) {
+      list = list.where((p) => (p.username.toLowerCase().contains(search.toLowerCase()) || p.email.toLowerCase().contains(search.toLowerCase()))).toList();
+    }
+    // Paginación simple
+    final start = (page - 1) * limit;
+    final end = (start + limit) > list.length ? list.length : (start + limit);
+    final paged = (start < list.length) ? list.sublist(start, end) : <ProfileModel>[];
+    return ApiResponse.success(paged);
   }
 
-  /// Cache single profile
-  void cacheProfile(ProfileModel profile) {
-    // Implementation would depend on local storage solution
-    // For now, do nothing
+  /// Subir imagen de farmer
+  Future<ApiResponse<ProfileModel>> uploadProfilePicture(String farmerId, String imagePath) async {
+    final response = await _networkClient.request<ProfileModel>(
+      endpoint: '${ApiConstants.farmers}/$farmerId/farmerImage',
+      method: network.RequestMethod.put,
+      data: {'file': imagePath},
+      fromJson: (json) => ProfileModel.fromJson(json),
+    );
+    if (response.success && response.data != null) {
+      return ApiResponse.success(response.data!);
+    } else {
+      return ApiResponse.error(response.error ?? 'Error al subir imagen');
+    }
+  }
+
+  /// Obtener el perfil del usuario autenticado
+  Future<ApiResponse<ProfileModel>> getCurrentProfile() async {
+    // Obtener el id del usuario autenticado desde el storage
+    final userData = _storageService.getUserData();
+    print('[DEBUG] userData from storage:');
+    print(userData);
+    if (userData == null) {
+      print('[DEBUG] userData is null');
+      return ApiResponse.error('No user data found');
+    }
+    try {
+      final userJson = userData.toString();
+      print('[DEBUG] userJson:');
+      print(userJson);
+      final userMap = userJson.isNotEmpty ? Map<String, dynamic>.from(await Future.value(jsonDecode(userJson))) : null;
+      print('[DEBUG] userMap:');
+      print(userMap);
+      final userId = userMap != null && userMap['id'] != null ? userMap['id'].toString() : null;
+      print('[DEBUG] userId:');
+      print(userId);
+      if (userId == null) {
+        print('[DEBUG] userId is null');
+        return ApiResponse.error('No user id found');
+      }
+      return getProfileById(userId);
+    } catch (e) {
+      print('[DEBUG] Error parsing user data: $e');
+      return ApiResponse.error('Error parsing user data: $e');
+    }
   }
 }

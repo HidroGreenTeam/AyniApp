@@ -29,7 +29,6 @@ class ProfileSearchView extends StatefulWidget {
 class _ProfileSearchViewState extends State<ProfileSearchView> {
   final _searchController = TextEditingController();
   final _locationController = TextEditingController();
-  final List<String> _selectedInterests = [];
   final ScrollController _scrollController = ScrollController();
   
   bool _showFilters = false;
@@ -65,7 +64,6 @@ class _ProfileSearchViewState extends State<ProfileSearchView> {
     context.read<ProfileBloc>().add(ProfileSearch(
       search: _searchController.text.trim().isEmpty ? null : _searchController.text.trim(),
       location: _locationController.text.trim().isEmpty ? null : _locationController.text.trim(),
-      interests: _selectedInterests.isEmpty ? null : _selectedInterests,
       page: page,
     ));
   }
@@ -74,19 +72,8 @@ class _ProfileSearchViewState extends State<ProfileSearchView> {
     setState(() {
       _searchController.clear();
       _locationController.clear();
-      _selectedInterests.clear();
     });
     _performSearch();
-  }
-
-  void _toggleInterest(String interest) {
-    setState(() {
-      if (_selectedInterests.contains(interest)) {
-        _selectedInterests.remove(interest);
-      } else {
-        _selectedInterests.add(interest);
-      }
-    });
   }
 
   @override
@@ -177,41 +164,6 @@ class _ProfileSearchViewState extends State<ProfileSearchView> {
 
                   const SizedBox(height: 16),
 
-                  // Interests Filter
-                  const Text(
-                    'Intereses:',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      'Agricultura',
-                      'Jardinería',
-                      'Sostenibilidad',
-                      'Plantas',
-                      'Cultivos',
-                      'Orgánico',
-                      'Permacultura',
-                      'Hidroponía',
-                    ].map((interest) => FilterChip(
-                      label: Text(interest),
-                      selected: _selectedInterests.contains(interest),
-                      onSelected: (_) => _toggleInterest(interest),
-                      backgroundColor: AppColors.lightGray,
-                      selectedColor: AppColors.lightGreen,
-                      checkmarkColor: AppColors.primaryGreen,
-                    )).toList(),
-                  ),
-
-                  const SizedBox(height: 16),
-
                   // Filter Actions
                   Row(
                     children: [
@@ -291,7 +243,7 @@ class _ProfileSearchViewState extends State<ProfileSearchView> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.search_off,
+                          Icons.person_search,
                           size: 64,
                           color: AppColors.textSecondary,
                         ),
@@ -302,6 +254,7 @@ class _ProfileSearchViewState extends State<ProfileSearchView> {
                             fontSize: 16,
                             color: AppColors.textSecondary,
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
@@ -341,7 +294,8 @@ class _ProfileSearchViewState extends State<ProfileSearchView> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      child: InkWell(        onTap: () {
+      child: InkWell(
+        onTap: () {
           Navigator.push(
             context, 
             MaterialPageRoute(
@@ -358,10 +312,10 @@ class _ProfileSearchViewState extends State<ProfileSearchView> {
               CircleAvatar(
                 radius: 30,
                 backgroundColor: AppColors.lightGray,
-                backgroundImage: profile.profilePicture != null
-                    ? NetworkImage(profile.profilePicture!)
+                backgroundImage: profile.imageUrl != null
+                    ? NetworkImage(profile.imageUrl!)
                     : null,
-                child: profile.profilePicture == null
+                child: profile.imageUrl == null
                     ? const Icon(Icons.person, size: 30, color: AppColors.textSecondary)
                     : null,
               ),
@@ -374,80 +328,38 @@ class _ProfileSearchViewState extends State<ProfileSearchView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      profile.fullName,
+                      profile.username,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    
-                    if (profile.location != null) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on_outlined,
-                            size: 16,
-                            color: AppColors.textSecondary,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            profile.location!,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
 
-                    if (profile.bio != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        profile.bio!,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                    const SizedBox(height: 8),
+                    Text(
+                      profile.email,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
                       ),
-                    ],
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
 
-                    if (profile.interests != null && profile.interests!.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 4,
-                        runSpacing: 4,
-                        children: profile.interests!.take(3).map((interest) => Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.lightGreen,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            interest,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.primaryGreen,
-                            ),
-                          ),
-                        )).toList(),
+                    const SizedBox(height: 8),
+                    Text(
+                      profile.phoneNumber,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
                       ),
-                    ],
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
-
-              // Verified Badge
-              if (profile.isVerified)
-                const Icon(
-                  Icons.verified,
-                  color: AppColors.primaryGreen,
-                  size: 20,
-                ),
             ],
           ),
         ),

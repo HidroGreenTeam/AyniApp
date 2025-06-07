@@ -62,11 +62,10 @@ class HomeView extends StatelessWidget {
                       'Email: ${user.email}',
                       style: const TextStyle(fontSize: 18),
                     ),
-                    if (user.name != null)
-                      Text(
-                        'Name: ${user.name}',
-                        style: const TextStyle(fontSize: 18),
-                      ),
+                    Text(
+                      'Username: ${user.username}',
+                      style: const TextStyle(fontSize: 18),
+                    ),
                   ],
                 ],
               ),

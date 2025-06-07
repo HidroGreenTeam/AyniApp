@@ -100,14 +100,6 @@ class ProfileView extends StatelessWidget {
   Widget _buildProfileHeader(BuildContext context, Profile? profile) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.primaryGreen, AppColors.primaryGreen.withValues(alpha: 0.8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
       child: Row(
         children: [
           // Profile Picture
@@ -115,82 +107,40 @@ class ProfileView extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 40,
-                backgroundColor: AppColors.white.withValues(alpha: 0.3),
-                backgroundImage: profile?.profilePicture != null
-                    ? NetworkImage(profile!.profilePicture!)
+                backgroundColor: AppColors.white.withOpacity(0.3),
+                backgroundImage: profile?.imageUrl != null
+                    ? NetworkImage(profile!.imageUrl!)
                     : null,
-                child: profile?.profilePicture == null
-                    ? const Icon(Icons.person, size: 40, color: AppColors.white)
+                child: profile?.imageUrl == null
+                    ? const Icon(Icons.person, size: 40, color: AppColors.textSecondary)
                     : null,
               ),
-              if (profile?.isVerified == true)
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: AppColors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.verified,
-                      color: AppColors.primaryGreen,
-                      size: 16,
-                    ),
-                  ),
-                ),
             ],
           ),
-          
           const SizedBox(width: 16),
-          
-          // Profile Info
-          Expanded(
-            child: Column(
+          // Username and email
+          if (profile != null)
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  profile?.fullName ?? 'Sin nombre',
+                  profile.username,
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.white,
+                    color: AppColors.textPrimary,
                   ),
                 ),
-                
-                if (profile?.email != null) ...[
-                  const SizedBox(height: 4),                  Text(
-                    profile!.email!,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.white.withValues(alpha: 0.9),
-                    ),
+                const SizedBox(height: 4),
+                Text(
+                  profile.email,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: AppColors.textSecondary,
                   ),
-                ],
-                
-                if (profile?.location != null) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        size: 16,
-                        color: AppColors.white,
-                      ),
-                      const SizedBox(width: 4),                      Text(
-                        profile!.location!,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.white.withValues(alpha: 0.9),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ],
             ),
-          ),
         ],
       ),
     );
@@ -422,15 +372,6 @@ class ProfileView extends StatelessWidget {
                 _formatDate(profile.updatedAt),
                 Icons.update_outlined,
               ),
-              
-              if (profile.interests != null && profile.interests!.isNotEmpty) ...[
-                const Divider(height: 24),
-                _buildStatItem(
-                  'Intereses',
-                  '${profile.interests!.length} registrados',
-                  Icons.interests_outlined,
-                ),
-              ],
             ],
           ),
         ),
@@ -475,16 +416,11 @@ class ProfileView extends StatelessWidget {
 
   double _getProfileCompletionPercentage(Profile profile) {
     int completedFields = 0;
-    const int totalFields = 7;
-    
-    if (profile.firstName != null && profile.firstName!.isNotEmpty) completedFields++;
-    if (profile.lastName != null && profile.lastName!.isNotEmpty) completedFields++;
-    if (profile.email != null && profile.email!.isNotEmpty) completedFields++;
-    if (profile.phoneNumber != null && profile.phoneNumber!.isNotEmpty) completedFields++;
-    if (profile.bio != null && profile.bio!.isNotEmpty) completedFields++;
-    if (profile.location != null && profile.location!.isNotEmpty) completedFields++;
-    if (profile.profilePicture != null && profile.profilePicture!.isNotEmpty) completedFields++;
-    
+    const int totalFields = 4; // username, email, phoneNumber, imageUrl
+    if (profile.username.isNotEmpty) completedFields++;
+    if (profile.email.isNotEmpty) completedFields++;
+    if (profile.phoneNumber.isNotEmpty) completedFields++;
+    if (profile.imageUrl != null && profile.imageUrl!.isNotEmpty) completedFields++;
     return (completedFields / totalFields) * 100;
   }
 

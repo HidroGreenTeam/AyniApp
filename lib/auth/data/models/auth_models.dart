@@ -1,5 +1,3 @@
-import '../../domain/entities/user.dart';
-
 class AuthRequest {
   final String email;
   final String password;
@@ -24,56 +22,57 @@ class AuthResponse {
   AuthResponse({
     required this.token,
     required this.user,
-  });  factory AuthResponse.fromJson(Map<String, dynamic> json) {
+  });
+
+  factory AuthResponse.fromJson(Map<String, dynamic> json) {
     try {
-      // Handle case where id might be an int or could be 0 from the API
-      String userId = json['id'] != null ? json['id'].toString() : '0';
-      
+      // El backend puede devolver el id y datos del usuario en la raíz o en un objeto 'user'
+      final userJson = json['user'] ?? json;
       return AuthResponse(
         token: json['token'] ?? '',
-        user: UserModel.fromJson({
-          'id': userId, 
-          'email': json['email'] ?? '',
-          'name': null, // API doesn't provide name
-          'profilePicture': null, // API doesn't provide profilePicture
-        }),
+        user: UserModel.fromJson(userJson),
       );
     } catch (e) {
-      // Return a default response in case of parsing error
       return AuthResponse(
         token: json['token'] ?? '',
-        user: UserModel.fromJson({
-          'id': '0',
-          'email': json['email'] ?? '',
-          'name': null,
-          'profilePicture': null,
-        }),
+        user: UserModel(id: '0', username: '', email: '', phoneNumber: '', imageUrl: null),
       );
     }
   }
 }
 
-class UserModel extends User {
-  const UserModel({
-    required super.id,
-    required super.email,
-    super.name,
-    super.profilePicture,
-  });  factory UserModel.fromJson(Map<String, dynamic> json) {
+class UserModel {
+  final String id;
+  final String username;
+  final String email;
+  final String phoneNumber;
+  final String? imageUrl;
+
+  UserModel({
+    required this.id,
+    required this.username,
+    required this.email,
+    required this.phoneNumber,
+    this.imageUrl,
+  });
+
+  factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] != null ? json['id'].toString() : '0',
+      id: json['id']?.toString() ?? '0',
+      username: json['username']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
-      name: json['name']?.toString(),
-      profilePicture: json['profilePicture']?.toString(),
+      phoneNumber: json['phoneNumber']?.toString() ?? '',
+      imageUrl: json['imageUrl']?.toString(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'username': username,
       'email': email,
-      'name': name,
-      'profilePicture': profilePicture,
+      'phoneNumber': phoneNumber,
+      'imageUrl': imageUrl,
     };
   }
 }

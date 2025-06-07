@@ -28,52 +28,31 @@ class ProfileManagementView extends StatefulWidget {
 
 class _ProfileManagementViewState extends State<ProfileManagementView> {
   final _formKey = GlobalKey<FormState>();
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _bioController = TextEditingController();
-  final _locationController = TextEditingController();
-  final List<String> _interests = [];
-  final _interestController = TextEditingController();
-  
   bool _isEditing = false;
   String? _profileId;
 
   @override
   void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _bioController.dispose();
-    _locationController.dispose();
-    _interestController.dispose();
     super.dispose();
   }
 
   void _populateForm(ProfileModel profile) {
-    _firstNameController.text = profile.firstName ?? '';
-    _lastNameController.text = profile.lastName ?? '';
-    _emailController.text = profile.email ?? '';
-    _phoneController.text = profile.phoneNumber ?? '';
-    _bioController.text = profile.bio ?? '';
-    _locationController.text = profile.location ?? '';
-    _interests.clear();
-    if (profile.interests != null) {
-      _interests.addAll(profile.interests!);
-    }
+    _usernameController.text = profile.username;
+    _emailController.text = profile.email;
+    _phoneController.text = profile.phoneNumber;
     _profileId = profile.id;
   }
 
   void _clearForm() {
-    _firstNameController.clear();
-    _lastNameController.clear();
+    _usernameController.clear();
     _emailController.clear();
     _phoneController.clear();
-    _bioController.clear();
-    _locationController.clear();
-    _interests.clear();
     _profileId = null;
   }
 
@@ -82,20 +61,14 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
 
     final request = _profileId == null
         ? CreateProfileRequest(
-            firstName: _firstNameController.text.trim(),
-            lastName: _lastNameController.text.trim(),
-            phoneNumber: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-            bio: _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
-            location: _locationController.text.trim().isEmpty ? null : _locationController.text.trim(),
-            interests: _interests.isEmpty ? null : _interests,
+            username: _usernameController.text.trim(),
+            email: _emailController.text.trim(),
+            phoneNumber: _phoneController.text.trim(),
+            password: 'temp_password', // TODO: Handle password properly
           )
         : UpdateProfileRequest(
-            firstName: _firstNameController.text.trim(),
-            lastName: _lastNameController.text.trim(),
+            username: _usernameController.text.trim(),
             phoneNumber: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-            bio: _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
-            location: _locationController.text.trim().isEmpty ? null : _locationController.text.trim(),
-            interests: _interests.isEmpty ? null : _interests,
           );
 
     if (_profileId == null) {
@@ -144,22 +117,6 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
     if (image != null && mounted) {
       context.read<ProfileBloc>().add(ProfileUploadPicture(_profileId!, image.path));
     }
-  }
-
-  void _addInterest() {
-    final interest = _interestController.text.trim();
-    if (interest.isNotEmpty && !_interests.contains(interest)) {
-      setState(() {
-        _interests.add(interest);
-        _interestController.clear();
-      });
-    }
-  }
-
-  void _removeInterest(String interest) {
-    setState(() {
-      _interests.remove(interest);
-    });
   }
 
   @override
@@ -253,10 +210,10 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
                             CircleAvatar(
                               radius: 60,
                               backgroundColor: AppColors.lightGray,
-                              backgroundImage: state.currentProfile?.profilePicture != null
-                                  ? NetworkImage(state.currentProfile!.profilePicture!)
+                              backgroundImage: state.currentProfile?.imageUrl != null
+                                  ? NetworkImage(state.currentProfile!.imageUrl!)
                                   : null,
-                              child: state.currentProfile?.profilePicture == null
+                              child: state.currentProfile?.imageUrl == null
                                   ? const Icon(Icons.person, size: 60, color: AppColors.textSecondary)
                                   : null,
                             ),
@@ -289,26 +246,12 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
                     const SizedBox(height: 16),
                     
                     _buildTextField(
-                      controller: _firstNameController,
-                      label: 'Nombre',
+                      controller: _usernameController,
+                      label: 'Nombre de usuario',
                       icon: Icons.person_outline,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'El nombre es requerido';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    _buildTextField(
-                      controller: _lastNameController,
-                      label: 'Apellido',
-                      icon: Icons.person_outline,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'El apellido es requerido';
+                          return 'El nombre de usuario es requerido';
                         }
                         return null;
                       },
@@ -339,70 +282,6 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
                       label: 'Teléfono',
                       icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // Additional Information
-                    _buildSectionTitle('Información Adicional'),
-                    const SizedBox(height: 16),
-
-                    _buildTextField(
-                      controller: _bioController,
-                      label: 'Biografía',
-                      icon: Icons.description_outlined,
-                      maxLines: 3,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    _buildTextField(
-                      controller: _locationController,
-                      label: 'Ubicación',
-                      icon: Icons.location_on_outlined,
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // Interests Section
-                    _buildSectionTitle('Intereses'),
-                    const SizedBox(height: 16),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildTextField(
-                            controller: _interestController,
-                            label: 'Agregar interés',
-                            icon: Icons.interests_outlined,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        ElevatedButton(
-                          onPressed: _addInterest,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryGreen,
-                            shape: const CircleBorder(),
-                            padding: const EdgeInsets.all(16),
-                          ),
-                          child: const Icon(Icons.add, color: AppColors.white),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Interests Tags
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _interests.map((interest) => Chip(
-                        label: Text(interest),
-                        deleteIcon: const Icon(Icons.close, size: 18),
-                        onDeleted: () => _removeInterest(interest),
-                        backgroundColor: AppColors.lightGreen,
-                        deleteIconColor: AppColors.primaryGreen,
-                      )).toList(),
                     ),
 
                     const SizedBox(height: 40),

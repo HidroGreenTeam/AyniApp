@@ -89,63 +89,47 @@ class ProfileViewModel {
 
   /// Validate profile data
   bool validateProfileData({
-    String? firstName,
-    String? lastName,
+    String? username,
     String? email,
     String? phoneNumber,
   }) {
-    if (firstName == null || firstName.trim().isEmpty) {
+    if (username == null || username.trim().isEmpty) {
       return false;
     }
-    
-    if (lastName == null || lastName.trim().isEmpty) {
-      return false;
-    }
-    
     if (email != null && email.isNotEmpty) {
       final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
       if (!emailRegex.hasMatch(email)) {
         return false;
       }
     }
-    
     if (phoneNumber != null && phoneNumber.isNotEmpty) {
       final phoneRegex = RegExp(r'^\+?[1-9]\d{1,14}$');
       if (!phoneRegex.hasMatch(phoneNumber.replaceAll(RegExp(r'[\s\-\(\)]'), ''))) {
         return false;
       }
     }
-    
     return true;
   }
 
   /// Format profile display name
   String getDisplayName(Profile profile) {
-    return profile.fullName;
+    return profile.username;
   }
 
   /// Check if profile is complete
   bool isProfileComplete(Profile profile) {
-    return profile.firstName != null &&
-           profile.lastName != null &&
-           profile.email != null &&
-           profile.bio != null &&
-           profile.location != null;
+    return profile.username.isNotEmpty &&
+           profile.email.isNotEmpty &&
+           profile.phoneNumber.isNotEmpty;
   }
 
   /// Get profile completion percentage
   double getProfileCompletionPercentage(Profile profile) {
     int completedFields = 0;
-    const int totalFields = 7; // firstName, lastName, email, phoneNumber, bio, location, profilePicture
-    
-    if (profile.firstName != null && profile.firstName!.isNotEmpty) completedFields++;
-    if (profile.lastName != null && profile.lastName!.isNotEmpty) completedFields++;
-    if (profile.email != null && profile.email!.isNotEmpty) completedFields++;
-    if (profile.phoneNumber != null && profile.phoneNumber!.isNotEmpty) completedFields++;
-    if (profile.bio != null && profile.bio!.isNotEmpty) completedFields++;
-    if (profile.location != null && profile.location!.isNotEmpty) completedFields++;
-    if (profile.profilePicture != null && profile.profilePicture!.isNotEmpty) completedFields++;
-    
+    const int totalFields = 3; // username, email, phoneNumber
+    if (profile.username.isNotEmpty) completedFields++;
+    if (profile.email.isNotEmpty) completedFields++;
+    if (profile.phoneNumber.isNotEmpty) completedFields++;
     return (completedFields / totalFields) * 100;
   }
 }
