@@ -107,7 +107,7 @@ class ProfileView extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 40,
-                backgroundColor: AppColors.white.withOpacity(0.3),
+                backgroundColor: AppColors.white.withValues(alpha: 0.3),
                 backgroundImage: profile?.imageUrl != null
                     ? NetworkImage(profile!.imageUrl!)
                     : null,
