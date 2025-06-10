@@ -10,7 +10,7 @@ class CropViewmodel {
   CropViewmodel(this._getAllCrops, this._getCurrentUserUseCase);
 
   Future<void> fetchCrops() async {
-    final user = await _getCurrentUserUseCase();
+    final user = _getCurrentUserUseCase();
     final int? farmerId = user?.id != null ? int.tryParse(user!.id) : null;
     if (farmerId != null) {
       crops = (await _getAllCrops(farmerId)).cast<Crop>();

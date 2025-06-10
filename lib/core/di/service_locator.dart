@@ -23,6 +23,10 @@ import '../../profile/presentation/blocs/account_bloc.dart';
 import '../../profile/presentation/blocs/profile_bloc.dart';
 import '../../profile/presentation/viewmodels/account_viewmodel.dart';
 import '../../profile/presentation/viewmodels/profile_viewmodel.dart';
+import '../../plant/data/datasources/crop_data_source.dart';
+import '../../plant/data/repositories/crop_repository.dart';
+import '../../plant/domain/usecases/get_all_crops.dart';
+import '../../plant/presentation/bolcs/crop_bloc.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -47,23 +51,31 @@ Future<void> initDependencies() async {
   serviceLocator.registerSingleton<AuthDataSource>(
     AuthDataSource(serviceLocator<NetworkClient>()),
   );
-
   serviceLocator.registerSingleton<ProfileDataSource>(
     ProfileDataSource(
       serviceLocator<NetworkClient>(),
       serviceLocator<StorageService>(), // Add the missing argument here
     ),
   );
+
+  serviceLocator.registerSingleton<CropDataSource>(
+    CropDataSource(serviceLocator<NetworkClient>()),
+  );
   // Repositories
   serviceLocator.registerSingleton<AuthRepository>(
     AuthRepository(
       serviceLocator<AuthDataSource>(),
       serviceLocator<StorageService>(),
-    ),  );
-  serviceLocator.registerSingleton<ProfileRepository>(
+    ),  );  serviceLocator.registerSingleton<ProfileRepository>(
     ProfileRepositoryImpl(
       serviceLocator<ProfileDataSource>(),
       serviceLocator<StorageService>(),
+    ),
+  );
+
+  serviceLocator.registerSingleton<CropRepository>(
+    CropRepository(
+      networkClient: serviceLocator<NetworkClient>(),
     ),
   );
   
@@ -120,9 +132,13 @@ Future<void> initDependencies() async {
   serviceLocator.registerFactory<GetCachedProfileUseCase>(
     () => GetCachedProfileUseCase(serviceLocator<ProfileRepository>()),
   );
-
   serviceLocator.registerFactory<ClearProfileCacheUseCase>(
     () => ClearProfileCacheUseCase(serviceLocator<ProfileRepository>()),
+  );
+
+  // Plant Use Cases
+  serviceLocator.registerFactory<GetAllCrops>(
+    () => GetAllCrops(serviceLocator<CropDataSource>()),
   );
     // ViewModels
   serviceLocator.registerFactory<LoginViewModel>(() =>
@@ -170,8 +186,13 @@ Future<void> initDependencies() async {
     serviceLocator.registerFactory<AccountBloc>(() => 
     AccountBloc(accountViewModel: serviceLocator<AccountViewModel>()),
   );
-
   serviceLocator.registerFactory<ProfileBloc>(() => 
     ProfileBloc(profileViewModel: serviceLocator<ProfileViewModel>()),
+  );
+  serviceLocator.registerFactory<CropBloc>(() => 
+    CropBloc(
+      serviceLocator<GetCurrentUserUseCase>(),
+      serviceLocator<CropRepository>(),
+    ),
   );
 }

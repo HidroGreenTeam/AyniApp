@@ -34,7 +34,7 @@ class ProfileDataSource {
       method: network.RequestMethod.get,
       fromJson: (json) {
         if (json is List) {
-          return (json as List).map<ProfileModel>((item) => ProfileModel.fromJson(item as Map<String, dynamic>)).toList();
+          return (json).map<ProfileModel>((item) => ProfileModel.fromJson(item as Map<String, dynamic>)).toList();
         }
         if (json['data'] != null && json['data'] is List) {
           return (json['data'] as List)

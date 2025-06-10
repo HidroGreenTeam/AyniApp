@@ -4,7 +4,7 @@ import '../../domain/entities/crop.dart';
 
 class PlantFormPage extends StatefulWidget {
   final Crop? crop;
-  const PlantFormPage({Key? key, this.crop}) : super(key: key);
+  const PlantFormPage({super.key, this.crop});
 
   @override
   State<PlantFormPage> createState() => _PlantFormPageState();

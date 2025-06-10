@@ -1,10 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:ayni/auth/domain/usecases/get_current_user_use_case.dart';
-import 'package:ayni/plant/domain/usecases/get_all_crops.dart';
 import 'package:ayni/plant/domain/entities/crop.dart';
 import 'package:ayni/plant/data/repositories/crop_repository.dart';
-import 'package:ayni/core/di/service_locator.dart';
 
 // Events
 abstract class CropEvent extends Equatable {
@@ -17,7 +15,7 @@ class FetchCrops extends CropEvent {}
 
 class AddCrop extends CropEvent {
   final Map<String, dynamic> cropData;
-  AddCrop(this.cropData);
+  const AddCrop(this.cropData);
   @override
   List<Object> get props => [cropData];
 }
@@ -25,14 +23,14 @@ class AddCrop extends CropEvent {
 class UpdateCrop extends CropEvent {
   final int cropId;
   final Map<String, dynamic> cropData;
-  UpdateCrop(this.cropId, this.cropData);
+  const UpdateCrop(this.cropId, this.cropData);
   @override
   List<Object> get props => [cropId, cropData];
 }
 
 class DeleteCrop extends CropEvent {
   final int cropId;
-  DeleteCrop(this.cropId);
+  const DeleteCrop(this.cropId);
   @override
   List<Object> get props => [cropId];
 }
@@ -68,21 +66,19 @@ class CropState extends Equatable {
 }
 
 class CropBloc extends Bloc<CropEvent, CropState> {
-  final GetAllCrops _getAllCrops;
   final GetCurrentUserUseCase _getCurrentUserUseCase;
-  final CropRepository _cropRepository = CropRepository(networkClient: serviceLocator());
+  final CropRepository _cropRepository;
 
-  CropBloc(this._getAllCrops, this._getCurrentUserUseCase) : super(const CropState()) {
+  CropBloc(this._getCurrentUserUseCase, this._cropRepository) : super(const CropState()) {
     on<FetchCrops>(_onFetchCrops);
     on<AddCrop>(_onAddCrop);
     on<UpdateCrop>(_onUpdateCrop);
     on<DeleteCrop>(_onDeleteCrop);
   }
-
   Future<void> _onFetchCrops(FetchCrops event, Emitter<CropState> emit) async {
     emit(state.copyWith(status: CropStatus.loading));
     try {
-      final user = await _getCurrentUserUseCase();
+      final user = _getCurrentUserUseCase();
       final int? farmerId = user?.id != null ? int.tryParse(user!.id) : null;
       if (farmerId != null) {
         final crops = await _cropRepository.fetchCrops(farmerId);
@@ -94,11 +90,10 @@ class CropBloc extends Bloc<CropEvent, CropState> {
       emit(state.copyWith(status: CropStatus.error, errorMessage: e.toString()));
     }
   }
-
   Future<void> _onAddCrop(AddCrop event, Emitter<CropState> emit) async {
     emit(state.copyWith(status: CropStatus.loading));
     try {
-      final user = await _getCurrentUserUseCase();
+      final user = _getCurrentUserUseCase();
       final int? farmerId = user?.id != null ? int.tryParse(user!.id) : null;
       if (farmerId == null) throw Exception('Farmer ID is null');
       final cropData = Map<String, dynamic>.from(event.cropData);

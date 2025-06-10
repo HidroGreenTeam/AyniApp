@@ -1,10 +1,5 @@
-import 'package:ayni/auth/domain/usecases/get_current_user_use_case.dart';
 import 'package:ayni/core/di/service_locator.dart';
-import 'package:ayni/core/network/network_client.dart';
 import 'package:ayni/core/services/storage_service.dart';
-import 'package:ayni/plant/data/datasources/crop_data_source.dart';
-import 'package:ayni/plant/data/repositories/crop_repository.dart';
-import 'package:ayni/plant/domain/usecases/get_all_crops.dart';
 import 'package:ayni/plant/presentation/bolcs/crop_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,7 +8,6 @@ import 'plant_form_page.dart';
 
 class MyPlantsPage extends StatelessWidget {
   const MyPlantsPage({super.key});
-
   @override
   Widget build(BuildContext context) {
     final token = serviceLocator<StorageService>().getToken();
@@ -25,12 +19,8 @@ class MyPlantsPage extends StatelessWidget {
         body: Center(child: CircularProgressIndicator()),
       );
     }
-    final networkClient = serviceLocator<NetworkClient>();
-    final cropDataSource = CropDataSource(networkClient);
-    final getAllCrops = GetAllCrops(cropDataSource);
-    final getCurrentUserUseCase = serviceLocator<GetCurrentUserUseCase>();
-    return BlocProvider(
-      create: (_) => CropBloc(getAllCrops, getCurrentUserUseCase)..add(FetchCrops()),
+      return BlocProvider(
+      create: (_) => serviceLocator<CropBloc>()..add(FetchCrops()),
       child: BlocBuilder<CropBloc, CropState>(
         builder: (context, state) {
           if (state.status == CropStatus.loading) {

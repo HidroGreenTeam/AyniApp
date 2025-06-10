@@ -9,10 +9,9 @@ class CropRepository {
     final response = await networkClient.request<List<Crop>>(
       endpoint: 'api/v1/crops/farmer/$farmerId/crops',
       method: RequestMethod.get,
-      fromJson: (json) {
-        // Permitir respuesta tipo List o Map con 'data'
+      fromJson: (json) {        // Permitir respuesta tipo List o Map con 'data'
         if (json is List) {
-          return (json as List)
+          return json
               .map((e) => Crop.fromJson(e as Map<String, dynamic>))
               .toList();
         } else if (json['data'] is List) {
