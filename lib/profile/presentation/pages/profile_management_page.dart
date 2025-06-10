@@ -31,7 +31,11 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _isEditing = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   String? _profileId;
 
   @override
@@ -39,6 +43,8 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
     _usernameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -47,12 +53,15 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
     _emailController.text = profile.email;
     _phoneController.text = profile.phoneNumber;
     _profileId = profile.id;
+    // Don't populate password fields for security
   }
 
   void _clearForm() {
     _usernameController.clear();
     _emailController.clear();
     _phoneController.clear();
+    _passwordController.clear();
+    _confirmPasswordController.clear();
     _profileId = null;
   }
 
@@ -64,7 +73,7 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
             username: _usernameController.text.trim(),
             email: _emailController.text.trim(),
             phoneNumber: _phoneController.text.trim(),
-            password: 'temp_password', // TODO: Handle password properly
+            password: _passwordController.text.trim(),
           )
         : UpdateProfileRequest(
             username: _usernameController.text.trim(),
@@ -282,7 +291,48 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
                       label: 'Teléfono',
                       icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
-                    ),
+                    ),                    const SizedBox(height: 16),
+
+                    // Password Section - Only for new profiles
+                    if (!_isEditing) ...[
+                      const SizedBox(height: 14),
+                      _buildSectionTitle('Contraseña'),
+                      const SizedBox(height: 16),
+
+                      _buildPasswordField(
+                        controller: _passwordController,
+                        label: 'Contraseña',
+                        obscureText: _obscurePassword,
+                        onToggleVisibility: () => setState(() => _obscurePassword = !_obscurePassword),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'La contraseña es requerida';
+                          }
+                          if (value.length < 6) {
+                            return 'La contraseña debe tener al menos 6 caracteres';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      _buildPasswordField(
+                        controller: _confirmPasswordController,
+                        label: 'Confirmar Contraseña',
+                        obscureText: _obscureConfirmPassword,
+                        onToggleVisibility: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Confirme su contraseña';
+                          }
+                          if (value != _passwordController.text.trim()) {
+                            return 'Las contraseñas no coinciden';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
 
                     const SizedBox(height: 40),
 
@@ -349,15 +399,56 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
     TextInputType? keyboardType,
     int maxLines = 1,
     String? Function(String?)? validator,
+    bool obscureText = false,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
+      obscureText: obscureText,
       validator: validator,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: AppColors.primaryGreen),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.lightGray),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.primaryGreen),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.error),
+        ),
+        filled: true,
+        fillColor: AppColors.lightGray.withValues(alpha: 0.3),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField({
+    required TextEditingController controller,
+    required String label,
+    required bool obscureText,
+    required VoidCallback onToggleVisibility,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primaryGreen),
+        suffixIcon: IconButton(
+          icon: Icon(
+            obscureText ? Icons.visibility : Icons.visibility_off,
+            color: AppColors.primaryGreen,
+          ),
+          onPressed: onToggleVisibility,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.lightGray),
