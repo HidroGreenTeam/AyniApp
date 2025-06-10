@@ -19,7 +19,6 @@ class AuthRepository {
     }
     return response;
   }
-
   Future<ApiResponse<AuthResponse>> signUp(String fullName, String email, String password) async {
     final request = SignUpRequest(
       fullName: fullName, 
@@ -29,13 +28,9 @@ class AuthRepository {
     );
     final response = await _authDataSource.signUp(request);
 
-    if (response.success && response.data != null) {
-      // Save token and user data
-      await _storageService.saveToken(response.data!.token);
-      await _storageService.saveUserData(jsonEncode(response.data!.user.toJson()));
-      // Save user id as string (for profile CRUD)
-      await _storageService.setString('user_id', response.data!.user.id.toString());
-    }
+    // Note: We don't save token and user data after signup
+    // The user needs to login after successful registration
+    // This provides better security and user experience
 
     return response;
   }

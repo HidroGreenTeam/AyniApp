@@ -234,13 +234,13 @@ class RegisterView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocListener<RegisterBloc, RegisterState>(
-      listenWhen: (previous, current) => previous.status != current.status,
-      listener: (context, state) {
+      listenWhen: (previous, current) => previous.status != current.status,      listener: (context, state) {
         if (state.status == RegisterStatus.success) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Registration successful! Please log in.'),
+              content: Text('¡Registro exitoso! Por favor inicia sesión con tu cuenta.'),
               backgroundColor: AppColors.success,
+              duration: Duration(seconds: 3),
             ),
           );
           // Navigate to the login page after successful registration
