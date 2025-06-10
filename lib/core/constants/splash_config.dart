@@ -44,7 +44,7 @@ class SplashConfig {  // === COLORES ===
   static const Gradient backgroundGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [primaryGreen, secondaryGreen],
+    colors: [secondaryGreen, primaryGreen],
   );
   
   // === SOMBRAS ===

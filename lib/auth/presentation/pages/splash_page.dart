@@ -29,13 +29,12 @@ class SplashView extends StatefulWidget {
   State<SplashView> createState() => _SplashViewState();
 }
 
-class _SplashViewState extends State<SplashView>
-    with TickerProviderStateMixin {
+class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
   late AnimationController _logoController;
   late AnimationController _textController;
   late AnimationController _loadingController;
   late AnimationController _rotationController;
-  
+
   late Animation<double> _logoScaleAnimation;
   late Animation<double> _logoOpacityAnimation;
   late Animation<double> _textOpacityAnimation;
@@ -45,18 +44,18 @@ class _SplashViewState extends State<SplashView>
   @override
   void initState() {
     super.initState();
-    
+
     // Configurar controladores de animación
     _logoController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
+
     _textController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _loadingController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
@@ -68,45 +67,28 @@ class _SplashViewState extends State<SplashView>
     );
 
     // Configurar animaciones
-    _logoScaleAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _logoController,
-      curve: Curves.elasticOut,
-    ));
+    _logoScaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _logoController, curve: Curves.elasticOut),
+    );
 
     _logoOpacityAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _logoController,
-      curve: Curves.easeIn,
-    ));
+    ).animate(CurvedAnimation(parent: _logoController, curve: Curves.easeIn));
 
     _textOpacityAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _textController,
-      curve: Curves.easeIn,
-    ));
+    ).animate(CurvedAnimation(parent: _textController, curve: Curves.easeIn));
 
-    _textSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.5),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _textController,
-      curve: Curves.easeOutCubic,
-    ));
+    _textSlideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero).animate(
+          CurvedAnimation(parent: _textController, curve: Curves.easeOutCubic),
+        );
 
-    _rotationAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _rotationController,
-      curve: Curves.linear,
-    ));
+    _rotationAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _rotationController, curve: Curves.linear),
+    );
 
     // Iniciar animaciones en secuencia
     _startAnimations();
@@ -115,15 +97,15 @@ class _SplashViewState extends State<SplashView>
   void _startAnimations() async {
     await Future.delayed(const Duration(milliseconds: 300));
     _logoController.forward();
-    
+
     await Future.delayed(const Duration(milliseconds: 500));
     _textController.forward();
-    
+
     await Future.delayed(const Duration(milliseconds: 300));
     _loadingController.forward();
-      // Iniciar rotación suave continua
+    // Iniciar rotación suave continua
     _rotationController.repeat();
-      // Timer de seguridad: solo en modo release para evitar problemas en tests
+    // Timer de seguridad: solo en modo release para evitar problemas en tests
     if (!kDebugMode) {
       Future.delayed(const Duration(seconds: 4), () {
         if (mounted && context.mounted) {
@@ -148,7 +130,8 @@ class _SplashViewState extends State<SplashView>
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
         // Agregar un pequeño delay para mostrar el splash
-        if (state.status != AuthStatus.initial && state.status != AuthStatus.loading) {
+        if (state.status != AuthStatus.initial &&
+            state.status != AuthStatus.loading) {
           Future.delayed(const Duration(milliseconds: 1500), () {
             if (mounted && context.mounted) {
               _navigateBasedOnAuthStatus(context, state.status);
@@ -163,10 +146,11 @@ class _SplashViewState extends State<SplashView>
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,            colors: [
-              Color(0xFF04A033), // Updated to Style Guide primary
-              Color(0xFFDDFFE7), // Updated to Style Guide secondary
-            ],
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFF04A033),
+                Color(0xFFDDFFE7),
+              ],
             ),
           ),
           child: Stack(
@@ -181,91 +165,105 @@ class _SplashViewState extends State<SplashView>
                   );
                 },
               ),
-              
+
               // Contenido principal
               SafeArea(
-                child: Column(
-                  children: [
-                    // Espacio superior
-                    const Spacer(flex: 2),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
                       // Logo animado con diseño personalizado
-                    AnimatedBuilder(
-                      animation: Listenable.merge([_logoController, _rotationController]),
-                      builder: (context, child) {
-                        return Transform.scale(
-                          scale: _logoScaleAnimation.value,
-                          child: Opacity(
-                            opacity: _logoOpacityAnimation.value,
-                            child: Transform.rotate(
-                              angle: _rotationAnimation.value * 0.1, // Rotación muy sutil
-                              child: _buildCustomLogo(),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    
-                    const SizedBox(height: 20),
-                      // Texto "Ayni" animado
-                    AnimatedBuilder(
-                      animation: _textController,
-                      builder: (context, child) {
-                        return SlideTransition(
-                          position: _textSlideAnimation,
-                          child: FadeTransition(
-                            opacity: _textOpacityAnimation,
-                            child: Text(
-                              'Ayni',
-                              style: TextStyle(
-                                fontSize: 64,
-                                fontWeight: FontWeight.w900,
-                                color: AppColors.textPrimary, // Updated to Style Guide black
-                                letterSpacing: 3,                                shadows: [
-                                  Shadow(
-                                    offset: const Offset(0, 4),
-                                    blurRadius: 12,
-                                    color: AppColors.black.withValues(alpha: 0.3),
-                                  ),
-                                  Shadow(
-                                    offset: const Offset(0, 2),
-                                    blurRadius: 6,
-                                    color: AppColors.black.withValues(alpha: 0.2),
-                                  ),
-                                ],
+                      AnimatedBuilder(
+                        animation: Listenable.merge([
+                          _logoController,
+                          _rotationController,
+                        ]),
+                        builder: (context, child) {
+                          return Transform.scale(
+                            scale: _logoScaleAnimation.value,
+                            child: Opacity(
+                              opacity: _logoOpacityAnimation.value,
+                              child: Transform.rotate(
+                                angle:
+                                    _rotationAnimation.value *
+                                    0.1, // Rotación muy sutil
+                                child: _buildCustomLogo(),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                    
-                    // Espacio flexible
-                    const Spacer(flex: 3),
-                      // Indicador de carga en la parte inferior
-                    FadeTransition(
-                      opacity: _loadingController,
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 60),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+                      // Texto "Ayni" animado
+                      AnimatedBuilder(
+                        animation: _textController,
+                        builder: (context, child) {
+                          return SlideTransition(
+                            position: _textSlideAnimation,
+                            child: FadeTransition(
+                              opacity: _textOpacityAnimation,
+                              child: Text(
+                                'Ayni',
+                                style: TextStyle(
+                                  fontSize: 64,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.textPrimary,
+                                  letterSpacing: 3,
+                                  shadows: [
+                                    Shadow(
+                                      offset: const Offset(0, 4),
+                                      blurRadius: 12,
+                                      color: AppColors.black.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                    ),
+                                    Shadow(
+                                      offset: const Offset(0, 2),
+                                      blurRadius: 6,
+                                      color: AppColors.black.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 40),
+                      // Indicador de carga en la parte inferior (centrado debajo del logo y texto)
+                      FadeTransition(
+                        opacity: _loadingController,
                         child: AnimatedBuilder(
                           animation: _rotationController,
                           builder: (context, child) {
                             return Transform.scale(
-                              scale: 1.0 + (0.1 * (1.0 + (_rotationAnimation.value * 2 - 1).abs())), // Efecto de pulsación
+                              scale: 1.0 + (0.1 * (1.0 + (_rotationAnimation.value * 2 - 1).abs())),
                               child: SizedBox(
                                 width: 32,
-                                height: 32,                                child: CircularProgressIndicator(
-                                  value: null, // Animación continua
-                                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.white),
+                                height: 32,
+                                child: CircularProgressIndicator(
+                                  value: null,
+                                  valueColor: const AlwaysStoppedAnimation<Color>(
+                                    AppColors.white,
+                                  ),
                                   strokeWidth: 3,
-                                  backgroundColor: AppColors.white.withValues(alpha: 0.3),
+                                  backgroundColor: AppColors.white.withValues(
+                                    alpha: 0.3,
+                                  ),
                                 ),
                               ),
                             );
                           },
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -274,20 +272,24 @@ class _SplashViewState extends State<SplashView>
       ),
     );
   }
+
   void _navigateBasedOnAuthStatus(BuildContext context, AuthStatus authStatus) {
     if (authStatus == AuthStatus.authenticated) {
       if (context.mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const MainApp(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const MainApp(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
             transitionDuration: const Duration(milliseconds: 500),
           ),
         );
       }
-    } else if (authStatus == AuthStatus.unauthenticated || authStatus == AuthStatus.failure) {
+    } else if (authStatus == AuthStatus.unauthenticated ||
+        authStatus == AuthStatus.failure) {
       _navigateToUnauthenticatedFlow(context);
     }
   }
@@ -295,18 +297,21 @@ class _SplashViewState extends State<SplashView>
   void _navigateToUnauthenticatedFlow(BuildContext context) {
     // Check if walkthrough has been completed
     final walkthroughViewModel = serviceLocator<WalkthroughViewModel>();
-    final isWalkthroughCompleted = walkthroughViewModel.isWalkthroughCompleted();
-    
+    final isWalkthroughCompleted = walkthroughViewModel
+        .isWalkthroughCompleted();
+
     if (isWalkthroughCompleted) {
       // Go directly to AuthMethodSelectionPage instead of LoginPage
       // This gives users the choice between login and register
       if (context.mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const AuthMethodSelectionPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const AuthMethodSelectionPage(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
             transitionDuration: const Duration(milliseconds: 500),
           ),
         );
@@ -316,10 +321,12 @@ class _SplashViewState extends State<SplashView>
       if (context.mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const WalkthroughPage(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const WalkthroughPage(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
             transitionDuration: const Duration(milliseconds: 500),
           ),
         );
@@ -335,7 +342,8 @@ class _SplashViewState extends State<SplashView>
   Widget _buildCustomLogo() {
     return Stack(
       alignment: Alignment.center,
-      children: [        // Contenedor principal del logo
+      children: [
+        // Contenedor principal del logo
         Container(
           width: 140,
           height: 140,
@@ -348,7 +356,7 @@ class _SplashViewState extends State<SplashView>
             ),
           ),
         ),
-        
+
         // Logo principal con hoja
         Container(
           width: 120,
@@ -376,7 +384,8 @@ class _SplashViewState extends State<SplashView>
                   angle: -0.3,
                   child: Container(
                     width: 35,
-                    height: 50,                    decoration: BoxDecoration(
+                    height: 50,
+                    decoration: BoxDecoration(
                       color: AppColors.primaryGreen,
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(25),
@@ -385,41 +394,29 @@ class _SplashViewState extends State<SplashView>
                         bottomRight: Radius.circular(8),
                       ),
                     ),
-                    child: CustomPaint(
-                      painter: LeafVeinsPainter(),
-                    ),
+                    child: CustomPaint(painter: LeafVeinsPainter()),
                   ),
                 ),
               ),
-              
+
               // Lupa/círculo de búsqueda
               Positioned(
                 right: 20,
                 bottom: 25,
                 child: Container(
                   width: 40,
-                  height: 40,                  decoration: BoxDecoration(
+                  height: 40,
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: AppColors.primaryGreen,
-                    border: Border.all(
-                      color: AppColors.white,
-                      width: 2,
-                    ),
+                    border: Border.all(color: AppColors.white, width: 2),
                   ),
-                  child: Icon(
-                    Icons.search,
-                    color: AppColors.white,
-                    size: 20,
-                  ),
+                  child: Icon(Icons.search, color: AppColors.white, size: 20),
                 ),
               ),
-              
+
               // Pequeños puntos decorativos (representando conectividad/WiFi)
-              Positioned(
-                top: 15,
-                right: 30,
-                child: _buildConnectivityDots(),
-              ),
+              Positioned(top: 15, right: 30, child: _buildConnectivityDots()),
             ],
           ),
         ),
@@ -429,7 +426,8 @@ class _SplashViewState extends State<SplashView>
 
   Widget _buildConnectivityDots() {
     return Column(
-      children: [        Container(
+      children: [
+        Container(
           width: 4,
           height: 4,
           decoration: BoxDecoration(
@@ -458,7 +456,8 @@ class WavesPainter extends CustomPainter {
   WavesPainter(this.animationValue);
 
   @override
-  void paint(Canvas canvas, Size size) {    final paint = Paint()
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
       ..style = PaintingStyle.fill
       ..color = AppColors.white.withValues(alpha: 0.1);
 
@@ -469,8 +468,13 @@ class WavesPainter extends CustomPainter {
 
     // Primera onda
     path.moveTo(-waveLength + offset, size.height * 0.3);
-    for (double x = -waveLength + offset; x <= size.width + waveLength; x += waveLength / 50) {
-      final y = size.height * 0.3 + 
+    for (
+      double x = -waveLength + offset;
+      x <= size.width + waveLength;
+      x += waveLength / 50
+    ) {
+      final y =
+          size.height * 0.3 +
           waveHeight * (1 + math.sin(x / waveLength * 2 * math.pi)) / 2;
       path.lineTo(x, y);
     }
@@ -478,16 +482,24 @@ class WavesPainter extends CustomPainter {
     path.lineTo(0, size.height);
     path.close();
 
-    canvas.drawPath(path, paint);    // Segunda onda (más sutil)
+    canvas.drawPath(path, paint); // Segunda onda (más sutil)
     final paint2 = Paint()
       ..style = PaintingStyle.fill
       ..color = AppColors.white.withValues(alpha: 0.05);
 
     final path2 = Path();
     path2.moveTo(-waveLength - offset, size.height * 0.7);
-    for (double x = -waveLength - offset; x <= size.width + waveLength; x += waveLength / 50) {
-      final y = size.height * 0.7 + 
-          waveHeight * 0.5 * (1 + math.sin(x / waveLength * 2 * math.pi + math.pi)) / 2;
+    for (
+      double x = -waveLength - offset;
+      x <= size.width + waveLength;
+      x += waveLength / 50
+    ) {
+      final y =
+          size.height * 0.7 +
+          waveHeight *
+              0.5 *
+              (1 + math.sin(x / waveLength * 2 * math.pi + math.pi)) /
+              2;
       path2.lineTo(x, y);
     }
     path2.lineTo(size.width, size.height);
@@ -498,34 +510,35 @@ class WavesPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(WavesPainter oldDelegate) => 
+  bool shouldRepaint(WavesPainter oldDelegate) =>
       oldDelegate.animationValue != animationValue;
 }
 
 // Custom painter para dibujar las venas de la hoja
 class LeafVeinsPainter extends CustomPainter {
   @override
-  void paint(Canvas canvas, Size size) {    final paint = Paint()
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
       ..color = AppColors.primaryGreen
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
 
     final path = Path();
-    
+
     // Vena central
     path.moveTo(size.width / 2, size.height * 0.9);
     path.lineTo(size.width / 2, size.height * 0.1);
-    
+
     // Venas laterales
     path.moveTo(size.width / 2, size.height * 0.3);
     path.lineTo(size.width * 0.2, size.height * 0.5);
-    
+
     path.moveTo(size.width / 2, size.height * 0.3);
     path.lineTo(size.width * 0.8, size.height * 0.5);
-    
+
     path.moveTo(size.width / 2, size.height * 0.6);
     path.lineTo(size.width * 0.3, size.height * 0.8);
-    
+
     path.moveTo(size.width / 2, size.height * 0.6);
     path.lineTo(size.width * 0.7, size.height * 0.8);
 
