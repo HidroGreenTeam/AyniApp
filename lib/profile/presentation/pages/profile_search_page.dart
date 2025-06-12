@@ -201,8 +201,7 @@ class _ProfileSearchViewState extends State<ProfileSearchView> {
           const SizedBox(height: 16),
 
           // Results
-          Expanded(
-            child: BlocBuilder<ProfileBloc, ProfileState>(
+          Expanded(            child: BlocBuilder<ProfileBloc, ProfileState>(
               builder: (context, state) {
                 if (state.status == ProfileStatus.searching && state.searchResults.isEmpty) {
                   return const Center(child: CircularProgressIndicator());

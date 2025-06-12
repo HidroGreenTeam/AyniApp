@@ -4,23 +4,46 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../auth/data/models/auth_models.dart';
+import '../../../auth/domain/usecases/get_current_user_use_case.dart';
 import '../../data/models/profile_models.dart';
+import '../../domain/entities/profile.dart';
 import '../blocs/profile_bloc.dart';
 
 class ProfileManagementPage extends StatelessWidget {
-  const ProfileManagementPage({super.key});
+  final bool isEditing;
+  final Profile? existingProfile;
+  
+  const ProfileManagementPage({
+    super.key,
+    this.isEditing = false,
+    this.existingProfile,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => serviceLocator<ProfileBloc>()..add(const ProfileLoadCurrent()),
-      child: const ProfileManagementView(),
+      create: (_) => serviceLocator<ProfileBloc>()
+        ..add(existingProfile != null 
+            ? ProfileLoadCached() 
+            : const ProfileLoadCurrent()),
+      child: ProfileManagementView(
+        initialIsEditing: isEditing,
+        initialProfile: existingProfile,
+      ),
     );
   }
 }
 
 class ProfileManagementView extends StatefulWidget {
-  const ProfileManagementView({super.key});
+  final bool initialIsEditing;
+  final Profile? initialProfile;
+  
+  const ProfileManagementView({
+    super.key,
+    this.initialIsEditing = false,
+    this.initialProfile,
+  });
 
   @override
   State<ProfileManagementView> createState() => _ProfileManagementViewState();
@@ -29,61 +52,75 @@ class ProfileManagementView extends StatefulWidget {
 class _ProfileManagementViewState extends State<ProfileManagementView> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
-  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
   bool _isEditing = false;
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
   String? _profileId;
+  UserModel? _authenticatedUser;
+  bool _isUserAuthenticated = false;
+  // Add a flag to track if the initial load has been processed
+  bool _initialLoadProcessed = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadAuthenticatedUser();
+    
+    if (widget.initialProfile != null) {
+      _populateFormFromProfile(widget.initialProfile!);
+      _isEditing = true; // If an existing profile is passed, we are editing.
+      _initialLoadProcessed = true; // Mark initial load as processed if profile is passed directly
+    } else {
+      // initialProfile is null. ProfileLoadCurrent is being dispatched by the Page widget.
+      // _isEditing will be determined by the BlocListener.
+      // _initialLoadProcessed is false, indicating we are waiting for the initial load.
+    }
+  }void _loadAuthenticatedUser() {
+    try {
+      final getCurrentUserUseCase = serviceLocator<GetCurrentUserUseCase>();
+      _authenticatedUser = getCurrentUserUseCase.call();
+      _isUserAuthenticated = _authenticatedUser != null;
+      
+      // Pre-populate form with authenticated user data for new profiles
+      if (_authenticatedUser != null && !_isEditing) {
+        _usernameController.text = _authenticatedUser!.username.isNotEmpty 
+            ? _authenticatedUser!.username 
+            : _authenticatedUser!.email.split('@')[0]; // Fallback to email prefix
+        if (_authenticatedUser!.phoneNumber.isNotEmpty) {
+          _phoneController.text = _authenticatedUser!.phoneNumber;
+        }
+      }
+    } catch (e) {
+      _isUserAuthenticated = false;
+    }
+  }
   @override
   void dispose() {
     _usernameController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
-
-  void _populateForm(ProfileModel profile) {
+  
+  void _populateFormFromProfile(Profile profile) {
     _usernameController.text = profile.username;
-    _emailController.text = profile.email;
     _phoneController.text = profile.phoneNumber;
     _profileId = profile.id;
-    // Don't populate password fields for security
   }
 
   void _clearForm() {
     _usernameController.clear();
-    _emailController.clear();
     _phoneController.clear();
-    _passwordController.clear();
-    _confirmPasswordController.clear();
     _profileId = null;
-  }
-
-  void _saveProfile() {
+  }  void _saveProfile() {
     if (!_formKey.currentState!.validate()) return;
 
-    final request = _profileId == null
-        ? CreateProfileRequest(
-            username: _usernameController.text.trim(),
-            email: _emailController.text.trim(),
-            phoneNumber: _phoneController.text.trim(),
-            password: _passwordController.text.trim(),
-          )
-        : UpdateProfileRequest(
-            username: _usernameController.text.trim(),
-            phoneNumber: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-          );
-
-    if (_profileId == null) {
-      context.read<ProfileBloc>().add(ProfileCreate(request as CreateProfileRequest));
-    } else {
-      context.read<ProfileBloc>().add(ProfileUpdate(_profileId!, request as UpdateProfileRequest));
+    // Siempre usamos UPDATE (PUT) ya que el perfil existe en el backend
+    final userIdForUpdate = _profileId ?? _authenticatedUser?.id;
+    if (userIdForUpdate != null) {
+      final updateRequest = UpdateProfileRequest(
+        username: _usernameController.text.trim(),
+        phoneNumber: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+      );
+      context.read<ProfileBloc>().add(ProfileUpdate(userIdForUpdate, updateRequest));
     }
   }
 
@@ -132,56 +169,118 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
   Widget build(BuildContext context) {
     return BlocListener<ProfileBloc, ProfileState>(
       listener: (context, state) {
-        if (state.status == ProfileStatus.loaded && state.currentProfile != null) {
-          _populateForm(state.currentProfile as ProfileModel);
-          setState(() {
-            _isEditing = true;
-          });
-        } else if (state.status == ProfileStatus.created || state.status == ProfileStatus.updated) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.status == ProfileStatus.created 
-                  ? 'Perfil creado exitosamente' 
-                  : 'Perfil actualizado exitosamente'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-          setState(() {
-            _isEditing = true;
-          });
-        } else if (state.status == ProfileStatus.deleted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Perfil eliminado exitosamente'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-          _clearForm();
-          setState(() {
-            _isEditing = false;
-          });
-        } else if (state.status == ProfileStatus.uploaded) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Foto de perfil actualizada exitosamente'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        } else if (state.status == ProfileStatus.error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage ?? 'Error desconocido'),
-              backgroundColor: AppColors.error,
-            ),
-          );
+        // Handle initial profile loading determination
+        if (!_initialLoadProcessed && widget.initialProfile == null) {
+          if (state.status == ProfileStatus.loaded && state.currentProfile != null) {
+            _populateFormFromProfile(state.currentProfile!);
+            setState(() {
+              _isEditing = true;
+              _initialLoadProcessed = true;
+            });
+          } else if (state.status == ProfileStatus.noProfile ||
+                     (state.status == ProfileStatus.error &&
+                      (state.errorMessage?.toLowerCase().contains('not found') == true ||
+                       state.errorMessage?.toLowerCase().contains('no profile') == true))) {
+            _clearForm();
+            setState(() {
+              _isEditing = false;
+              _initialLoadProcessed = true;
+            });
+            // Pre-populate with authenticated user data if available and in create mode
+            if (_authenticatedUser != null && !_isEditing) {
+              _usernameController.text = _authenticatedUser!.username.isNotEmpty
+                  ? _authenticatedUser!.username
+                  : _authenticatedUser!.email.split('@')[0];
+              if (_authenticatedUser!.phoneNumber.isNotEmpty) {
+                _phoneController.text = _authenticatedUser!.phoneNumber;
+              }
+            }
+          } else if (state.status == ProfileStatus.error) { // Other errors during initial load
+            _clearForm();
+            setState(() {
+              _isEditing = false; // Fallback to create mode
+              _initialLoadProcessed = true;
+            });
+          }
+          // If status is initial or loading, _initialLoadProcessed remains false, and loader shows.
+        }
+        // Handle subsequent state changes after initial load or if initialProfile was provided
+        else if (_initialLoadProcessed || widget.initialProfile != null) {
+          if (state.status == ProfileStatus.loaded && state.currentProfile != null) {
+            // Profile reloaded (e.g. after update or manual refresh), update form
+            _populateFormFromProfile(state.currentProfile!);
+            if (!_isEditing) { // Should be editing if profile is loaded
+              setState(() {
+                _isEditing = true;
+              });
+            } else {
+              // If already editing, just ensure UI reflects any changes from re-population
+              setState(() {});
+            }
+          }
+          else if (state.status == ProfileStatus.created || state.status == ProfileStatus.updated) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.status == ProfileStatus.created
+                    ? 'Perfil creado exitosamente'
+                    : 'Perfil actualizado exitosamente'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+            
+            if (state.currentProfile != null) {
+              _populateFormFromProfile(state.currentProfile!);
+            }
+            setState(() {
+              _isEditing = true; // After create or update, we are in "editing" mode
+            });
+
+            // For new profile creation that came from a flow expecting a profile afterwards
+            // (e.g., not just editing an existing one), navigate back.
+            // This condition might need to be more specific based on app flow.
+            if (state.status == ProfileStatus.created && !widget.initialIsEditing) {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            }
+          } else if (state.status == ProfileStatus.deleted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Perfil eliminado exitosamente'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+            _clearForm();
+            setState(() {
+              _isEditing = false; // Go back to create mode or an appropriate state
+            });
+            // Consider navigation after deletion, e.g., Navigator.of(context).pop();
+          } else if (state.status == ProfileStatus.uploaded) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Foto de perfil actualizada exitosamente'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+            // Optionally reload profile to show new image if not automatically reflected
+            if (state.currentProfile != null) {
+               _populateFormFromProfile(state.currentProfile!); // Ensure form/UI reflects this
+               setState((){}); // Refresh UI
+            }
+          } else if (state.status == ProfileStatus.error) {
+            // Generic error after initial load processed
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.errorMessage ?? 'Error desconocido'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.white,
-        appBar: AppBar(
-          title: const Text(
-            'Gestión de Perfil',
-            style: TextStyle(
+        backgroundColor: AppColors.white,        appBar: AppBar(
+          title: Text(
+            _isEditing ? 'Gestión de Perfil' : 'Crear tu Perfil',
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -189,6 +288,10 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
           ),
           backgroundColor: AppColors.white,
           elevation: 0,
+          leading: _isEditing ? null : IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.close, color: AppColors.textPrimary),
+          ),
           actions: [
             if (_isEditing)
               IconButton(
@@ -199,17 +302,62 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
         ),
         body: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, state) {
-            if (state.status == ProfileStatus.loading) {
+            // Show loader if:
+            // 1. Initial profile was not provided AND initial load determination is not yet processed
+            // OR 2. The bloc is in a general loading state (e.g. user initiated refresh)
+            if ((widget.initialProfile == null && !_initialLoadProcessed) ||
+                state.status == ProfileStatus.loading) {
               return const Center(child: CircularProgressIndicator());
             }
 
             return SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
-              child: Form(
+              padding: const EdgeInsets.all(20.0),              child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                  children: [                    // Welcome message for new users
+                    if (!_isEditing) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColors.lightGreen.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.lightGreen),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.emoji_people,
+                              color: AppColors.primaryGreen,
+                              size: 40,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              _isUserAuthenticated ? '¡Bienvenido de vuelta!' : '¡Bienvenido a Ayni!',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _isUserAuthenticated 
+                                  ? 'Completa la configuración de tu perfil con algunos datos adicionales.'
+                                  : 'Para comenzar, necesitamos algunos datos básicos para crear tu perfil.',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textSecondary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                    ],
+
                     // Profile Picture Section
                     Center(
                       child: GestureDetector(
@@ -248,9 +396,7 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
                       ),
                     ),
 
-                    const SizedBox(height: 30),
-
-                    // Basic Information
+                    const SizedBox(height: 30),                    // Basic Information
                     _buildSectionTitle('Información Básica'),
                     const SizedBox(height: 16),
                     
@@ -269,70 +415,11 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
                     const SizedBox(height: 16),
 
                     _buildTextField(
-                      controller: _emailController,
-                      label: 'Correo Electrónico',
-                      icon: Icons.email_outlined,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) {
-                        if (value != null && value.isNotEmpty) {
-                          final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                          if (!emailRegex.hasMatch(value)) {
-                            return 'Ingrese un correo válido';
-                          }
-                        }
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    _buildTextField(
                       controller: _phoneController,
                       label: 'Teléfono',
                       icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
-                    ),                    const SizedBox(height: 16),
-
-                    // Password Section - Only for new profiles
-                    if (!_isEditing) ...[
-                      const SizedBox(height: 14),
-                      _buildSectionTitle('Contraseña'),
-                      const SizedBox(height: 16),
-
-                      _buildPasswordField(
-                        controller: _passwordController,
-                        label: 'Contraseña',
-                        obscureText: _obscurePassword,
-                        onToggleVisibility: () => setState(() => _obscurePassword = !_obscurePassword),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'La contraseña es requerida';
-                          }
-                          if (value.length < 6) {
-                            return 'La contraseña debe tener al menos 6 caracteres';
-                          }
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      _buildPasswordField(
-                        controller: _confirmPasswordController,
-                        label: 'Confirmar Contraseña',
-                        obscureText: _obscureConfirmPassword,
-                        onToggleVisibility: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Confirme su contraseña';
-                          }
-                          if (value != _passwordController.text.trim()) {
-                            return 'Las contraseñas no coinciden';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
+                    ),
 
                     const SizedBox(height: 40),
 
@@ -423,47 +510,7 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
           borderSide: const BorderSide(color: AppColors.error),
         ),
         filled: true,
-        fillColor: AppColors.lightGray.withValues(alpha: 0.3),
-      ),
-    );
-  }
-
-  Widget _buildPasswordField({
-    required TextEditingController controller,
-    required String label,
-    required bool obscureText,
-    required VoidCallback onToggleVisibility,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscureText,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primaryGreen),
-        suffixIcon: IconButton(
-          icon: Icon(
-            obscureText ? Icons.visibility : Icons.visibility_off,
-            color: AppColors.primaryGreen,
-          ),
-          onPressed: onToggleVisibility,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.lightGray),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primaryGreen),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.error),
-        ),
-        filled: true,
-        fillColor: AppColors.lightGray.withValues(alpha: 0.3),
-      ),
+        fillColor: AppColors.lightGray.withValues(alpha: 0.3),      ),
     );
   }
 }

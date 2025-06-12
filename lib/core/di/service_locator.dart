@@ -160,8 +160,7 @@ Future<void> initDependencies() async {
       signOutUseCase: serviceLocator<SignOutUseCase>(),
       getCurrentUserUseCase: serviceLocator<GetCurrentUserUseCase>(),
     ),
-  );
-  serviceLocator.registerFactory<ProfileViewModel>(() =>
+  );  serviceLocator.registerFactory<ProfileViewModel>(() =>
     ProfileViewModel(
       getProfileUseCase: serviceLocator<GetProfileUseCase>(),
       getCurrentProfileUseCase: serviceLocator<GetCurrentProfileUseCase>(),
@@ -172,6 +171,7 @@ Future<void> initDependencies() async {
       searchProfilesUseCase: serviceLocator<SearchProfilesUseCase>(),
       getCachedProfileUseCase: serviceLocator<GetCachedProfileUseCase>(),
       clearProfileCacheUseCase: serviceLocator<ClearProfileCacheUseCase>(),
+      getCurrentUserUseCase: serviceLocator<GetCurrentUserUseCase>(),
     ),
   );
   

@@ -88,9 +88,9 @@ class AccountView extends StatelessWidget {
                     const SizedBox(height: 30),
 
                     // Upgrade Plan Card
-                    _buildUpgradePlanCard(),
+                    _buildUpgradePlanCard(),                    const SizedBox(height: 30),
 
-                    const SizedBox(height: 30),                    // Menu Options
+                    // Menu Options
                     _buildMenuItem(
                       icon: Icons.person_outline,
                       title: 'Gestionar Perfil',
