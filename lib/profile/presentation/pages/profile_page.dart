@@ -22,7 +22,6 @@ class ProfilePage extends StatelessWidget {
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
-
   @override
   Widget build(BuildContext context) {
     return BlocListener<ProfileBloc, ProfileState>(
@@ -34,6 +33,16 @@ class ProfileView extends StatelessWidget {
               backgroundColor: AppColors.error,
             ),
           );
+        } else if (state.status == ProfileStatus.noProfile) {
+          // Redirect to profile creation when no profile exists
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ProfileManagementPage(),
+              ),
+            );
+          });
         }
       },
       child: Scaffold(
@@ -57,11 +66,43 @@ class ProfileView extends StatelessWidget {
               icon: const Icon(Icons.refresh, color: AppColors.primaryGreen),
             ),
           ],
-        ),
-        body: BlocBuilder<ProfileBloc, ProfileState>(
+        ),        body: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, state) {
             if (state.status == ProfileStatus.loading) {
               return const Center(child: CircularProgressIndicator());
+            }
+
+            if (state.status == ProfileStatus.noProfile) {
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.person_add,
+                      size: 80,
+                      color: AppColors.primaryGreen,
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      'Configura tu Perfil',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    Text(
+                      'Para comenzar, necesitas crear tu perfil',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
             }
 
             return SingleChildScrollView(
@@ -228,17 +269,20 @@ class ProfileView extends StatelessWidget {
         
         Row(
           children: [
-            Expanded(
-              child: _buildActionCard(
+            Expanded(              child: _buildActionCard(
                 context,
                 icon: Icons.edit_outlined,
                 title: 'Editar Perfil',
                 subtitle: 'Actualizar información',
                 onTap: () {
+                  final currentProfile = context.read<ProfileBloc>().state.currentProfile;
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const ProfileManagementPage(),
+                      builder: (_) => ProfileManagementPage(
+                        isEditing: true,
+                        existingProfile: currentProfile,
+                      ),
                     ),
                   );
                 },
@@ -413,7 +457,6 @@ class ProfileView extends StatelessWidget {
       ],
     );
   }
-
   double _getProfileCompletionPercentage(Profile profile) {
     int completedFields = 0;
     const int totalFields = 4; // username, email, phoneNumber, imageUrl

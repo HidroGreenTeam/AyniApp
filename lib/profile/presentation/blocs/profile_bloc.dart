@@ -18,18 +18,18 @@ class ProfileLoadCurrent extends ProfileEvent {
 
 class ProfileLoadById extends ProfileEvent {
   final String userId;
-  
+
   const ProfileLoadById(this.userId);
-  
+
   @override
   List<Object?> get props => [userId];
 }
 
 class ProfileCreate extends ProfileEvent {
   final CreateProfileRequest request;
-  
+
   const ProfileCreate(this.request);
-  
+
   @override
   List<Object?> get props => [request];
 }
@@ -37,18 +37,18 @@ class ProfileCreate extends ProfileEvent {
 class ProfileUpdate extends ProfileEvent {
   final String profileId;
   final UpdateProfileRequest request;
-  
+
   const ProfileUpdate(this.profileId, this.request);
-  
+
   @override
   List<Object?> get props => [profileId, request];
 }
 
 class ProfileDelete extends ProfileEvent {
   final String profileId;
-  
+
   const ProfileDelete(this.profileId);
-  
+
   @override
   List<Object?> get props => [profileId];
 }
@@ -56,9 +56,9 @@ class ProfileDelete extends ProfileEvent {
 class ProfileUploadPicture extends ProfileEvent {
   final String profileId;
   final String imagePath;
-  
+
   const ProfileUploadPicture(this.profileId, this.imagePath);
-  
+
   @override
   List<Object?> get props => [profileId, imagePath];
 }
@@ -69,7 +69,7 @@ class ProfileSearch extends ProfileEvent {
   final List<String>? interests;
   final int page;
   final int limit;
-  
+
   const ProfileSearch({
     this.search,
     this.location,
@@ -77,7 +77,7 @@ class ProfileSearch extends ProfileEvent {
     this.page = 1,
     this.limit = 10,
   });
-  
+
   @override
   List<Object?> get props => [search, location, interests, page, limit];
 }
@@ -91,21 +91,22 @@ class ProfileClearCache extends ProfileEvent {
 }
 
 // States
-enum ProfileStatus { 
-  initial, 
-  loading, 
-  loaded, 
-  creating, 
-  created, 
-  updating, 
-  updated, 
-  deleting, 
-  deleted, 
-  uploading, 
-  uploaded, 
-  searching, 
+enum ProfileStatus {
+  initial,
+  loading,
+  loaded,
+  noProfile, // New status for when no profile exists
+  creating,
+  created,
+  updating,
+  updated,
+  deleting,
+  deleted,
+  uploading,
+  uploaded,
+  searching,
   searchCompleted,
-  error 
+  error,
 }
 
 class ProfileState extends Equatable {
@@ -128,9 +129,7 @@ class ProfileState extends Equatable {
   });
 
   factory ProfileState.initial() {
-    return const ProfileState(
-      status: ProfileStatus.initial,
-    );
+    return const ProfileState(status: ProfileStatus.initial);
   }
 
   ProfileState copyWith({
@@ -155,13 +154,13 @@ class ProfileState extends Equatable {
 
   @override
   List<Object?> get props => [
-    status, 
-    currentProfile, 
-    selectedProfile, 
-    searchResults, 
-    errorMessage, 
-    hasMore, 
-    currentPage
+    status,
+    currentProfile,
+    selectedProfile,
+    searchResults,
+    errorMessage,
+    hasMore,
+    currentPage,
   ];
 }
 
@@ -170,8 +169,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final ProfileViewModel _profileViewModel;
 
   ProfileBloc({required ProfileViewModel profileViewModel})
-      : _profileViewModel = profileViewModel,
-        super(ProfileState.initial()) {
+    : _profileViewModel = profileViewModel,
+      super(ProfileState.initial()) {
     on<ProfileLoadCurrent>(_onLoadCurrent);
     on<ProfileLoadById>(_onLoadById);
     on<ProfileCreate>(_onCreate);
@@ -182,160 +181,223 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<ProfileLoadCached>(_onLoadCached);
     on<ProfileClearCache>(_onClearCache);
   }
-
-  Future<void> _onLoadCurrent(ProfileLoadCurrent event, Emitter<ProfileState> emit) async {
+  Future<void> _onLoadCurrent(
+    ProfileLoadCurrent event,
+    Emitter<ProfileState> emit,
+  ) async {
     emit(state.copyWith(status: ProfileStatus.loading));
-    
+
     try {
       final response = await _profileViewModel.getCurrentProfile();
-      
+
       if (response.success && response.data != null) {
-        emit(state.copyWith(
-          status: ProfileStatus.loaded,
-          currentProfile: response.data,
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.loaded,
+            currentProfile: response.data,
+          ),
+        );
       } else {
-        emit(state.copyWith(
-          status: ProfileStatus.error,
-          errorMessage: response.error ?? 'Failed to load profile',
-        ));
+        // Check if this is a "profile not found" case vs actual error
+        final errorMessage = response.error ?? '';
+        final isProfileNotFound =
+            errorMessage.toLowerCase().contains('not found') ||
+            errorMessage.toLowerCase().contains('no profile') ||
+            errorMessage.toLowerCase().contains('no user') ||
+            errorMessage.contains('404');
+
+        if (isProfileNotFound) {
+          emit(
+            state.copyWith(
+              status: ProfileStatus.noProfile,
+              errorMessage: 'No profile found. Please create your profile.',
+            ),
+          );
+        } else {
+          // For other errors, still emit noProfile but indicate it might be an existing profile
+          emit(
+            state.copyWith(
+              status: ProfileStatus.noProfile,
+              errorMessage: 'Profile needs setup. ${response.error ?? ''}',
+            ),
+          );
+        }
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: ProfileStatus.error,
-        errorMessage: e.toString(),
-      ));
+      // For exceptions, assume the user might have a profile that needs updating
+      emit(
+        state.copyWith(
+          status: ProfileStatus.noProfile,
+          errorMessage: 'Connection error. Please setup your profile.',
+        ),
+      );
     }
   }
 
-  Future<void> _onLoadById(ProfileLoadById event, Emitter<ProfileState> emit) async {
+  Future<void> _onLoadById(
+    ProfileLoadById event,
+    Emitter<ProfileState> emit,
+  ) async {
     emit(state.copyWith(status: ProfileStatus.loading));
-    
+
     try {
       final response = await _profileViewModel.getProfile(event.userId);
-      
+
       if (response.success && response.data != null) {
-        emit(state.copyWith(
-          status: ProfileStatus.loaded,
-          selectedProfile: response.data,
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.loaded,
+            selectedProfile: response.data,
+          ),
+        );
       } else {
-        emit(state.copyWith(
-          status: ProfileStatus.error,
-          errorMessage: response.error ?? 'Failed to load profile',
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.error,
+            errorMessage: response.error ?? 'Failed to load profile',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: ProfileStatus.error,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(status: ProfileStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 
-  Future<void> _onCreate(ProfileCreate event, Emitter<ProfileState> emit) async {
+  Future<void> _onCreate(
+    ProfileCreate event,
+    Emitter<ProfileState> emit,
+  ) async {
     emit(state.copyWith(status: ProfileStatus.creating));
-    
+
     try {
       final response = await _profileViewModel.createProfile(event.request);
-      
+
       if (response.success && response.data != null) {
-        emit(state.copyWith(
-          status: ProfileStatus.created,
-          currentProfile: response.data,
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.created,
+            currentProfile: response.data,
+          ),
+        );
       } else {
-        emit(state.copyWith(
-          status: ProfileStatus.error,
-          errorMessage: response.error ?? 'Failed to create profile',
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.error,
+            errorMessage: response.error ?? 'Failed to create profile',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: ProfileStatus.error,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(status: ProfileStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 
-  Future<void> _onUpdate(ProfileUpdate event, Emitter<ProfileState> emit) async {
+  Future<void> _onUpdate(
+    ProfileUpdate event,
+    Emitter<ProfileState> emit,
+  ) async {
     emit(state.copyWith(status: ProfileStatus.updating));
-    
+
     try {
-      final response = await _profileViewModel.updateProfile(event.profileId, event.request);
-      
+      final response = await _profileViewModel.updateProfile(
+        event.profileId,
+        event.request,
+      );
+
       if (response.success && response.data != null) {
-        emit(state.copyWith(
-          status: ProfileStatus.updated,
-          currentProfile: response.data,
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.updated,
+            currentProfile: response.data,
+          ),
+        );
       } else {
-        emit(state.copyWith(
-          status: ProfileStatus.error,
-          errorMessage: response.error ?? 'Failed to update profile',
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.error,
+            errorMessage: response.error ?? 'Failed to update profile',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: ProfileStatus.error,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(status: ProfileStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 
-  Future<void> _onDelete(ProfileDelete event, Emitter<ProfileState> emit) async {
+  Future<void> _onDelete(
+    ProfileDelete event,
+    Emitter<ProfileState> emit,
+  ) async {
     emit(state.copyWith(status: ProfileStatus.deleting));
-    
+
     try {
       final response = await _profileViewModel.deleteProfile(event.profileId);
-      
+
       if (response.success) {
-        emit(state.copyWith(
-          status: ProfileStatus.deleted,
-          currentProfile: null,
-        ));
+        emit(
+          state.copyWith(status: ProfileStatus.deleted, currentProfile: null),
+        );
       } else {
-        emit(state.copyWith(
-          status: ProfileStatus.error,
-          errorMessage: response.error ?? 'Failed to delete profile',
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.error,
+            errorMessage: response.error ?? 'Failed to delete profile',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: ProfileStatus.error,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(status: ProfileStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 
-  Future<void> _onUploadPicture(ProfileUploadPicture event, Emitter<ProfileState> emit) async {
+  Future<void> _onUploadPicture(
+    ProfileUploadPicture event,
+    Emitter<ProfileState> emit,
+  ) async {
     emit(state.copyWith(status: ProfileStatus.uploading));
-    
+
     try {
-      final response = await _profileViewModel.uploadProfilePicture(event.profileId, event.imagePath);
-      
+      final response = await _profileViewModel.uploadProfilePicture(
+        event.profileId,
+        event.imagePath,
+      );
+
       if (response.success && response.data != null) {
-        emit(state.copyWith(
-          status: ProfileStatus.uploaded,
-          currentProfile: response.data,
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.uploaded,
+            currentProfile: response.data,
+          ),
+        );
       } else {
-        emit(state.copyWith(
-          status: ProfileStatus.error,
-          errorMessage: response.error ?? 'Failed to upload profile picture',
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.error,
+            errorMessage: response.error ?? 'Failed to upload profile picture',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: ProfileStatus.error,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(status: ProfileStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 
-  Future<void> _onSearch(ProfileSearch event, Emitter<ProfileState> emit) async {
+  Future<void> _onSearch(
+    ProfileSearch event,
+    Emitter<ProfileState> emit,
+  ) async {
     emit(state.copyWith(status: ProfileStatus.searching));
-    
+
     try {
       final response = await _profileViewModel.searchProfiles(
         search: event.search,
@@ -344,29 +406,32 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         page: event.page,
         limit: event.limit,
       );
-      
+
       if (response.success && response.data != null) {
-        final results = event.page == 1 
-            ? response.data! 
+        final results = event.page == 1
+            ? response.data!
             : [...state.searchResults, ...response.data!];
-            
-        emit(state.copyWith(
-          status: ProfileStatus.searchCompleted,
-          searchResults: results,
-          hasMore: response.data!.length == event.limit,
-          currentPage: event.page,
-        ));
+
+        emit(
+          state.copyWith(
+            status: ProfileStatus.searchCompleted,
+            searchResults: results,
+            hasMore: response.data!.length == event.limit,
+            currentPage: event.page,
+          ),
+        );
       } else {
-        emit(state.copyWith(
-          status: ProfileStatus.error,
-          errorMessage: response.error ?? 'Failed to search profiles',
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.error,
+            errorMessage: response.error ?? 'Failed to search profiles',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: ProfileStatus.error,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(status: ProfileStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 
@@ -374,35 +439,38 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     try {
       final cachedProfile = _profileViewModel.getCachedProfile();
       if (cachedProfile != null) {
-        emit(state.copyWith(
-          status: ProfileStatus.loaded,
-          currentProfile: cachedProfile,
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.loaded,
+            currentProfile: cachedProfile,
+          ),
+        );
       } else {
-        emit(state.copyWith(
-          status: ProfileStatus.error,
-          errorMessage: 'No cached profile found',
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.error,
+            errorMessage: 'No cached profile found',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: ProfileStatus.error,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(status: ProfileStatus.error, errorMessage: e.toString()),
+      );
     }
   }
-  Future<void> _onClearCache(ProfileClearCache event, Emitter<ProfileState> emit) async {
+
+  Future<void> _onClearCache(
+    ProfileClearCache event,
+    Emitter<ProfileState> emit,
+  ) async {
     try {
       _profileViewModel.clearCache();
-      emit(state.copyWith(
-        status: ProfileStatus.initial,
-        currentProfile: null,
-      ));
+      emit(state.copyWith(status: ProfileStatus.initial, currentProfile: null));
     } catch (e) {
-      emit(state.copyWith(
-        status: ProfileStatus.error,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(status: ProfileStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 }
