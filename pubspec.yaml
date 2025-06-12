@@ -57,6 +57,11 @@ dependencies:
   # Google Fonts for Nunito typography
   google_fonts: ^6.2.1
 
+  # For TFLite model inference
+  tflite_flutter: ^0.11.0 
+  # For image manipulation
+  image: ^4.1.7
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -85,6 +90,8 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/model/model.tflite
+    - assets/model/labels.txt
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
