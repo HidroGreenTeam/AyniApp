@@ -57,15 +57,22 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
   String? _profileId;
   UserModel? _authenticatedUser;
   bool _isUserAuthenticated = false;
+  // Add a flag to track if the initial load has been processed
+  bool _initialLoadProcessed = false;
+
   @override
   void initState() {
     super.initState();
-    _isEditing = widget.initialIsEditing;
     _loadAuthenticatedUser();
     
-    // If we have an initial profile, populate the form immediately
     if (widget.initialProfile != null) {
       _populateFormFromProfile(widget.initialProfile!);
+      _isEditing = true; // If an existing profile is passed, we are editing.
+      _initialLoadProcessed = true; // Mark initial load as processed if profile is passed directly
+    } else {
+      // initialProfile is null. ProfileLoadCurrent is being dispatched by the Page widget.
+      // _isEditing will be determined by the BlocListener.
+      // _initialLoadProcessed is false, indicating we are waiting for the initial load.
     }
   }void _loadAuthenticatedUser() {
     try {
@@ -91,10 +98,6 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
     _usernameController.dispose();
     _phoneController.dispose();
     super.dispose();
-  }  void _populateForm(ProfileModel profile) {
-    _usernameController.text = profile.username;
-    _phoneController.text = profile.phoneNumber;
-    _profileId = profile.id;
   }
   
   void _populateFormFromProfile(Profile profile) {
@@ -164,76 +167,113 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ProfileBloc, ProfileState>(      listener: (context, state) {
-        if (state.status == ProfileStatus.loaded && state.currentProfile != null) {
-          // Only populate and change editing state if we're not already in editing mode from initial setup
-          if (!_isEditing || _profileId == null) {
-            _populateForm(state.currentProfile as ProfileModel);
+    return BlocListener<ProfileBloc, ProfileState>(
+      listener: (context, state) {
+        // Handle initial profile loading determination
+        if (!_initialLoadProcessed && widget.initialProfile == null) {
+          if (state.status == ProfileStatus.loaded && state.currentProfile != null) {
+            _populateFormFromProfile(state.currentProfile!);
             setState(() {
               _isEditing = true;
+              _initialLoadProcessed = true;
             });
-          }
-        }else if (state.status == ProfileStatus.noProfile || 
-                  (state.status == ProfileStatus.error && 
-                   (state.errorMessage?.toLowerCase().contains('not found') == true ||
-                    state.errorMessage?.toLowerCase().contains('no profile') == true))) {
-          // User doesn't have a profile yet, stay in creation mode
-          setState(() {
-            _isEditing = false;
-          });
-          // Pre-populate with authenticated user data if available
-          if (_authenticatedUser != null) {
-            _usernameController.text = _authenticatedUser!.username.isNotEmpty 
-                ? _authenticatedUser!.username 
-                : _authenticatedUser!.email.split('@')[0];
-          }} else if (state.status == ProfileStatus.created || state.status == ProfileStatus.updated) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.status == ProfileStatus.created 
-                  ? 'Perfil creado exitosamente' 
-                  : 'Perfil actualizado exitosamente'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-          
-          // For both created and updated profiles from first-time setup, 
-          // navigate back to main navigation
-          if (state.status == ProfileStatus.created || 
-              (state.status == ProfileStatus.updated && !_isEditing)) {
-            // For new profile creation or first-time profile update, 
-            // pop all the way back to main navigation
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          } else {
-            // For subsequent updates, just set editing mode
+          } else if (state.status == ProfileStatus.noProfile ||
+                     (state.status == ProfileStatus.error &&
+                      (state.errorMessage?.toLowerCase().contains('not found') == true ||
+                       state.errorMessage?.toLowerCase().contains('no profile') == true))) {
+            _clearForm();
             setState(() {
-              _isEditing = true;
+              _isEditing = false;
+              _initialLoadProcessed = true;
+            });
+            // Pre-populate with authenticated user data if available and in create mode
+            if (_authenticatedUser != null && !_isEditing) {
+              _usernameController.text = _authenticatedUser!.username.isNotEmpty
+                  ? _authenticatedUser!.username
+                  : _authenticatedUser!.email.split('@')[0];
+              if (_authenticatedUser!.phoneNumber.isNotEmpty) {
+                _phoneController.text = _authenticatedUser!.phoneNumber;
+              }
+            }
+          } else if (state.status == ProfileStatus.error) { // Other errors during initial load
+            _clearForm();
+            setState(() {
+              _isEditing = false; // Fallback to create mode
+              _initialLoadProcessed = true;
             });
           }
-        }else if (state.status == ProfileStatus.deleted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Perfil eliminado exitosamente'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-          _clearForm();
-          setState(() {
-            _isEditing = false;
-          });
-        } else if (state.status == ProfileStatus.uploaded) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Foto de perfil actualizada exitosamente'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        } else if (state.status == ProfileStatus.error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage ?? 'Error desconocido'),
-              backgroundColor: AppColors.error,
-            ),
-          );
+          // If status is initial or loading, _initialLoadProcessed remains false, and loader shows.
+        }
+        // Handle subsequent state changes after initial load or if initialProfile was provided
+        else if (_initialLoadProcessed || widget.initialProfile != null) {
+          if (state.status == ProfileStatus.loaded && state.currentProfile != null) {
+            // Profile reloaded (e.g. after update or manual refresh), update form
+            _populateFormFromProfile(state.currentProfile!);
+            if (!_isEditing) { // Should be editing if profile is loaded
+              setState(() {
+                _isEditing = true;
+              });
+            } else {
+              // If already editing, just ensure UI reflects any changes from re-population
+              setState(() {});
+            }
+          }
+          else if (state.status == ProfileStatus.created || state.status == ProfileStatus.updated) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.status == ProfileStatus.created
+                    ? 'Perfil creado exitosamente'
+                    : 'Perfil actualizado exitosamente'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+            
+            if (state.currentProfile != null) {
+              _populateFormFromProfile(state.currentProfile!);
+            }
+            setState(() {
+              _isEditing = true; // After create or update, we are in "editing" mode
+            });
+
+            // For new profile creation that came from a flow expecting a profile afterwards
+            // (e.g., not just editing an existing one), navigate back.
+            // This condition might need to be more specific based on app flow.
+            if (state.status == ProfileStatus.created && !widget.initialIsEditing) {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            }
+          } else if (state.status == ProfileStatus.deleted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Perfil eliminado exitosamente'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+            _clearForm();
+            setState(() {
+              _isEditing = false; // Go back to create mode or an appropriate state
+            });
+            // Consider navigation after deletion, e.g., Navigator.of(context).pop();
+          } else if (state.status == ProfileStatus.uploaded) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Foto de perfil actualizada exitosamente'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+            // Optionally reload profile to show new image if not automatically reflected
+            if (state.currentProfile != null) {
+               _populateFormFromProfile(state.currentProfile!); // Ensure form/UI reflects this
+               setState((){}); // Refresh UI
+            }
+          } else if (state.status == ProfileStatus.error) {
+            // Generic error after initial load processed
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.errorMessage ?? 'Error desconocido'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
         }
       },
       child: Scaffold(
@@ -262,7 +302,11 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
         ),
         body: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, state) {
-            if (state.status == ProfileStatus.loading) {
+            // Show loader if:
+            // 1. Initial profile was not provided AND initial load determination is not yet processed
+            // OR 2. The bloc is in a general loading state (e.g. user initiated refresh)
+            if ((widget.initialProfile == null && !_initialLoadProcessed) ||
+                state.status == ProfileStatus.loading) {
               return const Center(child: CircularProgressIndicator());
             }
 
