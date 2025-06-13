@@ -1,10 +1,9 @@
 import 'dart:io';
-import 'dart:typed_data'; // Import for Float32List
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:tflite_flutter/tflite_flutter.dart';
-import 'package:image/image.dart' as img; // Use prefix for image library
-import 'package:flutter/services.dart';
+import 'package:ayni/detection/services/plant_disease_classifier.dart';
+import 'package:ayni/detection/services/detection_history_service.dart';
+import 'package:ayni/detection/presentation/pages/detection_history_page.dart';
 
 class CameraPage extends StatefulWidget {
   const CameraPage({super.key});
@@ -17,266 +16,405 @@ class _CameraPageState extends State<CameraPage> {
   bool _isProcessing = false;
   File? _image;
   final ImagePicker _picker = ImagePicker();
-  Interpreter? _interpreter;
-  List<String>? _labels;
+  String? _detectedDisease;
+  double? _confidence;
+  String? _recommendation;
+  
+  // Services
+  final PlantDiseaseClassifier _classifier = PlantDiseaseClassifier();
+  final DetectionHistoryService _historyService = DetectionHistoryService();
 
   @override
   void initState() {
     super.initState();
-    _loadModel();
-    _loadLabels();
+    _initializeClassifier();
   }
 
-  Future<void> _loadModel() async {
+  Future<void> _initializeClassifier() async {
     try {
-      _interpreter = await Interpreter.fromAsset('model/model.tflite');
-      print('Model loaded successfully');
+      final success = await _classifier.initialize();
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to initialize plant disease detector')),
+        );
+      }
     } catch (e) {
-      print('Failed to load model: $e');
+      print('Error initializing classifier: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error initializing: $e')),
+      );
     }
   }
 
-  Future<void> _loadLabels() async {
-    try {
-      final labelsData = await rootBundle.loadString('assets/model/labels.txt');
-      _labels = labelsData.split('\n').map((label) => label.trim()).where((label) => label.isNotEmpty).toList();
-      print('Labels loaded successfully: $_labels');
-    } catch (e) {
-      print('Failed to load labels: $e');
-    }
-  }
-
+  // Get image from camera or gallery
   Future<void> _getImage(ImageSource source) async {
-    final pickedFile = await _picker.pickImage(source: source);
+    try {
+      final pickedFile = await _picker.pickImage(source: source);
 
-    if (pickedFile != null) {
+      if (pickedFile != null) {
+        setState(() {
+          _image = File(pickedFile.path);
+          _isProcessing = true;
+          _detectedDisease = null; // Reset previous detection
+          _confidence = null;
+        });
+        await _runInference();
+      }
+    } catch (e) {
+      print('Error picking image: $e');
       setState(() {
-        _image = File(pickedFile.path);
-        _isProcessing = true;
+        _isProcessing = false;
       });
-      _runInference();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking image: $e')),
+      );
+    }
+  }  // Process image and run inference using our classifier service
+  Future<void> _runInference() async {
+    if (_image == null) {
+      setState(() {
+        _isProcessing = false;
+      });
+      return;
+    }
+
+    try {
+      // Run classification
+      final result = await _classifier.classifyImage(_image!);
+      
+      if (result == null) {
+        setState(() {
+          _isProcessing = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to analyze image')),
+        );
+        return;
+      }
+      
+      // Store results
+      setState(() {
+        _isProcessing = false;
+        _detectedDisease = result.disease;
+        _confidence = result.confidence;
+        _recommendation = result.recommendation;
+      });
+
+      // Save to history
+      try {
+        await _historyService.saveDetection(
+          disease: result.disease,
+          diseaseName: result.formattedDiseaseName,
+          confidence: result.confidence,
+          imageFile: _image!,
+          recommendation: result.recommendation,
+        );
+      } catch (e) {
+        print('Error saving to history: $e');
+        // Continue with detection even if history save fails
+      }
+
+      // Display the result
+      _showResultDialog(result.disease, result.confidence, result.recommendation);
+      
+    } catch (e) {
+      print('Error during inference: $e');
+      setState(() {
+        _isProcessing = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error analyzing image: $e')),
+      );
     }
   }
-
-  Future<void> _runInference() async {
-    if (_image == null || _interpreter == null || _labels == null) {
-      setState(() {
-        _isProcessing = false;
-      });
-      return;
-    }
-
-    // Preprocess the image
-    var imageBytes = _image!.readAsBytesSync();
-    img.Image? originalImage = img.decodeImage(imageBytes);
-
-    if (originalImage == null) {
-      setState(() {
-        _isProcessing = false;
-      });
-      print("Failed to decode image");
-      return;
-    }
-
-    // Resize the image to the input size of the model (e.g., 300x300)
-    img.Image resizedImage = img.copyResize(originalImage, width: 300, height: 300);
-
-    // Convert the image to a Float32List
-    var input = Float32List(1 * 300 * 300 * 3);
-    var buffer = Float32List.view(input.buffer);
-    int pixelIndex = 0;
-    for (var y = 0; y < 300; y++) {
-      for (var x = 0; x < 300; x++) {
-        var pixel = resizedImage.getPixel(x, y);
-        buffer[pixelIndex++] = pixel.r / 255.0;
-        buffer[pixelIndex++] = pixel.g / 255.0;
-        buffer[pixelIndex++] = pixel.b / 255.0;
-      }
-    }
-    
-    // The model output is Float32, so the output list should be Float32List.
-    var outputBuffer = Float32List(_labels!.length);
-
-    // Run inference
-    // The input needs to be reshaped to match the model's expected input tensor shape.
-    _interpreter!.run(input.reshape([1, 300, 300, 3]), outputBuffer.buffer.asFloat32List().reshape([1, _labels!.length]));
-
-    // Process the output
-    List<double> outputList = outputBuffer.toList();
-    print('Output List: $outputList');
-
-    // Get the index of the highest probability
-    int maxIndex = 0;
-    double maxValue = 0.0;
-    for (int i = 0; i < outputList.length; i++) {
-      if (outputList[i] > maxValue) {
-        maxValue = outputList[i];
-        maxIndex = i;
-      }
-    }
-    
-    String result = "Unknown";
-    if (maxIndex < _labels!.length) {
-        result = _labels![maxIndex];
-    }
-
-
-    setState(() {
-      _isProcessing = false;
-    });
-
-    // Display the result
+  // Show detection results in a nicer dialog
+  void _showResultDialog(String disease, double confidence, String recommendation) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Diagnosis Result'),
-        content: Text('The plant is likely: $result (Confidence: ${(maxValue * 100).toStringAsFixed(2)}%)'),
+        title: Row(
+          children: [
+            Icon(
+              disease == 'nodisease' ? Icons.check_circle : Icons.warning_amber_rounded,
+              color: disease == 'nodisease' ? Colors.green : Colors.orange,
+            ),
+            const SizedBox(width: 10),
+            const Text('Diagnosis Result'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Detected: ${_formatDiseaseName(disease)}',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Confidence: ${(confidence * 100).toStringAsFixed(2)}%',
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              recommendation,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00C851),
+            ),
+            onPressed: () {
+              // TODO: Navigate to detailed information about the disease
+              Navigator.of(context).pop();
+            },
+            child: const Text('More Info'),
           ),
         ],
       ),
     );
+  }
+  // Format disease name for display
+  String _formatDiseaseName(String diseaseName) {
+    switch (diseaseName) {
+      case 'nodisease':
+        return 'No Disease';
+      case 'miner':
+        return 'Leaf Miner';
+      case 'phoma':
+        return 'Phoma Leaf Spot';
+      case 'redspider':
+        return 'Red Spider Mite';
+      case 'rust': 
+        return 'Leaf Rust';
+      default:
+        // Generic formatting as fallback - replace underscores with spaces and capitalize each word
+        return diseaseName.split('_').map((word) {
+          if (word.isEmpty) return '';
+          return word[0].toUpperCase() + word.substring(1);
+        }).join(' ');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Take or Upload a Photo'),
+        title: const Text('Plant Disease Detection'),
         backgroundColor: const Color(0xFF00C851),
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'Detection History',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const DetectionHistoryPage()),
+              );
+            },
+          ),
+        ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (_isProcessing)
-              Column(
-                children: [
-                  const CircularProgressIndicator(
-                    color: Color(0xFF00C851),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Processing image...',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ],
-              )
-            else if (_image != null)
-              Column(
-                children: [
-                  Image.file(
-                    _image!,
-                    height: 300,
-                    width: 300, // Added explicit width
-                    fit: BoxFit.contain, // Added BoxFit to handle aspect ratio
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      body: SingleChildScrollView(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (_isProcessing)
+                  Column(
                     children: [
+                      const CircularProgressIndicator(
+                        color: Color(0xFF00C851),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Processing image...',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  )
+                else if (_image != null)
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.file(
+                          _image!,
+                          height: 300,
+                          width: 300,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      // Show result if available
+                      if (_detectedDisease != null)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: _detectedDisease == 'nodisease' 
+                              ? Colors.green.withOpacity(0.1) 
+                              : Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _detectedDisease == 'nodisease' ? Colors.green : Colors.orange,
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Result: ${_formatDiseaseName(_detectedDisease!)}',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: _detectedDisease == 'nodisease' ? Colors.green[800] : Colors.orange[800],
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                'Confidence: ${(_confidence! * 100).toStringAsFixed(2)}%',
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ),
+                      
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF00C851),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: () => _getImage(ImageSource.camera),
+                              icon: const Icon(Icons.camera_alt),
+                              label: const Text('New Photo', style: TextStyle(fontSize: 14)),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orangeAccent,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: () => _getImage(ImageSource.gallery),
+                              icon: const Icon(Icons.photo_library),
+                              label: const Text('Gallery', style: TextStyle(fontSize: 14)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                else
+                  Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Icon(
+                          Icons.camera_alt,
+                          size: 80,
+                          color: Colors.grey[400],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Plant Disease Detection',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                        child: Text(
+                          'Take a photo or upload an image from your gallery to detect plant diseases.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 40),
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF00C851),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         onPressed: () => _getImage(ImageSource.camera),
                         icon: const Icon(Icons.camera_alt),
-                        label: const Text('Retake Photo', style: TextStyle(fontSize: 16)),
+                        label: const Text('Take Photo', style: TextStyle(fontSize: 16)),
                       ),
+                      const SizedBox(height: 20),
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.orangeAccent,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         onPressed: () => _getImage(ImageSource.gallery),
                         icon: const Icon(Icons.photo_library),
-                        label: const Text('From Gallery', style: TextStyle(fontSize: 16)),
+                        label: const Text('Upload from Gallery', style: TextStyle(fontSize: 16)),
                       ),
                     ],
                   ),
-                ],
-              )
-            else
-              Column(
-                children: [
-                  Icon(Icons.camera_alt, size: 80, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Plant Disease Detection',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                    child: Text(
-                      'Take a photo or upload an image from your gallery to detect plant diseases.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00C851),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () => _getImage(ImageSource.camera),
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('Take Photo', style: TextStyle(fontSize: 16)),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orangeAccent,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () => _getImage(ImageSource.gallery),
-                    icon: const Icon(Icons.photo_library),
-                    label: const Text('Upload from Gallery', style: TextStyle(fontSize: 16)),
-                  ),
-                ],
-              ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
-
   @override
   void dispose() {
-    _interpreter?.close();
+    _classifier.dispose();
     super.dispose();
   }
 }
@@ -285,35 +423,23 @@ class _CameraPageState extends State<CameraPage> {
 extension ReshapeList<T> on List<T> {
   List<dynamic> reshape(List<int> shape) {
     if (shape.isEmpty) return this;
-    // int totalElements = 1;
-    // for (int dim in shape) {
-    //   totalElements *= dim;
-    // }
-    // if (totalElements != length) {
-    //   throw ArgumentError('New shape $shape is not compatible with existing list of length $length');
-    // }
 
     List<T> flatList = List<T>.from(this);
 
     List<dynamic> reshape(List<T> list, List<int> currentShape) {
       if (currentShape.length == 1) {
-        // Ensure we don't try to take more elements than available
         return List<T>.from(list.take(currentShape[0]));
       }
       List<dynamic> result = [];
-      // Calculate the size of the next dimension carefully
       int nextDimSize = currentShape.length > 1 && currentShape[0] != 0 ? list.length ~/ currentShape[0] : list.length;
-      if (currentShape[0] == 0) { // Handle zero dimension to prevent division by zero
+      if (currentShape[0] == 0) {
           return [];
       }
 
       for (int i = 0; i < currentShape[0]; i++) {
         if (list.length < (i + 1) * nextDimSize && currentShape.length > 1) {
-            // This condition might indicate an issue with shape compatibility or list size
-            // For robustness, one might throw an error or handle it based on specific needs
-            // For now, let's break or adjust to prevent range errors if possible
             print("Warning: Not enough elements for full reshape, check dimensions and list size.");
-            break; // Or handle differently
+            break;
         }
         result.add(reshape(list.sublist(i * nextDimSize, (i + 1) * nextDimSize), currentShape.sublist(1)));
       }
