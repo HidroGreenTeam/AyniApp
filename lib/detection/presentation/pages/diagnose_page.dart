@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../camera/presentation/pages/camera_page.dart';
 
 class DiagnosePage extends StatelessWidget {
   const DiagnosePage({super.key});
@@ -44,9 +45,13 @@ class DiagnosePage extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-              ),
-              onPressed: () {
-                // TODO: Implement diagnosis feature
+              ),              onPressed: () {
+                // Navigate to camera page for disease detection
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const CameraPage(),
+                  ),
+                );
               },
               icon: const Icon(Icons.camera_alt),
               label: const Text('Take Photo for Diagnosis', style: TextStyle(fontSize: 16)),

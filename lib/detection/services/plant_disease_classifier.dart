@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:image/image.dart' as img;
+import 'tflite_compatibility_helper.dart';
 
 class PlantDiseaseResult {
   final String disease;
@@ -24,39 +25,82 @@ class PlantDiseaseClassifier {
 
   Interpreter? _interpreter;
   List<String>? _labels;
-  bool _isInitialized = false;
-
+  bool _isInitialized = false;  
   Future<bool> initialize() async {
     if (_isInitialized) return true;
 
     try {
-      // Load the model
-      _interpreter = await Interpreter.fromAsset('model/model.tflite');
+      print('Starting plant disease classifier initialization...');
+      
+      // Try to create a compatible interpreter using the helper
+      _interpreter = await TFLiteCompatibilityHelper.createCompatibleInterpreter();
+      
+      if (_interpreter == null) {
+        print('Failed to initialize interpreter - model may be incompatible with tflite_flutter');
+        print('Please check MODEL_COMPATIBILITY.md for instructions on using a compatible model');
+        return false;
+      }
+      
+      print('Interpreter created successfully');
+      
+      try {
+        // Print model input/output tensor info for debugging
+        final inputTensors = _interpreter!.getInputTensors();
+        final outputTensors = _interpreter!.getOutputTensors();
+        
+        print('Model input tensors: ${inputTensors.length}');
+        for (var i = 0; i < inputTensors.length; i++) {
+          print('  Input tensor $i: shape=${inputTensors[i].shape}, type=${inputTensors[i].type}');
+        }
+        
+        print('Model output tensors: ${outputTensors.length}');
+        for (var i = 0; i < outputTensors.length; i++) {
+          print('  Output tensor $i: shape=${outputTensors[i].shape}, type=${outputTensors[i].type}');
+        }
+      } catch (e) {
+        print('Warning: Could not get tensor details: $e');
+      }
       
       // Load labels
-      final labelsData = await rootBundle.loadString('assets/model/labels.txt');
-      _labels = labelsData
-          .split('\n')
-          .map((label) => label.trim())
-          .where((label) => label.isNotEmpty)
-          .toList();
+      _labels = await TFLiteCompatibilityHelper.loadLabels();
       
+      if (_labels == null || _labels!.isEmpty) {
+        print('Failed to load labels or labels are empty');
+        return false;
+      }
+      
+      print('Model and labels loaded successfully');
+      print('Label count: ${_labels!.length}');
       _isInitialized = true;
       return true;
     } catch (e) {
       print('Error initializing plant disease classifier: $e');
+      print('Error details: ${e.toString()}');
+      
+      // Provide more specific guidance based on common error patterns
+      if (e.toString().contains('FULLY_CONNECTED')) {
+        print('Error: This model uses FULLY_CONNECTED ops that are not supported by the current tflite_flutter version.');
+        print('Solution: Replace model with a compatible version or downgrade the operations in your model.');
+      } else if (e.toString().contains('Could not find')) {
+        print('Error: Model contains unsupported operations for this version of tflite_flutter.');
+        print('Solution: Use a simpler model or one specifically compatible with tflite_flutter 0.11.0');
+      }
+      
       return false;
     }
   }
 
   Future<PlantDiseaseResult?> classifyImage(File imageFile) async {
     if (!_isInitialized || _interpreter == null || _labels == null) {
+      print('Classifier not initialized, attempting to initialize now...');
       if (!await initialize()) {
+        print('Failed to initialize classifier');
         return null;
       }
     }
 
     try {
+      print('Starting image classification...');
       // Preprocess the image
       var imageBytes = await imageFile.readAsBytes();
       img.Image? originalImage = img.decodeImage(imageBytes);
@@ -88,7 +132,8 @@ class PlantDiseaseClassifier {
       }
       
       // Prepare output buffer based on number of classes
-      var outputBuffer = Float32List(_labels!.length);
+      final numClasses = _labels!.length;
+      var outputBuffer = Float32List(numClasses);
 
       // Reshape input for the model
       List<dynamic> reshapedInput = _reshapeList(
@@ -98,14 +143,23 @@ class PlantDiseaseClassifier {
       
       List<dynamic> reshapedOutput = _reshapeList(
         outputBuffer.buffer.asFloat32List(), 
-        [1, _labels!.length]
+        [1, numClasses]
       );
 
+      print('Running inference...');
       // Run inference
       _interpreter!.run(reshapedInput, reshapedOutput);
+      
+      // Copy results to outputBuffer if needed
+      if (reshapedOutput.isNotEmpty && reshapedOutput[0] is List) {
+        for (int i = 0; i < numClasses && i < (reshapedOutput[0] as List).length; i++) {
+          outputBuffer[i] = (reshapedOutput[0] as List)[i];
+        }
+      }
 
       // Process the output
       List<double> outputList = outputBuffer.toList();
+      print('Output values: $outputList');
 
       // Get the index of the highest probability
       int maxIndex = 0;
@@ -123,6 +177,8 @@ class PlantDiseaseClassifier {
         disease = _labels![maxIndex];
       }
 
+      print('Detected disease: $disease with confidence: $maxValue');
+
       return PlantDiseaseResult(
         disease: disease,
         confidence: maxValue,
@@ -139,6 +195,8 @@ class PlantDiseaseClassifier {
   String _formatDiseaseName(String diseaseName) {
     if (diseaseName == 'nodisease') {
       return 'No Disease';
+    } else if (diseaseName == 'unknown') {
+      return 'Unknown';
     }
     
     // Replace underscores with spaces and capitalize each word
@@ -161,6 +219,8 @@ class PlantDiseaseClassifier {
         return 'Red spider mites detected. Increase humidity and consider applying insecticidal soap.';
       case 'rust':
         return 'Leaf rust detected. Remove affected parts and apply a copper-based fungicide.';
+      case 'unknown':
+        return 'Could not identify the plant condition. Try taking a clearer photo with better lighting.';
       default:
         return 'Consult with a plant specialist for proper treatment options.';
     }
@@ -202,6 +262,12 @@ class PlantDiseaseClassifier {
   }
 
   void dispose() {
-    _interpreter?.close();
+    if (_interpreter != null) {
+      try {
+        _interpreter!.close();
+      } catch (e) {
+        print('Error closing interpreter: $e');
+      }
+    }
   }
 }

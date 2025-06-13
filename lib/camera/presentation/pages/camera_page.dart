@@ -14,6 +14,8 @@ class CameraPage extends StatefulWidget {
 
 class _CameraPageState extends State<CameraPage> {
   bool _isProcessing = false;
+  bool _isInitializing = true; // Track initialization state
+  String? _initError; // Store initialization error if any
   File? _image;
   final ImagePicker _picker = ImagePicker();
   String? _detectedDisease;
@@ -29,21 +31,117 @@ class _CameraPageState extends State<CameraPage> {
     super.initState();
     _initializeClassifier();
   }
-
   Future<void> _initializeClassifier() async {
+    setState(() {
+      _isInitializing = true;
+      _initError = null;
+    });
+    
     try {
+      print('Attempting to initialize plant disease classifier...');
       final success = await _classifier.initialize();
+      
       if (!success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to initialize plant disease detector')),
-        );
+        setState(() {
+          _initError = 'Failed to initialize plant disease detector';
+          _isInitializing = false;
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Failed to initialize plant disease detector. The model may be incompatible.'),
+              action: SnackBarAction(
+                label: 'Details',
+                onPressed: () => _showModelCompatibilityDialog(),
+              ),
+              duration: const Duration(seconds: 10),
+            ),
+          );
+        }
+      } else {
+        setState(() {
+          _isInitializing = false;
+        });
+        print('Successfully initialized plant disease classifier');
       }
     } catch (e) {
       print('Error initializing classifier: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error initializing: $e')),
-      );
+      
+      setState(() {
+        _initError = 'Error initializing: $e';
+        _isInitializing = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error initializing: $e'),
+            action: SnackBarAction(
+              label: 'Help',
+              onPressed: () => _showModelCompatibilityDialog(),
+            ),
+            duration: const Duration(seconds: 10),
+          ),
+        );
+      }
     }
+  }
+  
+  void _showModelCompatibilityDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            SizedBox(width: 10),
+            Text('Model Compatibility Issue'),
+          ],
+        ),
+        content: const SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'The plant detection model could not be initialized because it\'s incompatible with the current TFLite version.',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 16),
+              Text(
+                'This usually happens when the model contains operations that aren\'t supported by tflite_flutter 0.11.0',
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Solutions:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Text('1. Replace the model with a compatible version'),
+              Text('2. Use the model downloader tool to get a compatible model'),
+              Text('3. Check the MODEL_COMPATIBILITY.md file for more details'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00C851),
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _initializeClassifier(); // Try initializing again
+            },
+            child: const Text('Try Again'),
+          ),
+        ],
+      ),
+    );
   }
 
   // Get image from camera or gallery
@@ -79,6 +177,26 @@ class _CameraPageState extends State<CameraPage> {
     }
 
     try {
+      // Check if classifier is initialized
+      if (_initError != null) {
+        // Try to initialize again if there was a previous error
+        bool success = await _classifier.initialize();
+        if (!success) {
+          setState(() {
+            _isProcessing = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to initialize model. Please try again.')),
+          );
+          return;
+        } else {
+          // Clear previous error if initialization succeeded
+          setState(() {
+            _initError = null;
+          });
+        }
+      }
+
       // Run classification
       final result = await _classifier.classifyImage(_image!);
       
@@ -87,7 +205,7 @@ class _CameraPageState extends State<CameraPage> {
           _isProcessing = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to analyze image')),
+          const SnackBar(content: Text('Failed to analyze image. Please try with a different image.')),
         );
         return;
       }
@@ -109,6 +227,7 @@ class _CameraPageState extends State<CameraPage> {
           imageFile: _image!,
           recommendation: result.recommendation,
         );
+        print('Detection saved to history successfully');
       } catch (e) {
         print('Error saving to history: $e');
         // Continue with detection even if history save fails
@@ -123,7 +242,10 @@ class _CameraPageState extends State<CameraPage> {
         _isProcessing = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error analyzing image: $e')),
+        SnackBar(
+          content: Text('Error analyzing image: $e'),
+          duration: const Duration(seconds: 5),
+        ),
       );
     }
   }
@@ -234,7 +356,68 @@ class _CameraPageState extends State<CameraPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (_isProcessing)
+                if (_isInitializing)
+                  Column(
+                    children: [
+                      const CircularProgressIndicator(
+                        color: Color(0xFF00C851),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Initializing classifier...',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  )
+                else if (_initError != null)
+                  Column(
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 80,
+                        color: Colors.red[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Initialization Failed',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red[700],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                        child: Text(
+                          _initError!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: _initializeClassifier,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Try Again', style: TextStyle(fontSize: 16)),
+                      ),
+                    ],
+                  )
+                else if (_isProcessing)
                   Column(
                     children: [
                       const CircularProgressIndicator(
