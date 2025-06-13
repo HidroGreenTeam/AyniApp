@@ -6,6 +6,7 @@ import 'package:ayni/detection/services/detection_history_service.dart';
 import 'package:ayni/detection/presentation/pages/detection_history_page.dart';
 import 'package:ayni/detection/presentation/pages/detection_detail_page.dart';
 import 'package:ayni/detection/data/models/detection_history_item.dart';
+import '../../../core/theme/app_theme.dart';
 
 class CameraPage extends StatefulWidget {
   const CameraPage({super.key});
@@ -112,18 +113,17 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
       }
     }
   }
-
   void _showErrorSnackBar(String message, {SnackBarAction? action}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error_outline, color: Colors.white),
+            const Icon(Icons.error_outline, color: AppColors.white),
             const SizedBox(width: 12),
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: Colors.red[600],
+        backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         action: action,
@@ -131,18 +131,17 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
       ),
     );
   }
-
   void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle, color: Colors.white),
+            const Icon(Icons.check_circle, color: AppColors.white),
             const SizedBox(width: 12),
             Text(message),
           ],
         ),
-        backgroundColor: const Color(0xFF00C851),
+        backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 3),
@@ -155,11 +154,10 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Container(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),        title: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.orange[50],
+            color: AppColors.warning.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -167,11 +165,11 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.orange[100],
+                  color: AppColors.warning.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.warning_amber_rounded, 
-                  color: Colors.orange[700], size: 24),
+                  color: AppColors.warning, size: 24),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -187,13 +185,12 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
+            children: [              Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.red[50],
+                  color: AppColors.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red[200]!),
+                  border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
                 ),
                 child: const Text(
                   'The plant detection model could not be initialized because it\'s incompatible with the current TFLite version.',
@@ -497,16 +494,15 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
               ),
             ),
           ],
-        ),
-        actions: [
+        ),        actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('Close', style: TextStyle(color: Colors.grey[600])),
+            child: Text('Close', style: TextStyle(color: AppColors.grey600)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00C851),
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: AppColors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
@@ -539,23 +535,24 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
         }).join(' ');
     }
   }
-
-  @override
-  Widget build(BuildContext context) {
+  @override  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Plant Disease Detection',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: AppColors.white,
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        backgroundColor: const Color(0xFF00C851),
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.primaryGreen,
+        foregroundColor: AppColors.white,
         elevation: 0,
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF00C851), Color(0xFF00A142)],
+              colors: [AppColors.primaryGreen, AppColors.primaryGreen.withValues(alpha: 0.8)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -565,7 +562,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
           Container(
             margin: const EdgeInsets.only(right: 16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: AppColors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
@@ -580,11 +577,10 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
             ),
           ),
         ],
-      ),
-      body: Container(
+      ),      body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.grey[50]!, Colors.white],
+            colors: [AppColors.background, AppColors.lightGreen.withValues(alpha: 0.3)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -614,18 +610,17 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
       ),
     );
   }
-
   Widget _buildInitializingWidget() {
     return FadeTransition(
       opacity: _fadeAnimation,
       child: Container(
         padding: const EdgeInsets.all(40),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: AppColors.grey300.withValues(alpha: 0.3),
               spreadRadius: 2,
               blurRadius: 10,
               offset: const Offset(0, 4),
@@ -646,7 +641,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                         width: 100,
                         height: 100,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF00C851).withOpacity(0.1),
+                          color: AppColors.primaryGreen.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -654,27 +649,23 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                   },
                 ),
                 const CircularProgressIndicator(
-                  color: Color(0xFF00C851),
+                  color: AppColors.primaryGreen,
                   strokeWidth: 3,
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-            Text(
+            const SizedBox(height: 24),            Text(
               'Initializing AI Model',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Please wait while we prepare the plant disease detector...',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.textSecondary,
               ),
             ),
           ],
@@ -682,16 +673,15 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
       ),
     );
   }
-
   Widget _buildErrorWidget() {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.red.withOpacity(0.1),
+            color: AppColors.error.withValues(alpha: 0.1),
             spreadRadius: 2,
             blurRadius: 10,
             offset: const Offset(0, 4),
@@ -703,13 +693,13 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.red[50],
+              color: AppColors.error.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.error_outline,
               size: 60,
-              color: Colors.red[400],
+              color: AppColors.error,
             ),
           ),
           const SizedBox(height: 24),
@@ -718,31 +708,31 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Colors.red[700],
+              color: AppColors.error,
             ),
           ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.red[50],
+              color: AppColors.error.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.red[200]!),
+              border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
             ),
             child: Text(
               _initError!,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.red[700],
+                color: AppColors.error,
               ),
             ),
           ),
           const SizedBox(height: 32),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00C851),
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: AppColors.white,
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -757,16 +747,15 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
       ),
     );
   }
-
   Widget _buildProcessingWidget() {
     return Container(
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: AppColors.grey300.withValues(alpha: 0.3),
             spreadRadius: 2,
             blurRadius: 10,
             offset: const Offset(0, 4),
@@ -787,7 +776,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00C851).withOpacity(0.1),
+                        color: AppColors.primaryGreen.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -797,39 +786,35 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: const BoxDecoration(
-                  color: Color(0xFF00C851),
+                  color: AppColors.primaryGreen,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.psychology,
                   size: 40,
-                  color: Colors.white,
+                  color: AppColors.white,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          Text(
+          const SizedBox(height: 24),          Text(
             'Analyzing Image',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Our AI is examining your plant for diseases...',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 20),
-          const LinearProgressIndicator(
-            color: Color(0xFF00C851),
-            backgroundColor: Color(0xFFE8F5E8),
+          LinearProgressIndicator(
+            color: AppColors.primaryGreen,
+            backgroundColor: AppColors.lightGreen,
           ),
         ],
       ),
@@ -843,10 +828,9 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
         children: [
           Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
+              borderRadius: BorderRadius.circular(20),              boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: AppColors.shadow.withValues(alpha: 0.5),
                   spreadRadius: 2,
                   blurRadius: 15,
                   offset: const Offset(0, 8),
@@ -864,22 +848,21 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
             ),
           ),
           const SizedBox(height: 24),
-          
-          if (_detectedDisease != null)
+            if (_detectedDisease != null)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: _detectedDisease == 'nodisease' 
-                    ? [Colors.green[50]!, Colors.green[100]!]
-                    : [Colors.orange[50]!, Colors.orange[100]!],
+                    ? [AppColors.success.withValues(alpha: 0.1), AppColors.success.withValues(alpha: 0.2)]
+                    : [AppColors.warning.withValues(alpha: 0.1), AppColors.warning.withValues(alpha: 0.2)],
                 ),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: _detectedDisease == 'nodisease' 
-                    ? Colors.green[200]! 
-                    : Colors.orange[200]!,
+                    ? AppColors.success.withValues(alpha: 0.3)
+                    : AppColors.warning.withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
@@ -889,18 +872,16 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                     _detectedDisease == 'nodisease' ? Icons.eco : Icons.bug_report,
                     size: 40,
                     color: _detectedDisease == 'nodisease' 
-                      ? Colors.green[700] 
-                      : Colors.orange[700],
+                      ? AppColors.success
+                      : AppColors.warning,
                   ),
-                  const SizedBox(height: 12),
-                  Text(
+                  const SizedBox(height: 12),                  Text(
                     _formatDiseaseName(_detectedDisease!),
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: _detectedDisease == 'nodisease' 
-                        ? Colors.green[800] 
-                        : Colors.orange[800],
+                        ? AppColors.success
+                        : AppColors.warning,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -908,18 +889,16 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: _detectedDisease == 'nodisease' 
-                        ? Colors.green[200] 
-                        : Colors.orange[200],
+                        ? AppColors.success.withValues(alpha: 0.2)
+                        : AppColors.warning.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
+                    ),                    child: Text(
                       'Confidence: ${(_confidence! * 100).toStringAsFixed(1)}%',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: _detectedDisease == 'nodisease' 
-                          ? Colors.green[800] 
-                          : Colors.orange[800],
+                          ? AppColors.success
+                          : AppColors.warning,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -927,14 +906,13 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
               ),
             ),
           
-          const SizedBox(height: 24),
-          Row(
+          const SizedBox(height: 24),          Row(
             children: [
               Expanded(
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00C851),
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.primaryGreen,
+                    foregroundColor: AppColors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -943,15 +921,20 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                   ),
                   onPressed: () => _getImage(ImageSource.camera),
                   icon: const Icon(Icons.camera_alt),
-                  label: const Text('New Photo', style: TextStyle(fontSize: 16)),
+                  label: Text(
+                    'New Photo', 
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: AppColors.white,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[600],
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.info,
+                    foregroundColor: AppColors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -960,7 +943,12 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                   ),
                   onPressed: () => _getImage(ImageSource.gallery),
                   icon: const Icon(Icons.photo_library),
-                  label: const Text('Gallery', style: TextStyle(fontSize: 16)),
+                  label: Text(
+                    'Gallery', 
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: AppColors.white,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -974,19 +962,18 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
     return FadeTransition(
       opacity: _fadeAnimation,
       child: Column(
-        children: [
-          Container(
+        children: [          Container(
             padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.green[50]!, Colors.green[100]!],
+                colors: [AppColors.lightGreen.withValues(alpha: 0.5), AppColors.lightGreen],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.green.withOpacity(0.1),
+                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
                   spreadRadius: 2,
                   blurRadius: 15,
                   offset: const Offset(0, 8),
@@ -994,15 +981,14 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
               ],
             ),
             child: Column(
-              children: [
-                Container(
+              children: [                Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.green.withOpacity(0.2),
+                        color: AppColors.primaryGreen.withValues(alpha: 0.2),
                         spreadRadius: 2,
                         blurRadius: 10,
                         offset: const Offset(0, 4),
@@ -1012,25 +998,21 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                   child: Icon(
                     Icons.local_florist,
                     size: 60,
-                    color: Colors.green[600],
+                    color: AppColors.primaryGreen,
                   ),
                 ),
-                const SizedBox(height: 24),
-                Text(
+                const SizedBox(height: 24),                Text(
                   'Plant Health Assistant',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green[800],
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: AppColors.primaryGreen,
                   ),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'Take a photo or upload an image to detect plant diseases with AI-powered analysis.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.green[700],
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: AppColors.textSecondary,
                     height: 1.5,
                   ),
                 ),
@@ -1041,16 +1023,15 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
           
           // Feature cards
           Row(
-            children: [
-              Expanded(
+            children: [              Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.white,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
+                        color: AppColors.grey300.withValues(alpha: 0.3),
                         spreadRadius: 1,
                         blurRadius: 8,
                         offset: const Offset(0, 4),
@@ -1058,22 +1039,17 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                     ],
                   ),
                   child: Column(
-                    children: [
-                      Icon(Icons.speed, size: 32, color: Colors.blue[600]),
+                    children: [                      Icon(Icons.speed, size: 32, color: AppColors.info),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Fast Detection',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleSmall,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Results in seconds',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -1085,11 +1061,11 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.white,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
+                        color: AppColors.grey300.withValues(alpha: 0.3),
                         spreadRadius: 1,
                         blurRadius: 8,
                         offset: const Offset(0, 4),
@@ -1097,22 +1073,17 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                     ],
                   ),
                   child: Column(
-                    children: [
-                      Icon(Icons.psychology, size: 32, color: Colors.purple[600]),
+                    children: [                      Icon(Icons.psychology, size: 32, color: AppColors.primaryGreen),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'AI Powered',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleSmall,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Advanced analysis',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -1120,23 +1091,22 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 40),
+          ),          const SizedBox(height: 40),
           
           // Action buttons
           Container(
             width: double.infinity,
             height: 60,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF00C851), Color(0xFF00A142)],
+              gradient: LinearGradient(
+                colors: [AppColors.primaryGreen, AppColors.primaryGreen.withValues(alpha: 0.8)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF00C851).withOpacity(0.3),
+                  color: AppColors.primaryGreen.withValues(alpha: 0.3),
                   spreadRadius: 2,
                   blurRadius: 10,
                   offset: const Offset(0, 4),
@@ -1152,13 +1122,11 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                 ),
               ),
               onPressed: () => _getImage(ImageSource.camera),
-              icon: const Icon(Icons.camera_alt, size: 28, color: Colors.white),
-              label: const Text(
+              icon: const Icon(Icons.camera_alt, size: 28, color: AppColors.white),              label: Text(
                 'Take Photo',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppColors.white,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -1168,12 +1136,12 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
             width: double.infinity,
             height: 60,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.grey[300]!, width: 2),
+              border: Border.all(color: AppColors.grey300, width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: AppColors.grey300.withValues(alpha: 0.3),
                   spreadRadius: 1,
                   blurRadius: 8,
                   offset: const Offset(0, 4),
@@ -1189,13 +1157,11 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                 ),
               ),
               onPressed: () => _getImage(ImageSource.gallery),
-              icon: Icon(Icons.photo_library, size: 28, color: Colors.grey[700]),
-              label: Text(
+              icon: Icon(Icons.photo_library, size: 28, color: AppColors.textPrimary),              label: Text(
                 'Upload from Gallery',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[700],
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
