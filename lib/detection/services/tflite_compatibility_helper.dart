@@ -56,7 +56,7 @@ class TFLiteCompatibilityHelper {
           debugPrint('File exists and is ${await tempFile.length()} bytes');
         }
         
-        return await Interpreter.fromFile(tempFile);
+        return Interpreter.fromFile(tempFile);
       } catch (e) {
         debugPrint('Method 2 failed: $e');
         debugPrint('Error details: ${e.toString()}');
