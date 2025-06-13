@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:ayni/detection/services/plant_disease_classifier.dart';
 import 'package:ayni/detection/services/detection_history_service.dart';
 import 'package:ayni/detection/presentation/pages/detection_history_page.dart';
+import 'package:ayni/detection/presentation/pages/detection_detail_page.dart';
+import 'package:ayni/detection/data/models/detection_history_item.dart';
 
 class CameraPage extends StatefulWidget {
   const CameraPage({super.key});
@@ -219,8 +221,9 @@ class _CameraPageState extends State<CameraPage> {
       });
 
       // Save to history
+      DetectionHistoryItem? savedItem;
       try {
-        await _historyService.saveDetection(
+        savedItem = await _historyService.saveDetection(
           disease: result.disease,
           diseaseName: result.formattedDiseaseName,
           confidence: result.confidence,
@@ -233,6 +236,15 @@ class _CameraPageState extends State<CameraPage> {
         // Continue with detection even if history save fails
       }
 
+      // Navegar a la página de detalle si se guardó correctamente
+      if (savedItem != null && mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => DetectionDetailPage(detection: savedItem!),
+          ),
+        );
+        return;
+      }
       // Display the result
       _showResultDialog(result.disease, result.confidence, result.recommendation);
       
