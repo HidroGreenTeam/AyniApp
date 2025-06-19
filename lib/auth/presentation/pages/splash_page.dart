@@ -41,6 +41,8 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
   late Animation<Offset> _textSlideAnimation;
   late Animation<double> _rotationAnimation;
 
+  bool _isDisposed = false;
+
   @override
   void initState() {
     super.initState();
@@ -96,19 +98,22 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
 
   void _startAnimations() async {
     await Future.delayed(const Duration(milliseconds: 300));
+    if (!mounted || _isDisposed) return;
     _logoController.forward();
 
     await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted || _isDisposed) return;
     _textController.forward();
 
     await Future.delayed(const Duration(milliseconds: 300));
+    if (!mounted || _isDisposed) return;
     _loadingController.forward();
     // Iniciar rotación suave continua
     _rotationController.repeat();
     // Timer de seguridad: solo en modo release para evitar problemas en tests
     if (!kDebugMode) {
       Future.delayed(const Duration(seconds: 4), () {
-        if (mounted && context.mounted) {
+        if (mounted && context.mounted && !_isDisposed) {
           _handleTimeoutNavigation(context);
         }
       });
@@ -117,10 +122,27 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _logoController.dispose();
-    _textController.dispose();
-    _loadingController.dispose();
-    _rotationController.dispose();
+    _isDisposed = true;
+    try {
+      _logoController.dispose();
+    } catch (e) {
+      // Controller already disposed
+    }
+    try {
+      _textController.dispose();
+    } catch (e) {
+      // Controller already disposed
+    }
+    try {
+      _loadingController.dispose();
+    } catch (e) {
+      // Controller already disposed
+    }
+    try {
+      _rotationController.dispose();
+    } catch (e) {
+      // Controller already disposed
+    }
     super.dispose();
   }
 
@@ -133,7 +155,7 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
         if (state.status != AuthStatus.initial &&
             state.status != AuthStatus.loading) {
           Future.delayed(const Duration(milliseconds: 1500), () {
-            if (mounted && context.mounted) {
+            if (mounted && context.mounted && !_isDisposed) {
               _navigateBasedOnAuthStatus(context, state.status);
             }
           });

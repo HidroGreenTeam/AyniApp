@@ -23,7 +23,6 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
   String? _detectedDisease;
   double? _confidence;
-  String? _recommendation;
   
   // Animation controllers
   late AnimationController _pulseController;
@@ -339,7 +338,6 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
         _isProcessing = false;
         _detectedDisease = result.disease;
         _confidence = result.confidence;
-        _recommendation = result.recommendation;
       });
 
       DetectionHistoryItem? savedItem;
