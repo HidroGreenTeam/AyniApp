@@ -14,7 +14,9 @@ class MyPlantsPage extends StatelessWidget {
     final token = serviceLocator<StorageService>().getToken();
     if (token == null || token.isEmpty) {
       Future.microtask(() {
-        Navigator.of(context).pushReplacementNamed('/login');
+        if (context.mounted) {
+          Navigator.of(context).pushReplacementNamed('/login');
+        }
       });
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -34,15 +36,17 @@ class MyPlantsPage extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.add),
                 onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(
-                        value: BlocProvider.of<CropBloc>(context),
-                        child: const PlantFormPage(),
+                  if (context.mounted) {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BlocProvider.value(
+                          value: BlocProvider.of<CropBloc>(context),
+                          child: const PlantFormPage(),
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  }
                 },
               ),
             ],
@@ -55,7 +59,9 @@ class MyPlantsPage extends StatelessWidget {
                 final error = state.errorMessage ?? '';
                 if (error.contains('401') || error.toLowerCase().contains('unauthorized')) {
                   Future.microtask(() {
-                    Navigator.of(context).pushReplacementNamed('/login');
+                    if (context.mounted) {
+                      Navigator.of(context).pushReplacementNamed('/login');
+                    }
                   });
                   return const Center(child: Text('Sesión expirada. Redirigiendo...'));
                 }
@@ -89,15 +95,17 @@ class MyPlantsPage extends StatelessWidget {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         onPressed: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BlocProvider.value(
-                                value: BlocProvider.of<CropBloc>(context),
-                                child: const PlantFormPage(),
+                          if (context.mounted) {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => BlocProvider.value(
+                                  value: BlocProvider.of<CropBloc>(context),
+                                  child: const PlantFormPage(),
+                                ),
                               ),
-                            ),
-                          );
+                            );
+                          }
                         },
                         icon: const Icon(Icons.add),
                         label: const Text('Añade tu primera planta', style: TextStyle(fontSize: 16)),
@@ -179,15 +187,17 @@ class MyPlantsPage extends StatelessWidget {
                                     icon: Icon(Icons.more_vert, color: AppColors.grey600),
                                     onSelected: (value) async {
                                       if (value == 'edit') {
-                                        await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => BlocProvider.value(
-                                              value: BlocProvider.of<CropBloc>(context),
-                                              child: PlantFormPage(crop: crop),
+                                        if (context.mounted) {
+                                          await Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => BlocProvider.value(
+                                                value: BlocProvider.of<CropBloc>(context),
+                                                child: PlantFormPage(crop: crop),
+                                              ),
                                             ),
-                                          ),
-                                        );
+                                          );
+                                        }
                                       } else if (value == 'delete') {
                                         final confirm = await showDialog<bool>(
                                           context: context,
@@ -365,7 +375,7 @@ class MyPlantsView extends StatelessWidget {
                               ],
                             ),
                           );
-                          if (confirm == true) {
+                          if (confirm == true && context.mounted) {
                             context.read<CropBloc>().add(DeleteCrop(crop.id));
                           }
                         },
