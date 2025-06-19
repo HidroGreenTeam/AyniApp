@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:ayni/plant/domain/entities/crop.dart';
 import 'package:ayni/core/network/network_client.dart';
 
@@ -67,6 +68,36 @@ class CropRepository {
       requiresAuth: true,
     );
     if (!response.success) {
+      throw Exception(response.error ?? 'Unknown error');
+    }
+  }
+
+  Future<Crop> updateCropImage(int cropId, File imageFile) async {
+    final response = await networkClient.request<Crop>(
+      endpoint: 'api/v1/crops/$cropId/cropImage',
+      method: RequestMethod.put,
+      data: {'file': imageFile},
+      fromJson: (json) => Crop.fromJson(json),
+      requiresAuth: true,
+      isMultipart: true,
+    );
+    if (response.success && response.data != null) {
+      return response.data!;
+    } else {
+      throw Exception(response.error ?? 'Unknown error');
+    }
+  }
+
+  Future<Crop> deleteCropImage(int cropId) async {
+    final response = await networkClient.request<Crop>(
+      endpoint: 'api/v1/crops/$cropId/cropImage',
+      method: RequestMethod.delete,
+      fromJson: (json) => Crop.fromJson(json),
+      requiresAuth: true,
+    );
+    if (response.success && response.data != null) {
+      return response.data!;
+    } else {
       throw Exception(response.error ?? 'Unknown error');
     }
   }

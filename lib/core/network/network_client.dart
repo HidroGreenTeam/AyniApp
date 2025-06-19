@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
 import '../services/storage_service.dart';
@@ -26,19 +27,24 @@ class NetworkClient {
     required StorageService storageService,
   }) : _client = client ?? http.Client(),
        _storageService = storageService;
+
   Future<ApiResponse<T>> request<T>({
     required String endpoint,
     required RequestMethod method,
     Map<String, dynamic>? data,
     Map<String, String>? headers,
-    T Function(dynamic)? fromJson, // Cambia el tipo a dynamic
+    T Function(dynamic)? fromJson,
     bool requiresAuth = true,
+    bool isMultipart = false,
   }) async {
     final url = Uri.parse(ApiConstants.baseUrl + endpoint);
     final requestHeaders = {
-      'Content-Type': 'application/json',
       ...?headers,
     };
+
+    if (!isMultipart) {
+      requestHeaders['Content-Type'] = 'application/json';
+    }
 
     // Add authorization header if authentication is required
     if (requiresAuth) {
@@ -51,38 +57,45 @@ class NetworkClient {
     http.Response response;
 
     try {
-      switch (method) {
-        case RequestMethod.get:
-          response = await _client.get(url, headers: requestHeaders);
-          break;
-        case RequestMethod.post:
-          response = await _client.post(
-            url,
-            headers: requestHeaders,
-            body: data != null ? jsonEncode(data) : null,
-          );
-          break;
-        case RequestMethod.put:
-          response = await _client.put(
-            url,
-            headers: requestHeaders,
-            body: data != null ? jsonEncode(data) : null,
-          );
-          break;
-        case RequestMethod.delete:
-          response = await _client.delete(
-            url,
-            headers: requestHeaders,
-            body: data != null ? jsonEncode(data) : null,
-          );
-          break;
+      if (isMultipart && data != null && data['file'] is File) {
+        final request = http.MultipartRequest(method.toString().split('.').last.toUpperCase(), url);
+        request.headers.addAll(requestHeaders);
+        request.files.add(await http.MultipartFile.fromPath('file', data['file'].path));
+        final streamedResponse = await request.send();
+        response = await http.Response.fromStream(streamedResponse);
+      } else {
+        switch (method) {
+          case RequestMethod.get:
+            response = await _client.get(url, headers: requestHeaders);
+            break;
+          case RequestMethod.post:
+            response = await _client.post(
+              url,
+              headers: requestHeaders,
+              body: data != null ? jsonEncode(data) : null,
+            );
+            break;
+          case RequestMethod.put:
+            response = await _client.put(
+              url,
+              headers: requestHeaders,
+              body: data != null ? jsonEncode(data) : null,
+            );
+            break;
+          case RequestMethod.delete:
+            response = await _client.delete(
+              url,
+              headers: requestHeaders,
+              body: data != null ? jsonEncode(data) : null,
+            );
+            break;
+        }
       }
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (fromJson != null && response.body.isNotEmpty) {
           try {
             final jsonData = jsonDecode(response.body);
-            // Permitir Map o List
             if (jsonData is Map<String, dynamic> || jsonData is List) {
               return ApiResponse<T>(
                 data: fromJson(jsonData),
@@ -103,7 +116,7 @@ class NetworkClient {
         }
         return ApiResponse<T>(success: true);
       } else {
-        String errorMessage = 'Request failed with status: {response.statusCode}';
+        String errorMessage = 'Request failed with status: ${response.statusCode}';
         try {
           if (response.body.isNotEmpty) {
             final errorJson = jsonDecode(response.body);

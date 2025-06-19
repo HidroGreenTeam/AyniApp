@@ -41,4 +41,23 @@ class CropModel {
     };
   }
 
+  CropModel copyWith({
+    int? id,
+    String? cropName,
+    String? irrigationType,
+    int? area,
+    String? plantingDate,
+    int? farmerId,
+    String? imageUrl,
+  }) {
+    return CropModel(
+      id: id ?? this.id,
+      cropName: cropName ?? this.cropName,
+      irrigationType: irrigationType ?? this.irrigationType,
+      area: area ?? this.area,
+      plantingDate: plantingDate ?? this.plantingDate,
+      farmerId: farmerId ?? this.farmerId,
+      imageUrl: imageUrl ?? this.imageUrl,
+    );
+  }
 }
