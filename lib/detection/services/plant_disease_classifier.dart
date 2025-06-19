@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:image/image.dart' as img;
 import 'tflite_compatibility_helper.dart';
@@ -29,60 +29,60 @@ class PlantDiseaseClassifier {
     if (_isInitialized) return true;
 
     try {
-      print('Starting plant disease classifier initialization...');
+      debugPrint('Starting plant disease classifier initialization...');
       
       // Try to create a compatible interpreter using the helper
       _interpreter = await TFLiteCompatibilityHelper.createCompatibleInterpreter();
       
       if (_interpreter == null) {
-        print('Failed to initialize interpreter - model may be incompatible with tflite_flutter');
-        print('Please check MODEL_COMPATIBILITY.md for instructions on using a compatible model');
+        debugPrint('Failed to initialize interpreter - model may be incompatible with tflite_flutter');
+        debugPrint('Please check MODEL_COMPATIBILITY.md for instructions on using a compatible model');
         return false;
       }
       
-      print('Interpreter created successfully');
+      debugPrint('Interpreter created successfully');
       
       try {
         // Print model input/output tensor info for debugging
         final inputTensors = _interpreter!.getInputTensors();
         final outputTensors = _interpreter!.getOutputTensors();
         
-        print('Model input tensors: ${inputTensors.length}');
+        debugPrint('Model input tensors: ${inputTensors.length}');
         for (var i = 0; i < inputTensors.length; i++) {
-          print('  Input tensor $i: shape=${inputTensors[i].shape}, type=${inputTensors[i].type}');
+          debugPrint('  Input tensor $i: shape=${inputTensors[i].shape}, type=${inputTensors[i].type}');
         }
         
-        print('Model output tensors: ${outputTensors.length}');
+        debugPrint('Model output tensors: ${outputTensors.length}');
         for (var i = 0; i < outputTensors.length; i++) {
-          print('  Output tensor $i: shape=${outputTensors[i].shape}, type=${outputTensors[i].type}');
+          debugPrint('  Output tensor $i: shape=${outputTensors[i].shape}, type=${outputTensors[i].type}');
         }
       } catch (e) {
-        print('Warning: Could not get tensor details: $e');
+        debugPrint('Warning: Could not get tensor details: $e');
       }
       
       // Load labels
       _labels = await TFLiteCompatibilityHelper.loadLabels();
       
       if (_labels == null || _labels!.isEmpty) {
-        print('Failed to load labels or labels are empty');
+        debugPrint('Failed to load labels or labels are empty');
         return false;
       }
       
-      print('Model and labels loaded successfully');
-      print('Label count: ${_labels!.length}');
+      debugPrint('Model and labels loaded successfully');
+      debugPrint('Label count: ${_labels!.length}');
       _isInitialized = true;
       return true;
     } catch (e) {
-      print('Error initializing plant disease classifier: $e');
-      print('Error details: ${e.toString()}');
+      debugPrint('Error initializing plant disease classifier: $e');
+      debugPrint('Error details: ${e.toString()}');
       
       // Provide more specific guidance based on common error patterns
       if (e.toString().contains('FULLY_CONNECTED')) {
-        print('Error: This model uses FULLY_CONNECTED ops that are not supported by the current tflite_flutter version.');
-        print('Solution: Replace model with a compatible version or downgrade the operations in your model.');
+        debugPrint('Error: This model uses FULLY_CONNECTED ops that are not supported by the current tflite_flutter version.');
+        debugPrint('Solution: Replace model with a compatible version or downgrade the operations in your model.');
       } else if (e.toString().contains('Could not find')) {
-        print('Error: Model contains unsupported operations for this version of tflite_flutter.');
-        print('Solution: Use a simpler model or one specifically compatible with tflite_flutter 0.11.0');
+        debugPrint('Error: Model contains unsupported operations for this version of tflite_flutter.');
+        debugPrint('Solution: Use a simpler model or one specifically compatible with tflite_flutter 0.11.0');
       }
       
       return false;
@@ -91,21 +91,21 @@ class PlantDiseaseClassifier {
 
   Future<PlantDiseaseResult?> classifyImage(File imageFile) async {
     if (!_isInitialized || _interpreter == null || _labels == null) {
-      print('Classifier not initialized, attempting to initialize now...');
+      debugPrint('Classifier not initialized, attempting to initialize now...');
       if (!await initialize()) {
-        print('Failed to initialize classifier');
+        debugPrint('Failed to initialize classifier');
         return null;
       }
     }
 
     try {
-      print('Starting image classification...');
+      debugPrint('Starting image classification...');
       // Preprocess the image
       var imageBytes = await imageFile.readAsBytes();
       img.Image? originalImage = img.decodeImage(imageBytes);
 
       if (originalImage == null) {
-        print("Failed to decode image");
+        debugPrint("Failed to decode image");
         return null;
       }
 
@@ -145,7 +145,7 @@ class PlantDiseaseClassifier {
         [1, numClasses]
       );
 
-      print('Running inference...');
+      debugPrint('Running inference...');
       // Run inference
       _interpreter!.run(reshapedInput, reshapedOutput);
       
@@ -158,7 +158,7 @@ class PlantDiseaseClassifier {
 
       // Process the output
       List<double> outputList = outputBuffer.toList();
-      print('Output values: $outputList');
+      debugPrint('Output values: $outputList');
 
       // Get the index of the highest probability
       int maxIndex = 0;
@@ -176,7 +176,7 @@ class PlantDiseaseClassifier {
         disease = _labels![maxIndex];
       }
 
-      print('Detected disease: $disease with confidence: $maxValue');
+      debugPrint('Detected disease: $disease with confidence: $maxValue');
 
       return PlantDiseaseResult(
         disease: disease,
@@ -185,7 +185,7 @@ class PlantDiseaseClassifier {
         recommendation: _getRecommendationForDisease(disease),
       );
     } catch (e) {
-      print('Error during classification: $e');
+      debugPrint('Error during classification: $e');
       return null;
     }
   }
@@ -246,7 +246,7 @@ class PlantDiseaseClassifier {
 
       for (int i = 0; i < currentShape[0]; i++) {
         if (list.length < (i + 1) * nextDimSize && currentShape.length > 1) {
-            print("Warning: Not enough elements for full reshape.");
+            debugPrint("Warning: Not enough elements for full reshape.");
             break;
         }
         result.add(reshape(
@@ -265,7 +265,7 @@ class PlantDiseaseClassifier {
       try {
         _interpreter!.close();
       } catch (e) {
-        print('Error closing interpreter: $e');
+        debugPrint('Error closing interpreter: $e');
       }
     }
   }

@@ -68,7 +68,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
     });
     
     try {
-      print('Attempting to initialize plant disease classifier...');
+      debugPrint('Attempting to initialize plant disease classifier...');
       final success = await _classifier.initialize();
       
       if (!success) {
@@ -91,10 +91,10 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
           _isInitializing = false;
         });
         _fadeController.forward();
-        print('Successfully initialized plant disease classifier');
+        debugPrint('Successfully initialized plant disease classifier');
       }
     } catch (e) {
-      print('Error initializing classifier: $e');
+      debugPrint('Error initializing classifier: $e');
       
       setState(() {
         _initError = 'Error initializing: $e';
@@ -292,7 +292,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
         await _runInference();
       }
     } catch (e) {
-      print('Error picking image: $e');
+      debugPrint('Error picking image: $e');
       setState(() {
         _isProcessing = false;
       });
@@ -351,7 +351,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
         );
         _showSuccessSnackBar('Detection saved to history successfully');
       } catch (e) {
-        print('Error saving to history: $e');
+        debugPrint('Error saving to history: $e');
       }
 
       if (savedItem != null && mounted) {
@@ -366,7 +366,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
       _showResultDialog(result.disease, result.confidence, result.recommendation);
       
     } catch (e) {
-      print('Error during inference: $e');
+      debugPrint('Error during inference: $e');
       setState(() {
         _isProcessing = false;
       });
@@ -1197,7 +1197,7 @@ extension ReshapeList<T> on List<T> {
 
       for (int i = 0; i < currentShape[0]; i++) {
         if (list.length < (i + 1) * nextDimSize && currentShape.length > 1) {
-            print("Warning: Not enough elements for full reshape, check dimensions and list size.");
+            debugPrint("Warning: Not enough elements for full reshape, check dimensions and list size.");
             break;
         }
         result.add(reshape(list.sublist(i * nextDimSize, (i + 1) * nextDimSize), currentShape.sublist(1)));

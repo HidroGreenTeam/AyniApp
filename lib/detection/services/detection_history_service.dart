@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -53,7 +54,7 @@ class DetectionHistoryService {
       
       return historyItem;
     } catch (e) {
-      print('Error saving detection to history: $e');
+      debugPrint('Error saving detection to history: $e');
       rethrow;
     }
   }
@@ -68,7 +69,7 @@ class DetectionHistoryService {
         return DetectionHistoryItem.fromMap(json.decode(item));
       }).toList();
     } catch (e) {
-      print('Error retrieving detection history: $e');
+      debugPrint('Error retrieving detection history: $e');
       return [];
     }
   }
@@ -89,7 +90,7 @@ class DetectionHistoryService {
       
       await prefs.setStringList(_prefKey, historyJson);
     } catch (e) {
-      print('Error adding to detection history: $e');
+      debugPrint('Error adding to detection history: $e');
       rethrow;
     }
   }
@@ -124,7 +125,7 @@ class DetectionHistoryService {
       // Save the updated history
       await prefs.setStringList(_prefKey, updatedHistory);
     } catch (e) {
-      print('Error deleting detection from history: $e');
+      debugPrint('Error deleting detection from history: $e');
       rethrow;
     }
   }

@@ -107,7 +107,7 @@ class TFLiteCompatibilityHelper {
           .map((label) => label.trim())
           .where((label) => label.isNotEmpty)
           .toList();
-      
+
       debugPrint('Labels loaded successfully: $labels');
       return labels;
     } catch (e) {

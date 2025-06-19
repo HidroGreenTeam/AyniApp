@@ -35,7 +35,7 @@ class _DetectionHistoryPageState extends State<DetectionHistoryPage> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading history: $e');
+      debugPrint('Error loading history: $e');
       setState(() {
         _isLoading = false;
       });
@@ -59,7 +59,7 @@ class _DetectionHistoryPageState extends State<DetectionHistoryPage> {
         );
       }
     } catch (e) {
-      print('Error deleting history item: $e');
+      debugPrint('Error deleting history item: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error deleting: $e')),
