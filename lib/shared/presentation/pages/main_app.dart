@@ -32,6 +32,7 @@ class _MainAppState extends State<MainApp> {
       _selectedIndex = index;
     });
   }
+  
   @override
   Widget build(BuildContext context) {
     return AuthGuard(
@@ -42,49 +43,37 @@ class _MainAppState extends State<MainApp> {
         ),
         bottomNavigationBar: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
-          currentIndex: _selectedIndex,          selectedItemColor: AppColors.primaryGreen,
-          unselectedItemColor: AppColors.grey500,
-          showSelectedLabels: true,
-          showUnselectedLabels: true,
+          currentIndex: _selectedIndex,
           onTap: _onItemTapped,
-          items: [
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.search),
-              label: 'Diagnose',
+          selectedItemColor: Theme.of(context).colorScheme.primary,
+          unselectedItemColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          elevation: 8,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Inicio',
             ),
             BottomNavigationBarItem(
-              icon: Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,                  color: AppColors.primaryGreen,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.black.withValues(alpha: 0.2),
-                      spreadRadius: 2,
-                      blurRadius: 5,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),                child: const Icon(
-                  Icons.camera_alt,
-                  color: AppColors.white,
-                  size: 28,
-                ),
-              ),
-              label: '',
+              icon: Icon(Icons.search_outlined),
+              activeIcon: Icon(Icons.search),
+              label: 'Diagnosticar',
             ),
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
+              icon: Icon(Icons.camera_alt_outlined),
+              activeIcon: Icon(Icons.camera_alt),
+              label: 'Cámara',
+            ),
+            BottomNavigationBarItem(
               icon: Icon(Icons.eco_outlined),
-              label: 'My Plants',
+              activeIcon: Icon(Icons.eco),
+              label: 'Mis Plantas',
             ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Account',
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'Cuenta',
             ),
           ],
         ),

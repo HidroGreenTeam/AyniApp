@@ -7,23 +7,28 @@ class DiagnosePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(      appBar: AppBar(
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
         title: const Text('Plant Diagnosis'),
-        backgroundColor: AppColors.primaryGreen,
-        foregroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         elevation: 0,
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [            Icon(Icons.search, size: 80, color: AppColors.grey400),
+          children: [
+            Icon(
+              Icons.search, 
+              size: 80, 
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
             const SizedBox(height: 16),
             Text(
               'Diagnose Plant Health',
-              style: TextStyle(
-                fontSize: 22,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: AppColors.grey800,
               ),
             ),
             const SizedBox(height: 8),
@@ -31,30 +36,25 @@ class DiagnosePage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 32.0),
               child: Text(
                 'Take a photo of your plant to diagnose diseases or identify issues',
-                textAlign: TextAlign.center,                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.grey600,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ),
             const SizedBox(height: 40),
-            ElevatedButton.icon(              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryGreen,
-                foregroundColor: AppColors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),              onPressed: () {
-                Navigator.of(context).push(
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
                   MaterialPageRoute(
                     builder: (context) => const DetectionModeSelectionPage(),
                   ),
                 );
               },
               icon: const Icon(Icons.camera_alt),
-              label: const Text('Start Detection', style: TextStyle(fontSize: 16)),
-            )
+              label: const Text('Start Diagnosis'),
+            ),
           ],
         ),
       ),

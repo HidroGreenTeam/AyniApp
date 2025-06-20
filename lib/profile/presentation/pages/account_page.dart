@@ -7,6 +7,7 @@ import '../../../auth/presentation/pages/splash_page.dart';
 import 'profile_management_page.dart';
 import 'profile_search_page.dart';
 import 'profile_page.dart';
+import 'appearance_settings_page.dart';
 
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
@@ -150,26 +151,15 @@ class AccountView extends StatelessWidget {
                     ),
 
                     _buildMenuItem(
-                      icon: Icons.link,
-                      title: 'Cuentas Vinculadas',
-                      onTap: () {
-                        // TODO: Implement linked accounts
-                      },
-                    ),
-
-                    _buildMenuItem(
                       icon: Icons.remove_red_eye_outlined,
                       title: 'Apariencia de la App',
                       onTap: () {
-                        // TODO: Implement app appearance
-                      },
-                    ),
-
-                    _buildMenuItem(
-                      icon: Icons.analytics_outlined,
-                      title: 'Datos y Analíticas',
-                      onTap: () {
-                        // TODO: Implement data analytics
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AppearanceSettingsPage(),
+                          ),
+                        );
                       },
                     ),
 

@@ -66,6 +66,9 @@ dependencies:
   
   # For connectivity checking
   connectivity_plus: ^6.0.5
+  
+  # For theme state management
+  provider: ^6.1.2
 
 dev_dependencies:
   flutter_test:

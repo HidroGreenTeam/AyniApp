@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../network/network_client.dart';
 import '../services/storage_service.dart';
 import '../services/connectivity_service.dart';
+import '../services/theme_service.dart';
 import '../../auth/data/datasources/auth_data_source.dart';
 import '../../auth/data/repositories/auth_repository.dart';
 import '../../auth/domain/usecases/sign_in_use_case.dart';
@@ -53,6 +54,10 @@ Future<void> initDependencies() async {
   // Services
   serviceLocator.registerSingleton<ConnectivityService>(
     ConnectivityService(),
+  );
+
+  serviceLocator.registerSingleton<ThemeService>(
+    ThemeService(),
   );
 
   serviceLocator.registerSingleton<HybridDetectionService>(

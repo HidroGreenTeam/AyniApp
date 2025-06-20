@@ -18,18 +18,18 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(),
-              _buildSearchBar(),
-              _buildSectionTitle(),
-              Expanded(child: _buildDiseasesGrid()),
+              _buildHeader(context),
+              _buildSearchBar(context),
+              _buildSectionTitle(context),
+              Expanded(child: _buildDiseasesGrid(context)),
             ],
           ),
         ),
@@ -37,72 +37,38 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 16.0),
+      padding: const EdgeInsets.symmetric(vertical: 20.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Logo and title
-          Row(
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.eco,
+              color: Theme.of(context).colorScheme.onPrimary,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Image.asset(
-                'assets/icons/plant_logo.png',
-                width: 35,
-                height: 35,                errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.eco,
-                  color: AppColors.primaryGreen,
-                  size: 35,
+              Text(
+                '¡Hola!',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(width: 8),              const Text(
-                'Ayni',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          
-          // Notification and bookmark buttons
-          Row(
-            children: [              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.grey100,
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: Stack(
-                    children: [
-                      const Icon(Icons.notifications_outlined, color: AppColors.textSecondary),
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppColors.error,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  onPressed: () {},
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.grey100,
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.bookmark_outline, color: AppColors.textSecondary),
-                  onPressed: () {},
+              Text(
+                '¿Qué vamos a diagnosticar hoy?',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -112,82 +78,30 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppColors.grey100,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.search, color: AppColors.grey500, size: 20),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textPrimary,
-                ),
-                decoration: InputDecoration(
-                  isDense: true,
-                  hintText: 'Buscar enfermedades...',
-                  hintStyle: TextStyle(
-                    color: AppColors.grey500,
-                    fontSize: 14,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ),
-          ],
+  Widget _buildSearchBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
-    );
-  }
-
-  Widget _buildSectionTitle() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            'Enfermedades Detectables',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
+          Icon(
+            Icons.search,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+            size: 20,
           ),
-          TextButton(
-            onPressed: () {},
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.zero,
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Text(
-                  'Ver Todas',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.primaryGreen,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(width: 2),
-                Icon(
-                  Icons.chevron_right,
-                  color: AppColors.primaryGreen,
-                  size: 16,
-                ),
-              ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Buscar enfermedades...',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
             ),
           ),
         ],
@@ -195,21 +109,32 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildDiseasesGrid() {
-    // Get detectable diseases (excluding nodisease)
-    final List<DiseaseInfo> diseases = DiseaseRepository.getDiseases();
+  Widget _buildSectionTitle(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24.0),
+      child: Text(
+        'Enfermedades Detectables',
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDiseasesGrid(BuildContext context) {
+    final diseases = _getDiseases();
     
     return GridView.builder(
-      padding: const EdgeInsets.only(top: 8),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 1.05,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.85,
       ),
       itemCount: diseases.length,
       itemBuilder: (context, index) {
-        return _buildDiseaseCard(context, diseases[index]);
+        final disease = diseases[index];
+        return _buildDiseaseCard(context, disease);
       },
     );
   }
@@ -217,7 +142,8 @@ class HomePage extends StatelessWidget {
   Widget _buildDiseaseCard(BuildContext context, DiseaseInfo disease) {
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
+        Navigator.push(
+          context,
           MaterialPageRoute(
             builder: (context) => DiseaseDetailPage(disease: disease),
           ),
@@ -225,85 +151,74 @@ class HomePage extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.black.withValues(alpha: 0.05),
-              blurRadius: 4,
+              color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.1),
+              spreadRadius: 1,
+              blurRadius: 8,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Disease icon
-              Container(
-                width: 40,
-                height: 40,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: Container(
+                width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: _getDiseaseColor(disease.id).withValues(alpha: 0.1),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
                 ),
                 child: Icon(
                   _getDiseaseIcon(disease.id),
-                  color: AppColors.primaryGreen,
-                  size: 20,
+                  size: 48,
+                  color: _getDiseaseColor(disease.id),
                 ),
               ),
-              const SizedBox(height: 8),
-              // Disease name
-              Text(
-                disease.name,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              // Disease description preview
-              Text(
-                disease.description,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textSecondary,
-                  height: 1.3,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const Spacer(),
-              // Learn more indicator
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Ver más',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.primaryGreen,
-                      fontWeight: FontWeight.w500,
+            ),
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      disease.name,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(width: 2),
-                  Icon(
-                    Icons.chevron_right,
-                    color: AppColors.primaryGreen,
-                    size: 14,
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      disease.description,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  List<DiseaseInfo> _getDiseases() {
+    return DiseaseRepository.getDiseases();
   }
 
   IconData _getDiseaseIcon(String diseaseId) {
@@ -318,6 +233,21 @@ class HomePage extends StatelessWidget {
         return Icons.warning;
       default:
         return Icons.eco;
+    }
+  }
+
+  Color _getDiseaseColor(String diseaseId) {
+    switch (diseaseId) {
+      case 'miner':
+        return Colors.orange;
+      case 'phoma':
+        return Colors.brown;
+      case 'redspider':
+        return Colors.red;
+      case 'rust':
+        return Colors.orange;
+      default:
+        return Colors.green;
     }
   }
 }
