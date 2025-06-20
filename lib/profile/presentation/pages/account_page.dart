@@ -8,6 +8,8 @@ import 'profile_management_page.dart';
 import 'profile_search_page.dart';
 import 'profile_page.dart';
 import 'appearance_settings_page.dart';
+import 'payment_methods_page.dart';
+import 'language_selection_page.dart';
 
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
@@ -146,7 +148,12 @@ class AccountView extends StatelessWidget {
                       icon: Icons.credit_card_outlined,
                       title: 'Métodos de Pago',
                       onTap: () {
-                        // TODO: Implement payment methods
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const PaymentMethodsPage(),
+                          ),
+                        );
                       },
                     ),
 
@@ -170,7 +177,12 @@ class AccountView extends StatelessWidget {
                       icon: Icons.language,
                       title: 'Cambio de Idioma',
                       onTap: () {
-                        // TODO: Implement language change
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const LanguageSelectionPage(),
+                          ),
+                        );
                       },
                     ),
 

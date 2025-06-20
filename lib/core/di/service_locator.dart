@@ -5,6 +5,7 @@ import '../network/network_client.dart';
 import '../services/storage_service.dart';
 import '../services/connectivity_service.dart';
 import '../services/theme_service.dart';
+import '../services/localization_service.dart';
 import '../../auth/data/datasources/auth_data_source.dart';
 import '../../auth/data/repositories/auth_repository.dart';
 import '../../auth/domain/usecases/sign_in_use_case.dart';
@@ -17,12 +18,15 @@ import '../../auth/presentation/blocs/auth_bloc.dart';
 import '../../auth/presentation/blocs/walkthrough_bloc.dart';
 import '../../auth/presentation/viewmodels/login_viewmodel.dart';
 import '../../profile/data/datasources/profile_data_source.dart';
+import '../../profile/data/datasources/payment_method_data_source.dart';
 import '../../profile/domain/repositories/profile_repository.dart';
 import '../../profile/data/repositories/profile_repository_impl.dart';
+import '../../profile/data/repositories/payment_method_repository.dart';
 import '../../auth/presentation/viewmodels/walkthrough_viewmodel.dart';
 import '../../profile/domain/usecases/profile_usecases.dart';
 import '../../profile/presentation/blocs/account_bloc.dart';
 import '../../profile/presentation/blocs/profile_bloc.dart';
+import '../../profile/presentation/blocs/payment_methods_bloc.dart';
 import '../../profile/presentation/viewmodels/account_viewmodel.dart';
 import '../../profile/presentation/viewmodels/profile_viewmodel.dart';
 import '../../plant/data/datasources/crop_data_source.dart';
@@ -60,6 +64,10 @@ Future<void> initDependencies() async {
     ThemeService(),
   );
 
+  serviceLocator.registerSingleton<LocalizationService>(
+    LocalizationService(serviceLocator<StorageService>()),
+  );
+
   serviceLocator.registerSingleton<HybridDetectionService>(
     HybridDetectionService(),
   );
@@ -78,16 +86,29 @@ Future<void> initDependencies() async {
   serviceLocator.registerSingleton<CropDataSource>(
     CropDataSource(serviceLocator<NetworkClient>()),
   );
+
+  // Payment Methods Data Source
+  serviceLocator.registerSingleton<PaymentMethodDataSource>(
+    PaymentMethodDataSourceImpl(serviceLocator<StorageService>()),
+  );
+
   // Repositories
   serviceLocator.registerSingleton<AuthRepository>(
     AuthRepository(
       serviceLocator<AuthDataSource>(),
       serviceLocator<StorageService>(),
-    ),  );  serviceLocator.registerSingleton<ProfileRepository>(
+    ),
+  );
+
+  serviceLocator.registerSingleton<ProfileRepository>(
     ProfileRepositoryImpl(
       serviceLocator<ProfileDataSource>(),
       serviceLocator<StorageService>(),
     ),
+  );
+
+  serviceLocator.registerSingleton<PaymentMethodRepository>(
+    PaymentMethodRepositoryImpl(serviceLocator<PaymentMethodDataSource>()),
   );
 
   serviceLocator.registerSingleton<CropRepository>(
@@ -211,5 +232,10 @@ Future<void> initDependencies() async {
       serviceLocator<GetCurrentUserUseCase>(),
       serviceLocator<CropRepository>(),
     ),
+  );
+
+  // Payment Methods Bloc
+  serviceLocator.registerFactory<PaymentMethodsBloc>(() => 
+    PaymentMethodsBloc(repository: serviceLocator<PaymentMethodRepository>()),
   );
 }
