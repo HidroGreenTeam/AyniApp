@@ -23,7 +23,7 @@ class BillingDataSourceImpl implements BillingDataSource {
   @override
   Future<List<SubscriptionPlan>> getSubscriptionPlans() async {
     try {
-      final data = await _storageService.getString(_plansKey);
+      final data = _storageService.getString(_plansKey);
       if (data == null || data.isEmpty) {
         // Return mock data for demonstration
         return _getMockSubscriptionPlans();
@@ -42,7 +42,7 @@ class BillingDataSourceImpl implements BillingDataSource {
   @override
   Future<Subscription?> getCurrentSubscription() async {
     try {
-      final data = await _storageService.getString(_currentSubscriptionKey);
+      final data = _storageService.getString(_currentSubscriptionKey);
       if (data == null || data.isEmpty) {
         return null;
       }
@@ -57,7 +57,7 @@ class BillingDataSourceImpl implements BillingDataSource {
   @override
   Future<List<BillingHistoryItem>> getBillingHistory() async {
     try {
-      final data = await _storageService.getString(_billingHistoryKey);
+      final data = _storageService.getString(_billingHistoryKey);
       if (data == null || data.isEmpty) {
         // Return mock data for demonstration
         return _getMockBillingHistory();

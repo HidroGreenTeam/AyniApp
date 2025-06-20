@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
 import 'detection_mode_selection_page.dart';
 
 class DiagnosePage extends StatelessWidget {

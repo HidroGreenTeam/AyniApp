@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../detection/data/models/disease_info.dart';
 import '../../../detection/presentation/pages/disease_detail_page.dart';
 
@@ -80,7 +79,7 @@ class HomePage extends StatelessWidget {
 
   Widget _buildSearchBar(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
@@ -198,7 +197,7 @@ class HomePage extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       disease.description,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(

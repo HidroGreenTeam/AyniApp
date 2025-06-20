@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../detection/presentation/pages/diagnose_page.dart';
 import '../../../plant/presentation/pages/my_plants_page.dart';
 import '../../../profile/presentation/pages/account_page.dart';

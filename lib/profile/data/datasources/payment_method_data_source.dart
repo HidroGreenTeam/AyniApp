@@ -19,7 +19,7 @@ class PaymentMethodDataSourceImpl implements PaymentMethodDataSource {
   @override
   Future<List<PaymentMethodModel>> getPaymentMethods() async {
     try {
-      final data = await _storageService.getString(_storageKey);
+      final data = _storageService.getString(_storageKey);
       if (data == null || data.isEmpty) {
         // Return mock data for demonstration
         return _getMockPaymentMethods();
