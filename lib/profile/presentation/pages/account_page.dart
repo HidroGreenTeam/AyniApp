@@ -9,6 +9,7 @@ import 'profile_search_page.dart';
 import 'profile_page.dart';
 import 'appearance_settings_page.dart';
 import 'payment_methods_page.dart';
+import 'billing_page.dart';
 import 'language_selection_page.dart';
 
 class AccountPage extends StatelessWidget {
@@ -91,7 +92,7 @@ class AccountView extends StatelessWidget {
                     const SizedBox(height: 30),
 
                     // Upgrade Plan Card
-                    _buildUpgradePlanCard(),                    const SizedBox(height: 30),
+                    _buildUpgradePlanCard(context),                    const SizedBox(height: 30),
 
                     // Menu Options
                     _buildMenuItem(
@@ -140,7 +141,12 @@ class AccountView extends StatelessWidget {
                       icon: Icons.star_outline,
                       title: 'Facturación y Suscripciones',
                       onTap: () {
-                        // TODO: Implement billing
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const BillingPage(),
+                          ),
+                        );
                       },
                     ),
 
@@ -256,55 +262,70 @@ class AccountView extends StatelessWidget {
     );
   }
 
-  Widget _buildUpgradePlanCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),      decoration: BoxDecoration(
-        color: AppColors.primaryGreen,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,            decoration: const BoxDecoration(
+  Widget _buildUpgradePlanCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const BillingPage(),
+          ),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.primaryGreen,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                color: AppColors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.emoji_events,
+                color: AppColors.primaryGreen,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    '¡Mejora tu plan para desbloquear más!',
+                    style: TextStyle(
+                      color: AppColors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Disfruta de todos los beneficios y explora más posibilidades',
+                    style: TextStyle(
+                      color: AppColors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
               color: AppColors.white,
-              shape: BoxShape.circle,
+              size: 16,
             ),
-            child: const Icon(
-              Icons.emoji_events,
-              color: AppColors.primaryGreen,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  '¡Mejora tu plan para desbloquear más!',                  style: TextStyle(
-                    color: AppColors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Disfruta de todos los beneficios y explora más posibilidades',                  style: TextStyle(
-                    color: AppColors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),          Icon(
-            Icons.arrow_forward_ios,
-            color: AppColors.white,
-            size: 16,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

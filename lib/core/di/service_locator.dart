@@ -19,14 +19,17 @@ import '../../auth/presentation/blocs/walkthrough_bloc.dart';
 import '../../auth/presentation/viewmodels/login_viewmodel.dart';
 import '../../profile/data/datasources/profile_data_source.dart';
 import '../../profile/data/datasources/payment_method_data_source.dart';
+import '../../profile/data/datasources/billing_data_source.dart';
 import '../../profile/domain/repositories/profile_repository.dart';
 import '../../profile/data/repositories/profile_repository_impl.dart';
 import '../../profile/data/repositories/payment_method_repository.dart';
+import '../../profile/data/repositories/billing_repository.dart';
 import '../../auth/presentation/viewmodels/walkthrough_viewmodel.dart';
 import '../../profile/domain/usecases/profile_usecases.dart';
 import '../../profile/presentation/blocs/account_bloc.dart';
 import '../../profile/presentation/blocs/profile_bloc.dart';
 import '../../profile/presentation/blocs/payment_methods_bloc.dart';
+import '../../profile/presentation/blocs/billing_bloc.dart';
 import '../../profile/presentation/viewmodels/account_viewmodel.dart';
 import '../../profile/presentation/viewmodels/profile_viewmodel.dart';
 import '../../plant/data/datasources/crop_data_source.dart';
@@ -92,6 +95,11 @@ Future<void> initDependencies() async {
     PaymentMethodDataSourceImpl(serviceLocator<StorageService>()),
   );
 
+  // Billing Data Source
+  serviceLocator.registerSingleton<BillingDataSource>(
+    BillingDataSourceImpl(serviceLocator<StorageService>()),
+  );
+
   // Repositories
   serviceLocator.registerSingleton<AuthRepository>(
     AuthRepository(
@@ -109,6 +117,10 @@ Future<void> initDependencies() async {
 
   serviceLocator.registerSingleton<PaymentMethodRepository>(
     PaymentMethodRepositoryImpl(serviceLocator<PaymentMethodDataSource>()),
+  );
+
+  serviceLocator.registerSingleton<BillingRepository>(
+    BillingRepositoryImpl(serviceLocator<BillingDataSource>()),
   );
 
   serviceLocator.registerSingleton<CropRepository>(
@@ -237,5 +249,10 @@ Future<void> initDependencies() async {
   // Payment Methods Bloc
   serviceLocator.registerFactory<PaymentMethodsBloc>(() => 
     PaymentMethodsBloc(repository: serviceLocator<PaymentMethodRepository>()),
+  );
+
+  // Billing Bloc
+  serviceLocator.registerFactory<BillingBloc>(() => 
+    BillingBloc(repository: serviceLocator<BillingRepository>()),
   );
 }
