@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../network/network_client.dart';
 import '../services/storage_service.dart';
+import '../services/connectivity_service.dart';
 import '../../auth/data/datasources/auth_data_source.dart';
 import '../../auth/data/repositories/auth_repository.dart';
 import '../../auth/domain/usecases/sign_in_use_case.dart';
@@ -27,6 +28,7 @@ import '../../plant/data/datasources/crop_data_source.dart';
 import '../../plant/data/repositories/crop_repository.dart';
 import '../../plant/domain/usecases/get_all_crops.dart';
 import '../../plant/presentation/bolcs/crop_bloc.dart';
+import '../../detection/services/hybrid_detection_service.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -47,6 +49,16 @@ Future<void> initDependencies() async {
       storageService: serviceLocator<StorageService>(),
     ),
   );
+
+  // Services
+  serviceLocator.registerSingleton<ConnectivityService>(
+    ConnectivityService(),
+  );
+
+  serviceLocator.registerSingleton<HybridDetectionService>(
+    HybridDetectionService(),
+  );
+
   // Data sources
   serviceLocator.registerSingleton<AuthDataSource>(
     AuthDataSource(serviceLocator<NetworkClient>()),

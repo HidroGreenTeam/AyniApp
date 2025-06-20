@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ayni/detection/services/plant_disease_classifier.dart';
+import 'package:ayni/detection/services/hybrid_detection_service.dart';
 import 'package:ayni/detection/services/detection_history_service.dart';
 import 'package:ayni/detection/presentation/pages/detection_history_page.dart';
 import 'package:ayni/detection/presentation/pages/detection_detail_page.dart';
@@ -9,7 +10,9 @@ import 'package:ayni/detection/data/models/detection_history_item.dart';
 import '../../../core/theme/app_theme.dart';
 
 class CameraPage extends StatefulWidget {
-  const CameraPage({super.key});
+  final bool? detectionMode; // true = online, false = local, null = auto
+  
+  const CameraPage({super.key, this.detectionMode});
 
   @override
   State<CameraPage> createState() => _CameraPageState();
@@ -23,6 +26,8 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
   String? _detectedDisease;
   double? _confidence;
+  String? _warningMessage;
+  bool _isOnlineDetection = false;
   
   // Animation controllers
   late AnimationController _pulseController;
@@ -32,13 +37,14 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
   
   // Services
   final PlantDiseaseClassifier _classifier = PlantDiseaseClassifier();
+  final HybridDetectionService _hybridService = HybridDetectionService();
   final DetectionHistoryService _historyService = DetectionHistoryService();
 
   @override
   void initState() {
     super.initState();
     _setupAnimations();
-    _initializeClassifier();
+    _initializeServices();
   }
 
   void _setupAnimations() {
@@ -61,40 +67,50 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
     _pulseController.repeat(reverse: true);
   }
 
-  Future<void> _initializeClassifier() async {
+  Future<void> _initializeServices() async {
     setState(() {
       _isInitializing = true;
       _initError = null;
     });
     
     try {
-      debugPrint('Attempting to initialize plant disease classifier...');
-      final success = await _classifier.initialize();
+      debugPrint('Initializing detection services...');
       
-      if (!success) {
-        setState(() {
-          _initError = 'Failed to initialize plant disease detector';
-          _isInitializing = false;
-        });
+      // Initialize hybrid service
+      final hybridSuccess = await _hybridService.initialize();
+      
+      if (!hybridSuccess) {
+        // Fallback to local classifier
+        debugPrint('Hybrid service failed, falling back to local classifier...');
+        final localSuccess = await _classifier.initialize();
         
-        if (mounted) {
-          _showErrorSnackBar(
-            'Failed to initialize plant disease detector. The model may be incompatible.',
-            action: SnackBarAction(
-              label: 'Details',
-              onPressed: () => _showModelCompatibilityDialog(),
-            ),
-          );
+        if (!localSuccess) {
+          setState(() {
+            _initError = 'Failed to initialize any detection service';
+            _isInitializing = false;
+          });
+          
+          if (mounted) {
+            _showErrorSnackBar(
+              'Failed to initialize detection services. Please try again.',
+              action: SnackBarAction(
+                label: 'Details',
+                onPressed: () => _showModelCompatibilityDialog(),
+              ),
+            );
+          }
+          return;
         }
-      } else {
-        setState(() {
-          _isInitializing = false;
-        });
-        _fadeController.forward();
-        debugPrint('Successfully initialized plant disease classifier');
       }
+      
+      setState(() {
+        _isInitializing = false;
+      });
+      _fadeController.forward();
+      debugPrint('Successfully initialized detection services');
+      
     } catch (e) {
-      debugPrint('Error initializing classifier: $e');
+      debugPrint('Error initializing services: $e');
       
       setState(() {
         _initError = 'Error initializing: $e';
@@ -112,6 +128,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
       }
     }
   }
+
   void _showErrorSnackBar(String message, {SnackBarAction? action}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -242,7 +259,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
             ),
             onPressed: () {
               Navigator.of(context).pop();
-              _initializeClassifier();
+              _initializeServices();
             },
             child: const Text('Try Again'),
           ),
@@ -310,12 +327,12 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
 
     try {
       if (_initError != null) {
-        bool success = await _classifier.initialize();
+        bool success = await _hybridService.initialize();
         if (!success) {
           setState(() {
             _isProcessing = false;
           });
-          _showErrorSnackBar('Failed to initialize model. Please try again.');
+          _showErrorSnackBar('Failed to initialize detection service. Please try again.');
           return;
         } else {
           setState(() {
@@ -324,7 +341,34 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
         }
       }
 
-      final result = await _classifier.classifyImage(_image!);
+      DetectionResult? result;
+      
+      // Use detection mode based on widget parameter
+      switch (widget.detectionMode) {
+        case true: // Force online
+          try {
+            result = await _hybridService.detectOnlineOnly(_image!);
+            _isOnlineDetection = true;
+          } catch (e) {
+            debugPrint('Online detection failed: $e');
+            _showErrorSnackBar('Online detection failed. Please check your internet connection.');
+            setState(() {
+              _isProcessing = false;
+            });
+            return;
+          }
+          break;
+          
+        case false: // Force local
+          result = await _hybridService.detectLocalOnly(_image!);
+          _isOnlineDetection = false;
+          break;
+          
+        default: // Auto (null)
+          result = await _hybridService.detectDisease(_image!);
+          _isOnlineDetection = result?.isOnlineDetection ?? false;
+          break;
+      }
       
       if (result == null) {
         setState(() {
@@ -336,8 +380,9 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
       
       setState(() {
         _isProcessing = false;
-        _detectedDisease = result.disease;
+        _detectedDisease = result!.disease;
         _confidence = result.confidence;
+        _warningMessage = result.warningMessage;
       });
 
       DetectionHistoryItem? savedItem;
@@ -737,7 +782,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
               ),
               elevation: 2,
             ),
-            onPressed: _initializeClassifier,
+            onPressed: _initializeServices,
             icon: const Icon(Icons.refresh),
             label: const Text('Try Again', style: TextStyle(fontSize: 16)),
           ),
