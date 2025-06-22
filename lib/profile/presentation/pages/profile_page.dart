@@ -222,7 +222,7 @@ class ProfileView extends StatelessWidget {
           
           LinearProgressIndicator(
             value: completion / 100,
-            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
           ),
           

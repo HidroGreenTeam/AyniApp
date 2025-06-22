@@ -277,7 +277,7 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
         }
       },
       child: Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.background,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: AppBar(
           title: Text(
             _isEditing ? 'Gestión de Perfil' : 'Crear tu Perfil',
@@ -507,7 +507,7 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
           borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
         ),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),      ),
+        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),      ),
     );
   }
 }
