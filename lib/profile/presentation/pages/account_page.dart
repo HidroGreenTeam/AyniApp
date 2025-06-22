@@ -232,7 +232,7 @@ class AccountView extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 30,
-            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             child: Icon(
               Icons.person,
               size: 40,
