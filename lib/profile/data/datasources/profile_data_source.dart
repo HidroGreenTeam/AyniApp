@@ -20,7 +20,7 @@ class ProfileDataSource {
       fromJson: (json) => ProfileModel.fromJson(json),
     );
     if (response.success && response.data != null) {
-      // print('[DEBUG] ProfileDataSource.getProfileById: {response.data}'); // Removed for production
+      // debugPrint('[DEBUG] ProfileDataSource.getProfileById: {response.data}'); // Removed for production
       return ApiResponse.success(response.data!);
     } else {
       return ApiResponse.error(response.error ?? 'Unknown error');
@@ -34,7 +34,7 @@ class ProfileDataSource {
       method: network.RequestMethod.get,
       fromJson: (json) {
         if (json is List) {
-          return (json as List).map<ProfileModel>((item) => ProfileModel.fromJson(item as Map<String, dynamic>)).toList();
+          return (json).map<ProfileModel>((item) => ProfileModel.fromJson(item as Map<String, dynamic>)).toList();
         }
         if (json['data'] != null && json['data'] is List) {
           return (json['data'] as List)
@@ -136,29 +136,29 @@ class ProfileDataSource {
   Future<ApiResponse<ProfileModel>> getCurrentProfile() async {
     // Obtener el id del usuario autenticado desde el storage
     final userData = _storageService.getUserData();
-    // print('[DEBUG] userData from storage:'); // Removed for production
-    // print(userData); // Removed for production
+    // debugPrint('[DEBUG] userData from storage:'); // Removed for production
+    // debugPrint(userData); // Removed for production
     if (userData == null) {
-      // print('[DEBUG] userData is null'); // Removed for production
+      // debugPrint('[DEBUG] userData is null'); // Removed for production
       return ApiResponse.error('No user data found');
     }
     try {
       final userJson = userData.toString();
-      // print('[DEBUG] userJson:'); // Removed for production
-      // print(userJson); // Removed for production
+      // debugPrint('[DEBUG] userJson:'); // Removed for production
+      // debugPrint(userJson); // Removed for production
       final userMap = userJson.isNotEmpty ? Map<String, dynamic>.from(await Future.value(jsonDecode(userJson))) : null;
-      // print('[DEBUG] userMap:'); // Removed for production
-      // print(userMap); // Removed for production
+      // debugPrint('[DEBUG] userMap:'); // Removed for production
+      // debugPrint(userMap); // Removed for production
       final userId = userMap != null && userMap['id'] != null ? userMap['id'].toString() : null;
-      // print('[DEBUG] userId:'); // Removed for production
-      // print(userId); // Removed for production
+      // debugPrint('[DEBUG] userId:'); // Removed for production
+      // debugPrint(userId); // Removed for production
       if (userId == null) {
-        // print('[DEBUG] userId is null'); // Removed for production
+        // debugPrint('[DEBUG] userId is null'); // Removed for production
         return ApiResponse.error('No user id found');
       }
       return getProfileById(userId);
     } catch (e) {
-      // print('[DEBUG] Error parsing user data: $e'); // Removed for production
+      // debugPrint('[DEBUG] Error parsing user data: $e'); // Removed for production
       return ApiResponse.error('Error parsing user data: $e');
     }
   }

@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import 'login_page.dart';
+import '../../domain/usecases/sign_up_use_case.dart';
 
 class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
-  RegisterBloc() : super(RegisterState.initial()) {
+  final SignUpUseCase _signUpUseCase;
+  RegisterBloc({SignUpUseCase? signUpUseCase})
+    : _signUpUseCase = signUpUseCase ?? serviceLocator<SignUpUseCase>(),
+      super(RegisterState.initial()) {
     on<NameChanged>(_onNameChanged);
     on<EmailChanged>(_onEmailChanged);
     on<PasswordChanged>(_onPasswordChanged);
@@ -19,67 +24,93 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
 
   void _onEmailChanged(EmailChanged event, Emitter<RegisterState> emit) {
     final email = event.email;
-    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
-    emit(state.copyWith(email: email, isEmailValid: emailRegex.hasMatch(email)));
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    emit(
+      state.copyWith(email: email, isEmailValid: emailRegex.hasMatch(email)),
+    );
   }
 
   void _onPasswordChanged(PasswordChanged event, Emitter<RegisterState> emit) {
     final password = event.password;
-    emit(state.copyWith(
-      password: password, 
-      isPasswordValid: password.length >= 6,
-      isFormValid: _validateForm(
-        state.isNameValid, 
-        state.isEmailValid, 
-        password.length >= 6, 
-        state.confirmPassword == password && password.isNotEmpty
+    emit(
+      state.copyWith(
+        password: password,
+        isPasswordValid: password.length >= 6,
+        isFormValid: _validateForm(
+          state.isNameValid,
+          state.isEmailValid,
+          password.length >= 6,
+          state.confirmPassword == password && password.isNotEmpty,
+        ),
       ),
-    ));
+    );
   }
 
-  void _onConfirmPasswordChanged(ConfirmPasswordChanged event, Emitter<RegisterState> emit) {
+  void _onConfirmPasswordChanged(
+    ConfirmPasswordChanged event,
+    Emitter<RegisterState> emit,
+  ) {
     final confirmPassword = event.confirmPassword;
-    emit(state.copyWith(
-      confirmPassword: confirmPassword, 
-      isConfirmPasswordValid: confirmPassword == state.password && confirmPassword.isNotEmpty,
-      isFormValid: _validateForm(
-        state.isNameValid, 
-        state.isEmailValid, 
-        state.isPasswordValid, 
-        confirmPassword == state.password && confirmPassword.isNotEmpty
+    emit(
+      state.copyWith(
+        confirmPassword: confirmPassword,
+        isConfirmPasswordValid:
+            confirmPassword == state.password && confirmPassword.isNotEmpty,
+        isFormValid: _validateForm(
+          state.isNameValid,
+          state.isEmailValid,
+          state.isPasswordValid,
+          confirmPassword == state.password && confirmPassword.isNotEmpty,
+        ),
       ),
-    ));
+    );
   }
 
-  void _onRegisterSubmitted(RegisterSubmitted event, Emitter<RegisterState> emit) async {
+  void _onRegisterSubmitted(
+    RegisterSubmitted event,
+    Emitter<RegisterState> emit,
+  ) async {
     if (state.isFormValid) {
       emit(state.copyWith(status: RegisterStatus.loading));
-        try {
-        // TODO: Implement actual registration API call
-        // Create a sign-up request (will be used when API is implemented)
-        // final signUpRequest = SignUpRequest(
-        //   fullName: state.name,
-        //   email: state.email,
-        //   password: state.password,
-        //   roles: ["ROLE_USER"], // Default role
-        // );
-
-        // Here you would typically call the repository to perform the API call
-        // For now we'll simulate a successful registration
-        await Future.delayed(const Duration(seconds: 2));
-        
-        emit(state.copyWith(status: RegisterStatus.success));
+      try {
+        final response = await _signUpUseCase.call(
+          state.name,
+          state.email,
+          state.password,
+        );
+        if (response.success) {
+          emit(state.copyWith(status: RegisterStatus.success));
+        } else {
+          emit(
+            state.copyWith(
+              status: RegisterStatus.failure,
+              errorMessage: response.error ?? 'Registration failed',
+            ),
+          );
+        }
       } catch (e) {
-        emit(state.copyWith(
-          status: RegisterStatus.failure,
-          errorMessage: 'Registration failed: ${e.toString()}',
-        ));
+        emit(
+          state.copyWith(
+            status: RegisterStatus.failure,
+            errorMessage: 'Registration failed: \\${e.toString()}',
+          ),
+        );
       }
     }
   }
 
-  bool _validateForm(bool isNameValid, bool isEmailValid, bool isPasswordValid, bool isConfirmPasswordValid) {
-    return isNameValid && isEmailValid && isPasswordValid && isConfirmPasswordValid;
+  bool _validateForm(
+    bool isNameValid,
+    bool isEmailValid,
+    bool isPasswordValid,
+    bool isConfirmPasswordValid,
+  ) {
+    return isNameValid &&
+        isEmailValid &&
+        isPasswordValid &&
+        isConfirmPasswordValid;
   }
 }
 
@@ -176,7 +207,8 @@ class RegisterState {
       isNameValid: isNameValid ?? this.isNameValid,
       isEmailValid: isEmailValid ?? this.isEmailValid,
       isPasswordValid: isPasswordValid ?? this.isPasswordValid,
-      isConfirmPasswordValid: isConfirmPasswordValid ?? this.isConfirmPasswordValid,
+      isConfirmPasswordValid:
+          isConfirmPasswordValid ?? this.isConfirmPasswordValid,
       isFormValid: isFormValid ?? this.isFormValid,
       status: status ?? this.status,
       errorMessage: errorMessage ?? this.errorMessage,
@@ -202,12 +234,13 @@ class RegisterView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocListener<RegisterBloc, RegisterState>(
-      listenWhen: (previous, current) => previous.status != current.status,
-      listener: (context, state) {
+      listenWhen: (previous, current) => previous.status != current.status,      listener: (context, state) {
         if (state.status == RegisterStatus.success) {
-          ScaffoldMessenger.of(context).showSnackBar(            const SnackBar(
-              content: Text('Registration successful! Please log in.'),
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('¡Registro exitoso! Por favor inicia sesión con tu cuenta.'),
               backgroundColor: AppColors.success,
+              duration: Duration(seconds: 3),
             ),
           );
           // Navigate to the login page after successful registration
@@ -216,7 +249,8 @@ class RegisterView extends StatelessWidget {
           );
         }
         if (state.status == RegisterStatus.failure) {
-          ScaffoldMessenger.of(context).showSnackBar(            SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
               content: Text(state.errorMessage ?? 'Registration failed'),
               backgroundColor: AppColors.error,
             ),
@@ -226,7 +260,8 @@ class RegisterView extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.transparent,
-          elevation: 0,          leading: IconButton(
+          elevation: 0,
+          leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: AppColors.textSecondary),
             onPressed: () => Navigator.of(context).pop(),
           ),
@@ -259,7 +294,8 @@ class RegisterView extends StatelessWidget {
                             decoration: const BoxDecoration(
                               color: AppColors.primaryGreen,
                               shape: BoxShape.circle,
-                            ),                            child: const Icon(
+                            ),
+                            child: const Icon(
                               Icons.person_outline,
                               color: AppColors.white,
                               size: 30,
@@ -277,7 +313,7 @@ class RegisterView extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 40),
-                      
+
                       // Full Name input
                       const Text(
                         'Full Name',
@@ -289,7 +325,7 @@ class RegisterView extends StatelessWidget {
                       const SizedBox(height: 8),
                       _NameInput(),
                       const SizedBox(height: 24),
-                      
+
                       // Email input
                       const Text(
                         'Email',
@@ -301,7 +337,7 @@ class RegisterView extends StatelessWidget {
                       const SizedBox(height: 8),
                       _EmailInput(),
                       const SizedBox(height: 24),
-                      
+
                       // Password input
                       const Text(
                         'Password',
@@ -313,7 +349,7 @@ class RegisterView extends StatelessWidget {
                       const SizedBox(height: 8),
                       _PasswordInput(),
                       const SizedBox(height: 24),
-                      
+
                       // Confirm Password input
                       const Text(
                         'Confirm Password',
@@ -325,18 +361,23 @@ class RegisterView extends StatelessWidget {
                       const SizedBox(height: 8),
                       _ConfirmPasswordInput(),
                       const SizedBox(height: 32),
-                      
+
                       // Register Button
                       SizedBox(
                         width: double.infinity,
                         height: 55,
                         child: ElevatedButton(
-                          onPressed: state.isFormValid && state.status != RegisterStatus.loading
+                          onPressed:
+                              state.isFormValid &&
+                                  state.status != RegisterStatus.loading
                               ? () {
-                                  context.read<RegisterBloc>().add(RegisterSubmitted());
+                                  context.read<RegisterBloc>().add(
+                                    RegisterSubmitted(),
+                                  );
                                 }
                               : null,
-                          style: ElevatedButton.styleFrom(                            backgroundColor: AppColors.primaryGreen,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryGreen,
                             foregroundColor: AppColors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
@@ -346,7 +387,8 @@ class RegisterView extends StatelessWidget {
                           child: state.status == RegisterStatus.loading
                               ? const SizedBox(
                                   height: 20,
-                                  width: 20,                                  child: CircularProgressIndicator(
+                                  width: 20,
+                                  child: CircularProgressIndicator(
                                     color: AppColors.white,
                                     strokeWidth: 2.0,
                                   ),
@@ -358,7 +400,7 @@ class RegisterView extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Already have an account
                       Center(
                         child: TextButton(
@@ -370,13 +412,16 @@ class RegisterView extends StatelessWidget {
                               ),
                             );
                           },
-                          child: RichText(                            text: const TextSpan(
+                          child: RichText(
+                            text: const TextSpan(
                               text: 'Already have an account? ',
                               style: TextStyle(color: AppColors.textSecondary),
                               children: [
                                 TextSpan(
                                   text: 'Log in',
-                                  style: TextStyle(color: AppColors.primaryGreen),
+                                  style: TextStyle(
+                                    color: AppColors.primaryGreen,
+                                  ),
                                 ),
                               ],
                             ),
@@ -402,7 +447,9 @@ class _NameInput extends StatelessWidget {
       buildWhen: (previous, current) => previous.name != current.name,
       builder: (context, state) {
         return TextFormField(
-          onChanged: (name) => context.read<RegisterBloc>().add(NameChanged(name)),          decoration: InputDecoration(
+          onChanged: (name) =>
+              context.read<RegisterBloc>().add(NameChanged(name)),
+          decoration: InputDecoration(
             hintText: 'Enter your full name',
             prefixIcon: const Icon(Icons.person, color: AppColors.grey500),
             filled: true,
@@ -428,8 +475,10 @@ class _EmailInput extends StatelessWidget {
       buildWhen: (previous, current) => previous.email != current.email,
       builder: (context, state) {
         return TextFormField(
-          onChanged: (email) => context.read<RegisterBloc>().add(EmailChanged(email)),
-          keyboardType: TextInputType.emailAddress,          decoration: InputDecoration(
+          onChanged: (email) =>
+              context.read<RegisterBloc>().add(EmailChanged(email)),
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(
             hintText: 'Enter your email',
             prefixIcon: const Icon(Icons.email, color: AppColors.grey500),
             filled: true,
@@ -455,11 +504,16 @@ class _PasswordInput extends StatelessWidget {
       buildWhen: (previous, current) => previous.password != current.password,
       builder: (context, state) {
         return TextFormField(
-          onChanged: (password) => context.read<RegisterBloc>().add(PasswordChanged(password)),
+          onChanged: (password) =>
+              context.read<RegisterBloc>().add(PasswordChanged(password)),
           obscureText: true,
-          decoration: InputDecoration(            hintText: 'Enter your password',
+          decoration: InputDecoration(
+            hintText: 'Enter your password',
             prefixIcon: const Icon(Icons.lock, color: AppColors.grey500),
-            suffixIcon: const Icon(Icons.visibility_off, color: AppColors.grey500),
+            suffixIcon: const Icon(
+              Icons.visibility_off,
+              color: AppColors.grey500,
+            ),
             filled: true,
             fillColor: AppColors.grey100,
             border: OutlineInputBorder(
@@ -480,24 +534,31 @@ class _ConfirmPasswordInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<RegisterBloc, RegisterState>(
-      buildWhen: (previous, current) => 
-          previous.confirmPassword != current.confirmPassword || 
+      buildWhen: (previous, current) =>
+          previous.confirmPassword != current.confirmPassword ||
           previous.password != current.password,
       builder: (context, state) {
         return TextFormField(
-          onChanged: (confirmPassword) => 
-              context.read<RegisterBloc>().add(ConfirmPasswordChanged(confirmPassword)),
+          onChanged: (confirmPassword) => context.read<RegisterBloc>().add(
+            ConfirmPasswordChanged(confirmPassword),
+          ),
           obscureText: true,
-          decoration: InputDecoration(            hintText: 'Confirm your password',
+          decoration: InputDecoration(
+            hintText: 'Confirm your password',
             prefixIcon: const Icon(Icons.lock, color: AppColors.grey500),
-            suffixIcon: const Icon(Icons.visibility_off, color: AppColors.grey500),
+            suffixIcon: const Icon(
+              Icons.visibility_off,
+              color: AppColors.grey500,
+            ),
             filled: true,
             fillColor: AppColors.grey100,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide.none,
             ),
-            errorText: !state.isConfirmPasswordValid && state.confirmPassword.isNotEmpty
+            errorText:
+                !state.isConfirmPasswordValid &&
+                    state.confirmPassword.isNotEmpty
                 ? 'Passwords do not match'
                 : null,
           ),

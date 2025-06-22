@@ -3,6 +3,9 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../network/network_client.dart';
 import '../services/storage_service.dart';
+import '../services/connectivity_service.dart';
+import '../services/theme_service.dart';
+import '../services/localization_service.dart';
 import '../../auth/data/datasources/auth_data_source.dart';
 import '../../auth/data/repositories/auth_repository.dart';
 import '../../auth/domain/usecases/sign_in_use_case.dart';
@@ -15,14 +18,25 @@ import '../../auth/presentation/blocs/auth_bloc.dart';
 import '../../auth/presentation/blocs/walkthrough_bloc.dart';
 import '../../auth/presentation/viewmodels/login_viewmodel.dart';
 import '../../profile/data/datasources/profile_data_source.dart';
+import '../../profile/data/datasources/payment_method_data_source.dart';
+import '../../profile/data/datasources/billing_data_source.dart';
 import '../../profile/domain/repositories/profile_repository.dart';
 import '../../profile/data/repositories/profile_repository_impl.dart';
+import '../../profile/data/repositories/payment_method_repository.dart';
+import '../../profile/data/repositories/billing_repository.dart';
 import '../../auth/presentation/viewmodels/walkthrough_viewmodel.dart';
 import '../../profile/domain/usecases/profile_usecases.dart';
 import '../../profile/presentation/blocs/account_bloc.dart';
 import '../../profile/presentation/blocs/profile_bloc.dart';
+import '../../profile/presentation/blocs/payment_methods_bloc.dart';
+import '../../profile/presentation/blocs/billing_bloc.dart';
 import '../../profile/presentation/viewmodels/account_viewmodel.dart';
 import '../../profile/presentation/viewmodels/profile_viewmodel.dart';
+import '../../plant/data/datasources/crop_data_source.dart';
+import '../../plant/data/repositories/crop_repository.dart';
+import '../../plant/domain/usecases/get_all_crops.dart';
+import '../../plant/presentation/bolcs/crop_bloc.dart';
+import '../../detection/services/hybrid_detection_service.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -43,27 +57,75 @@ Future<void> initDependencies() async {
       storageService: serviceLocator<StorageService>(),
     ),
   );
+
+  // Services
+  serviceLocator.registerSingleton<ConnectivityService>(
+    ConnectivityService(),
+  );
+
+  serviceLocator.registerSingleton<ThemeService>(
+    ThemeService(),
+  );
+
+  serviceLocator.registerSingleton<LocalizationService>(
+    LocalizationService(serviceLocator<StorageService>()),
+  );
+
+  serviceLocator.registerSingleton<HybridDetectionService>(
+    HybridDetectionService(),
+  );
+
   // Data sources
   serviceLocator.registerSingleton<AuthDataSource>(
     AuthDataSource(serviceLocator<NetworkClient>()),
   );
-
   serviceLocator.registerSingleton<ProfileDataSource>(
     ProfileDataSource(
       serviceLocator<NetworkClient>(),
       serviceLocator<StorageService>(), // Add the missing argument here
     ),
   );
+
+  serviceLocator.registerSingleton<CropDataSource>(
+    CropDataSource(serviceLocator<NetworkClient>()),
+  );
+
+  // Payment Methods Data Source
+  serviceLocator.registerSingleton<PaymentMethodDataSource>(
+    PaymentMethodDataSourceImpl(serviceLocator<StorageService>()),
+  );
+
+  // Billing Data Source
+  serviceLocator.registerSingleton<BillingDataSource>(
+    BillingDataSourceImpl(serviceLocator<StorageService>()),
+  );
+
   // Repositories
   serviceLocator.registerSingleton<AuthRepository>(
     AuthRepository(
       serviceLocator<AuthDataSource>(),
       serviceLocator<StorageService>(),
-    ),  );
+    ),
+  );
+
   serviceLocator.registerSingleton<ProfileRepository>(
     ProfileRepositoryImpl(
       serviceLocator<ProfileDataSource>(),
       serviceLocator<StorageService>(),
+    ),
+  );
+
+  serviceLocator.registerSingleton<PaymentMethodRepository>(
+    PaymentMethodRepositoryImpl(serviceLocator<PaymentMethodDataSource>()),
+  );
+
+  serviceLocator.registerSingleton<BillingRepository>(
+    BillingRepositoryImpl(serviceLocator<BillingDataSource>()),
+  );
+
+  serviceLocator.registerSingleton<CropRepository>(
+    CropRepository(
+      networkClient: serviceLocator<NetworkClient>(),
     ),
   );
   
@@ -120,9 +182,13 @@ Future<void> initDependencies() async {
   serviceLocator.registerFactory<GetCachedProfileUseCase>(
     () => GetCachedProfileUseCase(serviceLocator<ProfileRepository>()),
   );
-
   serviceLocator.registerFactory<ClearProfileCacheUseCase>(
     () => ClearProfileCacheUseCase(serviceLocator<ProfileRepository>()),
+  );
+
+  // Plant Use Cases
+  serviceLocator.registerFactory<GetAllCrops>(
+    () => GetAllCrops(serviceLocator<CropDataSource>()),
   );
     // ViewModels
   serviceLocator.registerFactory<LoginViewModel>(() =>
@@ -144,8 +210,7 @@ Future<void> initDependencies() async {
       signOutUseCase: serviceLocator<SignOutUseCase>(),
       getCurrentUserUseCase: serviceLocator<GetCurrentUserUseCase>(),
     ),
-  );
-  serviceLocator.registerFactory<ProfileViewModel>(() =>
+  );  serviceLocator.registerFactory<ProfileViewModel>(() =>
     ProfileViewModel(
       getProfileUseCase: serviceLocator<GetProfileUseCase>(),
       getCurrentProfileUseCase: serviceLocator<GetCurrentProfileUseCase>(),
@@ -156,6 +221,7 @@ Future<void> initDependencies() async {
       searchProfilesUseCase: serviceLocator<SearchProfilesUseCase>(),
       getCachedProfileUseCase: serviceLocator<GetCachedProfileUseCase>(),
       clearProfileCacheUseCase: serviceLocator<ClearProfileCacheUseCase>(),
+      getCurrentUserUseCase: serviceLocator<GetCurrentUserUseCase>(),
     ),
   );
   
@@ -170,8 +236,23 @@ Future<void> initDependencies() async {
     serviceLocator.registerFactory<AccountBloc>(() => 
     AccountBloc(accountViewModel: serviceLocator<AccountViewModel>()),
   );
-
   serviceLocator.registerFactory<ProfileBloc>(() => 
     ProfileBloc(profileViewModel: serviceLocator<ProfileViewModel>()),
+  );
+  serviceLocator.registerFactory<CropBloc>(() => 
+    CropBloc(
+      serviceLocator<GetCurrentUserUseCase>(),
+      serviceLocator<CropRepository>(),
+    ),
+  );
+
+  // Payment Methods Bloc
+  serviceLocator.registerFactory<PaymentMethodsBloc>(() => 
+    PaymentMethodsBloc(repository: serviceLocator<PaymentMethodRepository>()),
+  );
+
+  // Billing Bloc
+  serviceLocator.registerFactory<BillingBloc>(() => 
+    BillingBloc(repository: serviceLocator<BillingRepository>()),
   );
 }

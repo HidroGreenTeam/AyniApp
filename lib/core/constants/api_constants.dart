@@ -8,4 +8,7 @@ class ApiConstants {
   // Farmer endpoints (backend uses farmers instead of profiles)
   static const String farmers = 'api/v1/farmers';
   static const String profiles = 'api/v1/farmers'; // Alias for compatibility
+  
+  // Detection endpoints
+  static const String detectionAnalyze = 'api/v1/detection/analyze';
 }
