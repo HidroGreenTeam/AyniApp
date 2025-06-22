@@ -142,7 +142,7 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
               Navigator.of(context).pop();
               context.read<ProfileBloc>().add(ProfileDelete(_profileId!));
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
             child: const Text('Eliminar'),
           ),
         ],
@@ -224,7 +224,7 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
                 content: Text(state.status == ProfileStatus.created
                     ? 'Perfil creado exitosamente'
                     : 'Perfil actualizado exitosamente'),
-                backgroundColor: AppColors.success,
+                backgroundColor: Theme.of(context).colorScheme.primary,
               ),
             );
             
@@ -243,9 +243,9 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
             }
           } else if (state.status == ProfileStatus.deleted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Perfil eliminado exitosamente'),
-                backgroundColor: AppColors.success,
+              SnackBar(
+                content: const Text('Perfil eliminado exitosamente'),
+                backgroundColor: Theme.of(context).colorScheme.primary,
               ),
             );
             _clearForm();
@@ -255,9 +255,9 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
             // Consider navigation after deletion, e.g., Navigator.of(context).pop();
           } else if (state.status == ProfileStatus.uploaded) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Foto de perfil actualizada exitosamente'),
-                backgroundColor: AppColors.success,
+              SnackBar(
+                content: const Text('Foto de perfil actualizada exitosamente'),
+                backgroundColor: Theme.of(context).colorScheme.primary,
               ),
             );
             // Optionally reload profile to show new image if not automatically reflected
@@ -270,33 +270,34 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.errorMessage ?? 'Error desconocido'),
-                backgroundColor: AppColors.error,
+                backgroundColor: Theme.of(context).colorScheme.error,
               ),
             );
           }
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.white,        appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.background,
+        appBar: AppBar(
           title: Text(
             _isEditing ? 'Gestión de Perfil' : 'Crear tu Perfil',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
-          backgroundColor: AppColors.white,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           elevation: 0,
           leading: _isEditing ? null : IconButton(
             onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.close, color: AppColors.textPrimary),
+            icon: Icon(Icons.close, color: Theme.of(context).colorScheme.onSurface),
           ),
           actions: [
             if (_isEditing)
               IconButton(
                 onPressed: _deleteProfile,
-                icon: const Icon(Icons.delete_outline, color: AppColors.error),
+                icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
               ),
           ],
         ),
@@ -307,7 +308,7 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
             // OR 2. The bloc is in a general loading state (e.g. user initiated refresh)
             if ((widget.initialProfile == null && !_initialLoadProcessed) ||
                 state.status == ProfileStatus.loading) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary));
             }
 
             return SingleChildScrollView(
@@ -321,24 +322,24 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: AppColors.lightGreen.withValues(alpha: 0.3),
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.lightGreen),
+                          border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
                         ),
                         child: Column(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.emoji_people,
-                              color: AppColors.primaryGreen,
+                              color: Theme.of(context).colorScheme.primary,
                               size: 40,
                             ),
                             const SizedBox(height: 12),
                             Text(
                               _isUserAuthenticated ? '¡Bienvenido de vuelta!' : '¡Bienvenido a Ayni!',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -346,9 +347,9 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
                               _isUserAuthenticated 
                                   ? 'Completa la configuración de tu perfil con algunos datos adicionales.'
                                   : 'Para comenzar, necesitamos algunos datos básicos para crear tu perfil.',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: AppColors.textSecondary,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -439,18 +440,16 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
                           ),
                         ),
                         child: state.status == ProfileStatus.creating || 
-                               state.status == ProfileStatus.updating
-                            ? const SizedBox(
+                               state.status == ProfileStatus.updating                            ? SizedBox(
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(
-                                  color: AppColors.white,
+                                  color: Theme.of(context).colorScheme.onPrimary,
                                   strokeWidth: 2,
                                 ),
                               )
                             : Text(
-                                _isEditing ? 'Actualizar Perfil' : 'Crear Perfil',
-                                style: const TextStyle(
+                                _isEditing ? 'Actualizar Perfil' : 'Crear Perfil',                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.white,
@@ -467,18 +466,16 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
       ),
     );
   }
-
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
+        color: Theme.of(context).colorScheme.onSurface,
       ),
     );
   }
-
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -496,21 +493,21 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
       validator: validator,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: AppColors.primaryGreen),
+        prefixIcon: Icon(icon, color: Theme.of(context).colorScheme.primary),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.lightGray),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primaryGreen),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.error),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
         ),
         filled: true,
-        fillColor: AppColors.lightGray.withValues(alpha: 0.3),      ),
+        fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),      ),
     );
   }
 }

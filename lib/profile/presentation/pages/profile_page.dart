@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/di/service_locator.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../domain/entities/profile.dart';
 import '../blocs/profile_bloc.dart';
 import 'profile_management_page.dart';
@@ -30,7 +29,7 @@ class ProfileView extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.errorMessage ?? 'Error desconocido'),
-              backgroundColor: AppColors.error,
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
         } else if (state.status == ProfileStatus.noProfile) {
@@ -46,57 +45,50 @@ class ProfileView extends StatelessWidget {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.white,
         appBar: AppBar(
           title: const Text(
             'Mi Perfil',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
           ),
-          backgroundColor: AppColors.white,
           elevation: 0,
           actions: [
             IconButton(
               onPressed: () {
                 context.read<ProfileBloc>().add(const ProfileLoadCurrent());
               },
-              icon: const Icon(Icons.refresh, color: AppColors.primaryGreen),
+              icon: Icon(Icons.refresh, color: Theme.of(context).colorScheme.primary),
             ),
           ],
-        ),        body: BlocBuilder<ProfileBloc, ProfileState>(
+        ),
+        body: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, state) {
             if (state.status == ProfileStatus.loading) {
               return const Center(child: CircularProgressIndicator());
             }
 
             if (state.status == ProfileStatus.noProfile) {
-              return const Center(
+              return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       Icons.person_add,
                       size: 80,
-                      color: AppColors.primaryGreen,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
-                    SizedBox(height: 20),
-                    Text(
+                    const SizedBox(height: 20),
+                    const Text(
                       'Configura tu Perfil',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
                       ),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Text(
                       'Para comenzar, necesitas crear tu perfil',
                       style: TextStyle(
                         fontSize: 16,
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -148,12 +140,12 @@ class ProfileView extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 40,
-                backgroundColor: AppColors.white.withValues(alpha: 0.3),
+                backgroundColor: Theme.of(context).colorScheme.surface.withOpacity(0.3),
                 backgroundImage: profile?.imageUrl != null
                     ? NetworkImage(profile!.imageUrl!)
                     : null,
                 child: profile?.imageUrl == null
-                    ? const Icon(Icons.person, size: 40, color: AppColors.textSecondary)
+                    ? Icon(Icons.person, size: 40, color: Theme.of(context).colorScheme.onSurfaceVariant)
                     : null,
               ),
             ],
@@ -169,15 +161,14 @@ class ProfileView extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   profile.email,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -193,18 +184,18 @@ class ProfileView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.lightGreen.withValues(alpha: 0.3),
+        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.lightGreen),
+        border: Border.all(color: Theme.of(context).colorScheme.primaryContainer),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.trending_up,
-                color: AppColors.primaryGreen,
+                color: Theme.of(context).colorScheme.primary,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -213,16 +204,15 @@ class ProfileView extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
                 ),
               ),
               const Spacer(),
               Text(
                 '${completion.round()}%',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.primaryGreen,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
@@ -232,8 +222,8 @@ class ProfileView extends StatelessWidget {
           
           LinearProgressIndicator(
             value: completion / 100,
-            backgroundColor: AppColors.lightGray,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
           ),
           
           const SizedBox(height: 8),
@@ -242,9 +232,9 @@ class ProfileView extends StatelessWidget {
             completion < 100 
                 ? 'Completa tu perfil para obtener mejores resultados'
                 : '¡Perfil completo! Excelente trabajo',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -261,7 +251,6 @@ class ProfileView extends StatelessWidget {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
           ),
         ),
         
@@ -325,12 +314,12 @@ class ProfileView extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.lightGray),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
           boxShadow: [
             BoxShadow(
-              color: AppColors.textSecondary.withValues(alpha: 0.1),
+              color: Theme.of(context).colorScheme.shadow.withOpacity(0.1),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -341,12 +330,12 @@ class ProfileView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.lightGreen,
+                color: Theme.of(context).colorScheme.primaryContainer,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 icon,
-                color: AppColors.primaryGreen,
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
                 size: 24,
               ),
             ),
@@ -358,7 +347,6 @@ class ProfileView extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -367,9 +355,9 @@ class ProfileView extends StatelessWidget {
             
             Text(
               subtitle,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
@@ -388,7 +376,6 @@ class ProfileView extends StatelessWidget {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
           ),
         ),
         
@@ -397,13 +384,14 @@ class ProfileView extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.lightGray),
+            border: Border.all(color: Theme.of(context).colorScheme.outline),
           ),
           child: Column(
             children: [
               _buildStatItem(
+                context,
                 'Fecha de Registro',
                 _formatDate(profile.createdAt),
                 Icons.calendar_today_outlined,
@@ -412,6 +400,7 @@ class ProfileView extends StatelessWidget {
               const Divider(height: 24),
               
               _buildStatItem(
+                context,
                 'Última Actualización',
                 _formatDate(profile.updatedAt),
                 Icons.update_outlined,
@@ -423,12 +412,12 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon) {
+  Widget _buildStatItem(BuildContext context, String label, String value, IconData icon) {
     return Row(
       children: [
         Icon(
           icon,
-          color: AppColors.primaryGreen,
+          color: Theme.of(context).colorScheme.primary,
           size: 20,
         ),
         const SizedBox(width: 12),
@@ -438,9 +427,9 @@ class ProfileView extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
               Text(
@@ -448,7 +437,6 @@ class ProfileView extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textPrimary,
                 ),
               ),
             ],
