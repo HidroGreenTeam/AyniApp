@@ -140,7 +140,7 @@ class ProfileView extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 40,
-                backgroundColor: Theme.of(context).colorScheme.surface.withOpacity(0.3),
+                backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
                 backgroundImage: profile?.imageUrl != null
                     ? NetworkImage(profile!.imageUrl!)
                     : null,
@@ -184,9 +184,9 @@ class ProfileView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+        color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).colorScheme.primaryContainer),
+        border: Border.all(color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,7 +319,7 @@ class ProfileView extends StatelessWidget {
           border: Border.all(color: Theme.of(context).colorScheme.outline),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).colorScheme.shadow.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.1),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),

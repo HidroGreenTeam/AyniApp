@@ -137,7 +137,7 @@ class BillingView extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryGreen.withOpacity(0.3),
+            color: AppColors.primaryGreen.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -177,7 +177,7 @@ class BillingView extends StatelessWidget {
                     Text(
                       'Suscripción Activa',
                       style: TextStyle(
-                        color: AppColors.white.withOpacity(0.9),
+                        color: AppColors.white.withValues(alpha: 0.9),
                         fontSize: 14,
                       ),
                     ),
@@ -187,7 +187,7 @@ class BillingView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.white.withOpacity(0.2),
+                  color: AppColors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -211,7 +211,7 @@ class BillingView extends StatelessWidget {
                     Text(
                       'Próximo cobro',
                       style: TextStyle(
-                        color: AppColors.white.withOpacity(0.8),
+                        color: AppColors.white.withValues(alpha: 0.8),
                         fontSize: 12,
                       ),
                     ),
@@ -229,7 +229,7 @@ class BillingView extends StatelessWidget {
               TextButton(
                 onPressed: () => _showCancelSubscriptionDialog(context),
                 style: TextButton.styleFrom(
-                  backgroundColor: AppColors.white.withOpacity(0.2),
+                  backgroundColor: AppColors.white.withValues(alpha: 0.2),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -508,7 +508,7 @@ class BillingView extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.primaryGreen.withOpacity(0.1),
+              color: AppColors.primaryGreen.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
@@ -554,7 +554,7 @@ class BillingView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _getStatusColor(item.status).withOpacity(0.1),
+                  color: _getStatusColor(item.status).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
