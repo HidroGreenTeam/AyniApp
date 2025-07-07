@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:formz/formz.dart';
 import '../../data/models/auth_models.dart';
 import '../viewmodels/login_viewmodel.dart';
@@ -185,15 +186,31 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
   Future<void> _onCheckStatus(AuthCheckStatus event, Emitter<AuthState> emit) async {
-    final isAuthenticated = _loginViewModel.isAuthenticated();
+    // Emit loading state first
+    emit(state.copyWith(status: AuthStatus.loading));
     
-    if (isAuthenticated) {
-      final user = _loginViewModel.getCurrentUser();
-      emit(state.copyWith(
-        status: AuthStatus.authenticated,
-        user: user,
-      ));
-    } else {
+    try {
+      final isAuthenticated = _loginViewModel.isAuthenticated();
+      
+      if (isAuthenticated) {
+        final user = _loginViewModel.getCurrentUser();
+        
+        if (user != null) {
+          emit(state.copyWith(
+            status: AuthStatus.authenticated,
+            user: user,
+          ));
+        } else {
+          // Token exists but user data is invalid, treat as unauthenticated
+          emit(state.copyWith(status: AuthStatus.unauthenticated));
+        }
+      } else {
+        emit(state.copyWith(status: AuthStatus.unauthenticated));
+      }
+    } catch (e) {
+      // In case of any error, treat as unauthenticated
+      // Log error for debugging
+      debugPrint('AuthBloc: Error in _onCheckStatus: $e');
       emit(state.copyWith(status: AuthStatus.unauthenticated));
     }
   }

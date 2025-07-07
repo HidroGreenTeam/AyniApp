@@ -26,9 +26,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
   String? _detectedDisease;
   double? _confidence;
-  String? _warningMessage;
-  bool _isOnlineDetection = false;
-  
+
   // Animation controllers
   late AnimationController _pulseController;
   late AnimationController _fadeController;
@@ -348,7 +346,6 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
         case true: // Force online
           try {
             result = await _hybridService.detectOnlineOnly(_image!);
-            _isOnlineDetection = true;
           } catch (e) {
             debugPrint('Online detection failed: $e');
             _showErrorSnackBar('Online detection failed. Please check your internet connection.');
@@ -361,12 +358,10 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
           
         case false: // Force local
           result = await _hybridService.detectLocalOnly(_image!);
-          _isOnlineDetection = false;
           break;
           
         default: // Auto (null)
           result = await _hybridService.detectDisease(_image!);
-          _isOnlineDetection = result?.isOnlineDetection ?? false;
           break;
       }
       
@@ -382,7 +377,6 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
         _isProcessing = false;
         _detectedDisease = result!.disease;
         _confidence = result.confidence;
-        _warningMessage = result.warningMessage;
       });
 
       DetectionHistoryItem? savedItem;

@@ -6,9 +6,9 @@ plugins {
 }
 
 android {
-    namespace = "com.hidrogreen.ayni"
+    namespace = "com.example.ayni"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion =  "27.0.12077973"
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
