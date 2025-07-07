@@ -8,6 +8,13 @@ import 'package:ayni/detection/presentation/pages/detection_history_page.dart';
 import 'package:ayni/detection/presentation/pages/detection_detail_page.dart';
 import 'package:ayni/detection/data/models/detection_history_item.dart';
 import '../../../core/theme/app_theme.dart';
+import '../widgets/initializing_widget.dart';
+import '../widgets/error_widget.dart';
+import '../widgets/processing_widget.dart';
+import '../widgets/image_result_widget.dart';
+import '../widgets/welcome_widget.dart';
+import '../widgets/dialogs.dart';
+import '../widgets/utils.dart';
 
 class CameraPage extends StatefulWidget {
   final bool? detectionMode; // true = online, false = local, null = auto
@@ -93,7 +100,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
               'Failed to initialize detection services. Please try again.',
               action: SnackBarAction(
                 label: 'Details',
-                onPressed: () => _showModelCompatibilityDialog(),
+                onPressed: () => CameraDialogs.showModelCompatibilityDialog(context, _initializeServices),
               ),
             );
           }
@@ -120,7 +127,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
           'Error initializing: $e',
           action: SnackBarAction(
             label: 'Help',
-            onPressed: () => _showModelCompatibilityDialog(),
+            onPressed: () => CameraDialogs.showModelCompatibilityDialog(context, _initializeServices),
           ),
         );
       }
@@ -132,12 +139,12 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error_outline, color: AppColors.white),
+            Icon(Icons.error_outline, color: Theme.of(context).colorScheme.onError),
             const SizedBox(width: 12),
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: AppColors.error,
+        backgroundColor: Theme.of(context).colorScheme.error,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         action: action,
@@ -145,145 +152,21 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
       ),
     );
   }
+
   void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle, color: AppColors.white),
+            Icon(Icons.check_circle, color: Theme.of(context).colorScheme.onSurface),
             const SizedBox(width: 12),
             Text(message),
           ],
         ),
-        backgroundColor: AppColors.success,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-  
-  void _showModelCompatibilityDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),        title: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.warning.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.warning_amber_rounded, 
-                  color: AppColors.warning, size: 24),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Model Compatibility Issue',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
-                ),
-                child: const Text(
-                  'The plant detection model could not be initialized because it\'s incompatible with the current TFLite version.',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'This usually happens when the model contains operations that aren\'t supported by tflite_flutter 0.11.0',
-                style: TextStyle(color: Colors.grey),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Solutions:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[800],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildSolutionItem('Replace the model with a compatible version'),
-                    _buildSolutionItem('Use the model downloader tool to get a compatible model'),
-                    _buildSolutionItem('Check the MODEL_COMPATIBILITY.md file for more details'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Close', style: TextStyle(color: Colors.grey[600])),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00C851),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            onPressed: () {
-              Navigator.of(context).pop();
-              _initializeServices();
-            },
-            child: const Text('Try Again'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSolutionItem(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: const EdgeInsets.only(top: 6),
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: Colors.blue[600],
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(child: Text(text)),
-        ],
       ),
     );
   }
@@ -402,7 +285,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
         return;
       }
       
-      _showResultDialog(result.disease, result.confidence, result.recommendation);
+      CameraDialogs.showResultDialog(context, result.disease, result.confidence, result.recommendation);
       
     } catch (e) {
       debugPrint('Error during inference: $e');
@@ -413,183 +296,25 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
     }
   }
 
-  void _showResultDialog(String disease, double confidence, String recommendation) {
-    final isHealthy = disease == 'nodisease';
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isHealthy 
-                ? [Colors.green[50]!, Colors.green[100]!]
-                : [Colors.orange[50]!, Colors.orange[100]!],
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isHealthy ? Colors.green[200] : Colors.orange[200],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  isHealthy ? Icons.eco : Icons.bug_report,
-                  color: isHealthy ? Colors.green[700] : Colors.orange[700],
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Diagnosis Result',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: isHealthy ? Colors.green[50] : Colors.orange[50],
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isHealthy ? Colors.green[200]! : Colors.orange[200]!,
-                  width: 2,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    _formatDiseaseName(disease),
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: isHealthy ? Colors.green[800] : Colors.orange[800],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isHealthy ? Colors.green[100] : Colors.orange[100],
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Confidence: ${(confidence * 100).toStringAsFixed(1)}%',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: isHealthy ? Colors.green[800] : Colors.orange[800],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[200]!),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.lightbulb_outline, color: Colors.blue[600]),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Recommendation',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    recommendation,
-                    style: const TextStyle(fontSize: 14, height: 1.5),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Close', style: TextStyle(color: AppColors.grey600)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryGreen,
-              foregroundColor: AppColors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('More Info'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDiseaseName(String diseaseName) {
-    switch (diseaseName) {
-      case 'nodisease':
-        return 'Healthy Plant';
-      case 'miner':
-        return 'Leaf Miner';
-      case 'phoma':
-        return 'Phoma Leaf Spot';
-      case 'redspider':
-        return 'Red Spider Mite';
-      case 'rust': 
-        return 'Leaf Rust';
-      default:
-        return diseaseName.split('_').map((word) {
-          if (word.isEmpty) return '';
-          return word[0].toUpperCase() + word.substring(1);
-        }).join(' ');
-    }
-  }
-  @override  Widget build(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
         title: Text(
           'Plant Disease Detection',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: AppColors.white,
+            color: Theme.of(context).colorScheme.onPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
-        backgroundColor: AppColors.primaryGreen,
-        foregroundColor: AppColors.white,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         elevation: 0,
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.primaryGreen, AppColors.primaryGreen.withValues(alpha: 0.8)],
+              colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primary.withValues(alpha: 0.8)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -599,11 +324,11 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
           Container(
             margin: const EdgeInsets.only(right: 16),
             decoration: BoxDecoration(
-              color: AppColors.white.withValues(alpha: 0.2),
+              color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
-              icon: const Icon(Icons.history, size: 24),
+              icon: Icon(Icons.history, size: 24, color: Theme.of(context).colorScheme.onPrimary),
               tooltip: 'Detection History',
               onPressed: () {
                 Navigator.push(
@@ -614,10 +339,11 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
             ),
           ),
         ],
-      ),      body: Container(
+      ),
+      body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppColors.background, AppColors.lightGreen.withValues(alpha: 0.3)],
+            colors: [Theme.of(context).colorScheme.background, Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -630,580 +356,38 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
               child: Column(
                 children: [
                   if (_isInitializing)
-                    _buildInitializingWidget()
+                    InitializingWidget(
+                      fadeAnimation: _fadeAnimation,
+                      pulseAnimation: _pulseAnimation,
+                    )
                   else if (_initError != null)
-                    _buildErrorWidget()
+                    CameraErrorWidget(
+                      errorMessage: _initError!,
+                      onRetry: _initializeServices,
+                    )
                   else if (_isProcessing)
-                    _buildProcessingWidget()
+                    ProcessingWidget(
+                      pulseAnimation: _pulseAnimation,
+                    )
                   else if (_image != null)
-                    _buildImageResultWidget()
+                    ImageResultWidget(
+                      image: _image!,
+                      detectedDisease: _detectedDisease,
+                      confidence: _confidence,
+                      onTakePhoto: () => _getImage(ImageSource.camera),
+                      onSelectFromGallery: () => _getImage(ImageSource.gallery),
+                    )
                   else
-                    _buildWelcomeWidget(),
+                    WelcomeWidget(
+                      fadeAnimation: _fadeAnimation,
+                      onTakePhoto: () => _getImage(ImageSource.camera),
+                      onSelectFromGallery: () => _getImage(ImageSource.gallery),
+                    ),
                 ],
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
-  Widget _buildInitializingWidget() {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: Container(
-        padding: const EdgeInsets.all(40),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.grey300.withValues(alpha: 0.3),
-              spreadRadius: 2,
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                AnimatedBuilder(
-                  animation: _pulseAnimation,
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: _pulseAnimation.value,
-                      child: Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                const CircularProgressIndicator(
-                  color: AppColors.primaryGreen,
-                  strokeWidth: 3,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),            Text(
-              'Initializing AI Model',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Please wait while we prepare the plant disease detector...',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  Widget _buildErrorWidget() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.error.withValues(alpha: 0.1),
-            spreadRadius: 2,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.error.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.error_outline,
-              size: 60,
-              color: AppColors.error,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Initialization Failed',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: AppColors.error,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.error.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
-            ),
-            child: Text(
-              _initError!,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.error,
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryGreen,
-              foregroundColor: AppColors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 2,
-            ),
-            onPressed: _initializeServices,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Try Again', style: TextStyle(fontSize: 16)),
-          ),
-        ],
-      ),
-    );
-  }
-  Widget _buildProcessingWidget() {
-    return Container(
-      padding: const EdgeInsets.all(40),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.grey300.withValues(alpha: 0.3),
-            spreadRadius: 2,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              AnimatedBuilder(
-                animation: _pulseAnimation,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: _pulseAnimation.value,
-                    child: Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  );
-                },
-              ),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryGreen,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.psychology,
-                  size: 40,
-                  color: AppColors.white,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),          Text(
-            'Analyzing Image',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Our AI is examining your plant for diseases...',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 20),
-          LinearProgressIndicator(
-            color: AppColors.primaryGreen,
-            backgroundColor: AppColors.lightGreen,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImageResultWidget() {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadow.withValues(alpha: 0.5),
-                  spreadRadius: 2,
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Image.file(
-                _image!,
-                height: 320,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-            if (_detectedDisease != null)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: _detectedDisease == 'nodisease' 
-                    ? [AppColors.success.withValues(alpha: 0.1), AppColors.success.withValues(alpha: 0.2)]
-                    : [AppColors.warning.withValues(alpha: 0.1), AppColors.warning.withValues(alpha: 0.2)],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: _detectedDisease == 'nodisease' 
-                    ? AppColors.success.withValues(alpha: 0.3)
-                    : AppColors.warning.withValues(alpha: 0.3),
-                  width: 2,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    _detectedDisease == 'nodisease' ? Icons.eco : Icons.bug_report,
-                    size: 40,
-                    color: _detectedDisease == 'nodisease' 
-                      ? AppColors.success
-                      : AppColors.warning,
-                  ),
-                  const SizedBox(height: 12),                  Text(
-                    _formatDiseaseName(_detectedDisease!),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: _detectedDisease == 'nodisease' 
-                        ? AppColors.success
-                        : AppColors.warning,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _detectedDisease == 'nodisease' 
-                        ? AppColors.success.withValues(alpha: 0.2)
-                        : AppColors.warning.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),                    child: Text(
-                      'Confidence: ${(_confidence! * 100).toStringAsFixed(1)}%',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: _detectedDisease == 'nodisease' 
-                          ? AppColors.success
-                          : AppColors.warning,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          
-          const SizedBox(height: 24),          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                    foregroundColor: AppColors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 2,
-                  ),
-                  onPressed: () => _getImage(ImageSource.camera),
-                  icon: const Icon(Icons.camera_alt),
-                  label: Text(
-                    'New Photo', 
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.white,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.info,
-                    foregroundColor: AppColors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 2,
-                  ),
-                  onPressed: () => _getImage(ImageSource.gallery),
-                  icon: const Icon(Icons.photo_library),
-                  label: Text(
-                    'Gallery', 
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWelcomeWidget() {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: Column(
-        children: [          Container(
-            padding: const EdgeInsets.all(40),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.lightGreen.withValues(alpha: 0.5), AppColors.lightGreen],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                  spreadRadius: 2,
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primaryGreen.withValues(alpha: 0.2),
-                        spreadRadius: 2,
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    Icons.local_florist,
-                    size: 60,
-                    color: AppColors.primaryGreen,
-                  ),
-                ),
-                const SizedBox(height: 24),                Text(
-                  'Plant Health Assistant',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: AppColors.primaryGreen,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Take a photo or upload an image to detect plant diseases with AI-powered analysis.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.textSecondary,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
-          
-          // Feature cards
-          Row(
-            children: [              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.grey300.withValues(alpha: 0.3),
-                        spreadRadius: 1,
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [                      Icon(Icons.speed, size: 32, color: AppColors.info),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Fast Detection',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Results in seconds',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.grey300.withValues(alpha: 0.3),
-                        spreadRadius: 1,
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [                      Icon(Icons.psychology, size: 32, color: AppColors.primaryGreen),
-                      const SizedBox(height: 8),
-                      Text(
-                        'AI Powered',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Advanced analysis',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),          const SizedBox(height: 40),
-          
-          // Action buttons
-          Container(
-            width: double.infinity,
-            height: 60,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.primaryGreen, AppColors.primaryGreen.withValues(alpha: 0.8)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primaryGreen.withValues(alpha: 0.3),
-                  spreadRadius: 2,
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              onPressed: () => _getImage(ImageSource.camera),
-              icon: const Icon(Icons.camera_alt, size: 28, color: AppColors.white),              label: Text(
-                'Take Photo',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            height: 60,
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.grey300, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.grey300.withValues(alpha: 0.3),
-                  spreadRadius: 1,
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              onPressed: () => _getImage(ImageSource.gallery),
-              icon: Icon(Icons.photo_library, size: 28, color: AppColors.textPrimary),              label: Text(
-                'Upload from Gallery',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
