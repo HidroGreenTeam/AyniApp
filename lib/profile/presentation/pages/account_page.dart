@@ -255,7 +255,7 @@ class AccountView extends StatelessWidget {
                 'Ver mi perfil',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -264,7 +264,7 @@ class AccountView extends StatelessWidget {
           Icon(
             Icons.arrow_forward_ios,
             size: 16,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
           ),
         ],
       ),
@@ -379,8 +379,8 @@ class AccountView extends StatelessWidget {
                 Icons.arrow_forward_ios,
                 size: 16,
                 color: isSignOut
-                    ? Theme.of(context).colorScheme.error.withOpacity(0.7)
-                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                    ? Theme.of(context).colorScheme.error.withValues(alpha: 0.7)
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
               ),
             ],
           ),
@@ -431,7 +431,7 @@ class AccountView extends StatelessWidget {
                 Icon(
                   Icons.arrow_forward_ios,
                   size: 16,
-                  color: Theme.of(context).colorScheme.error.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.error.withValues(alpha: 0.7),
                 ),
             ],
           ),

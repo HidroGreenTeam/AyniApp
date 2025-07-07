@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../../../core/network/network_client.dart';
 import '../../../core/services/connectivity_service.dart';
-import '../../../core/services/storage_service.dart';
 import '../../../core/di/service_locator.dart';
 import 'plant_disease_classifier.dart';
 import '../../../core/constants/api_constants.dart';
@@ -29,11 +28,9 @@ class HybridDetectionService {
   final PlantDiseaseClassifier _localClassifier = PlantDiseaseClassifier();
   final ConnectivityService _connectivityService = ConnectivityService();
   late final NetworkClient _networkClient;
-  late final StorageService _storageService;
 
   HybridDetectionService() {
     _networkClient = serviceLocator<NetworkClient>();
-    _storageService = serviceLocator<StorageService>();
   }
 
   /// Initialize the detection service

@@ -7,12 +7,21 @@ class WalkthroughUseCase {
 
   WalkthroughUseCase(this._storageService);  /// Verifica si el walkthrough ya fue completado
   bool isWalkthroughCompleted() {
-    return _storageService.getBool(_walkthroughCompletedKey) ?? false;
+    try {
+      return _storageService.getBool(_walkthroughCompletedKey) ?? false;
+    } catch (e) {
+      return false;
+    }
   }
 
   /// Marca el walkthrough como completado
   Future<void> markWalkthroughCompleted() async {
-    await _storageService.setBool(_walkthroughCompletedKey, true);
+    try {
+      await _storageService.setBool(_walkthroughCompletedKey, true);
+    } catch (e) {
+      // If marking fails, we can continue with the app flow
+      // The user will see the walkthrough again next time
+    }
   }
   /// Resetea el estado del walkthrough (útil para testing)
   Future<void> resetWalkthrough() async {

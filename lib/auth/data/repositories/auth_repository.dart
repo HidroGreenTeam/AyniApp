@@ -39,14 +39,23 @@ class AuthRepository {
   }
 
   bool isAuthenticated() {
-    return _storageService.getToken() != null;
+    try {
+      final token = _storageService.getToken();
+      return token != null && token.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
   }
 
   UserModel? getCurrentUser() {
-    final userData = _storageService.getUserData();
-    if (userData != null) {
-      return UserModel.fromJson(jsonDecode(userData));
+    try {
+      final userData = _storageService.getUserData();
+      if (userData != null && userData.isNotEmpty) {
+        return UserModel.fromJson(jsonDecode(userData));
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
-    return null;
   }
 }

@@ -165,7 +165,7 @@ class _DetectionModeSelectionPageState extends State<DetectionModeSelectionPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.shadow.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 8,
             offset: const Offset(0, 2),
@@ -187,7 +187,7 @@ class _DetectionModeSelectionPageState extends State<DetectionModeSelectionPage>
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
+                        color: color.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(icon, color: color, size: 24),
@@ -213,7 +213,7 @@ class _DetectionModeSelectionPageState extends State<DetectionModeSelectionPage>
                     ),
                     Icon(
                       Icons.arrow_forward_ios,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                       size: 16,
                     ),
                   ],
@@ -250,7 +250,7 @@ class _DetectionModeSelectionPageState extends State<DetectionModeSelectionPage>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(

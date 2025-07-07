@@ -61,24 +61,24 @@ class LoginView extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Welcome Back',
                             style: TextStyle(
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           Container(
                             width: 50,
                             height: 50,
-                            decoration: const BoxDecoration(
-                              color: AppColors.primaryGreen,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.login,
-                              color: AppColors.white,
+                              color: Theme.of(context).colorScheme.onPrimary,
                               size: 30,
                             ),
                           ),
@@ -86,31 +86,33 @@ class LoginView extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       // Subtitle
-                      const Text(
+                      Text(
                         'Sign in to your account',
                         style: TextStyle(
                           fontSize: 18,
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.7),
                         ),
                       ),
                       const SizedBox(height: 40),
                       // Email label
-                      const Text(
+                      Text(
                         'Email',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 8),
                       _EmailInput(),
                       const SizedBox(height: 24),
                       // Password label
-                      const Text(
+                      Text(
                         'Password',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -127,48 +129,21 @@ class LoginView extends StatelessWidget {
                             );
                           },
                           child: RichText(
-                            text: const TextSpan(
+                            text: TextSpan(
                               text: "Don't have an account? ",
-                              style: TextStyle(color: AppColors.textSecondary),
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.7)),
                               children: [
                                 TextSpan(
                                   text: 'Sign up',
-                                  style: TextStyle(color: AppColors.primaryGreen),
+                                  style: TextStyle(color: Theme.of(context).colorScheme.primary),
                                 ),
                               ],
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      const Center(
-                        child: Text(
-                          'or',
-                          style: TextStyle(color: AppColors.textSecondary),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      // Social login section
-                      _SocialLoginButton(
-                        text: 'Continue with Google',
-                        icon: Icon(Icons.public, size: 24),
-                        onPressed: null, // Social logins not implemented yet
-                      ),
-                      const SizedBox(height: 12),
-                      
-                      _SocialLoginButton(
-                        text: 'Continue with Apple',
-                        icon: Icon(Icons.apple, size: 24),
-                        onPressed: null, // Social logins not implemented yet
-                      ),
-                      const SizedBox(height: 12),
-                      
-                      _SocialLoginButton(
-                        text: 'Continue with Facebook',
-                        icon: Icon(Icons.facebook, size: 24),
-                        onPressed: null, // Social logins not implemented yet
-                      ),
-                      const SizedBox(height: 24),                      // Log in button
+                      const SizedBox(height: 24),
+                      // Log in button
                       SizedBox(
                         width: double.infinity,
                         height: 55,
@@ -180,8 +155,9 @@ class LoginView extends StatelessWidget {
                                   context.read<AuthBloc>().add(const AuthLoginSubmitted());
                                 }
                               : null,
-                          style: ElevatedButton.styleFrom(                            backgroundColor: AppColors.primaryGreen,
-                            foregroundColor: AppColors.white,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            foregroundColor: Theme.of(context).colorScheme.onPrimary,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
@@ -221,14 +197,39 @@ class _EmailInput extends StatelessWidget {
         return TextFormField(
           key: const Key('loginForm_emailInput_textField'),
           onChanged: (email) => context.read<AuthBloc>().add(AuthEmailChanged(email)),
-          keyboardType: TextInputType.emailAddress,          decoration: InputDecoration(
+          keyboardType: TextInputType.emailAddress,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+          decoration: InputDecoration(
             hintText: 'Email',
-            prefixIcon: const Icon(Icons.email, color: AppColors.grey500),
+            hintStyle: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.5),
+            ),
+            prefixIcon: Icon(
+              Icons.email, 
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.6),
+            ),
             filled: true,
-            fillColor: AppColors.grey100,
+            fillColor: Theme.of(context).colorScheme.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha:0.3),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha:0.3),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
             ),
             errorText: state.email.isNotValid && state.email.value.isNotEmpty 
                 ? 'Please enter a valid email' 
@@ -249,15 +250,43 @@ class _PasswordInput extends StatelessWidget {
         return TextFormField(
           key: const Key('loginForm_passwordInput_textField'),
           onChanged: (password) => context.read<AuthBloc>().add(AuthPasswordChanged(password)),
-          obscureText: true,          decoration: InputDecoration(
+          obscureText: true,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+          decoration: InputDecoration(
             hintText: 'Password',
-            prefixIcon: const Icon(Icons.lock, color: AppColors.grey500),
-            suffixIcon: const Icon(Icons.visibility_off, color: AppColors.grey500),
+            hintStyle: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.5),
+            ),
+            prefixIcon: Icon(
+              Icons.lock, 
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.6),
+            ),
+            suffixIcon: Icon(
+              Icons.visibility_off, 
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.6),
+            ),
             filled: true,
-            fillColor: AppColors.grey100,
+            fillColor: Theme.of(context).colorScheme.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha:0.3),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha:0.3),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
             ),
             errorText: state.password.isNotValid && state.password.value.isNotEmpty 
                 ? 'Password must be at least 6 characters' 
@@ -269,35 +298,6 @@ class _PasswordInput extends StatelessWidget {
   }
 }
 
-class _SocialLoginButton extends StatelessWidget {
-  final String text;
-  final Widget icon;
-  final VoidCallback? onPressed;
 
-  const _SocialLoginButton({
-    required this.text,
-    required this.icon,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 54,
-      child: OutlinedButton.icon(
-        icon: icon,
-        label: Text(text),
-        onPressed: onPressed,        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
-          side: BorderSide(color: AppColors.grey300),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 

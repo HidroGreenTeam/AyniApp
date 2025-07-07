@@ -322,9 +322,9 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
+                          border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
                         ),
                         child: Column(
                           children: [
@@ -507,7 +507,7 @@ class _ProfileManagementViewState extends State<ProfileManagementView> {
           borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
         ),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),      ),
+        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),      ),
     );
   }
 }

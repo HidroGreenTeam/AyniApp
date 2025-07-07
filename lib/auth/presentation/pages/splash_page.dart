@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter/foundation.dart';
 import 'dart:math' as math;
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
@@ -110,14 +109,12 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
     _loadingController.forward();
     // Iniciar rotación suave continua
     _rotationController.repeat();
-    // Timer de seguridad: solo en modo release para evitar problemas en tests
-    if (!kDebugMode) {
-      Future.delayed(const Duration(seconds: 4), () {
-        if (mounted && context.mounted && !_isDisposed) {
-          _handleTimeoutNavigation(context);
-        }
-      });
-    }
+    // Timer de seguridad: para evitar quedarse en splash infinitamente
+    Future.delayed(const Duration(seconds: 8), () {
+      if (mounted && context.mounted && !_isDisposed) {
+        _handleTimeoutNavigation(context);
+      }
+    });
   }
 
   @override
@@ -154,7 +151,7 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
         // Agregar un pequeño delay para mostrar el splash
         if (state.status != AuthStatus.initial &&
             state.status != AuthStatus.loading) {
-          Future.delayed(const Duration(milliseconds: 1500), () {
+          Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted && context.mounted && !_isDisposed) {
               _navigateBasedOnAuthStatus(context, state.status);
             }
