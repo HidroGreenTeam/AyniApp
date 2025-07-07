@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 
 class WelcomeWidget extends StatelessWidget {
   final Animation<double> fadeAnimation;
@@ -71,7 +70,7 @@ class WelcomeWidget extends StatelessWidget {
                   'Take a photo or upload an image to detect plant diseases with AI-powered analysis.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.7),
                     height: 1.5,
                   ),
                 ),
@@ -112,7 +111,7 @@ class WelcomeWidget extends StatelessWidget {
                       Text(
                         'Results in seconds',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.7),
                         ),
                       ),
                     ],
@@ -149,7 +148,7 @@ class WelcomeWidget extends StatelessWidget {
                       Text(
                         'Advanced analysis',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.7),
                         ),
                       ),
                     ],

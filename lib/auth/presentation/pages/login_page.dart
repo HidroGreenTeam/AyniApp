@@ -90,7 +90,7 @@ class LoginView extends StatelessWidget {
                         'Sign in to your account',
                         style: TextStyle(
                           fontSize: 18,
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.7),
                         ),
                       ),
                       const SizedBox(height: 40),
@@ -131,7 +131,7 @@ class LoginView extends StatelessWidget {
                           child: RichText(
                             text: TextSpan(
                               text: "Don't have an account? ",
-                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.7)),
                               children: [
                                 TextSpan(
                                   text: 'Sign up',
@@ -204,24 +204,24 @@ class _EmailInput extends StatelessWidget {
           decoration: InputDecoration(
             hintText: 'Email',
             hintStyle: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.5),
             ),
             prefixIcon: Icon(
               Icons.email, 
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.6),
             ),
             filled: true,
             fillColor: Theme.of(context).colorScheme.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.outline.withValues(alpha:0.3),
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.outline.withValues(alpha:0.3),
               ),
             ),
             focusedBorder: OutlineInputBorder(
@@ -257,28 +257,28 @@ class _PasswordInput extends StatelessWidget {
           decoration: InputDecoration(
             hintText: 'Password',
             hintStyle: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.5),
             ),
             prefixIcon: Icon(
               Icons.lock, 
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.6),
             ),
             suffixIcon: Icon(
               Icons.visibility_off, 
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.6),
             ),
             filled: true,
             fillColor: Theme.of(context).colorScheme.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.outline.withValues(alpha:0.3),
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.outline.withValues(alpha:0.3),
               ),
             ),
             focusedBorder: OutlineInputBorder(

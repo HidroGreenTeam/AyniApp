@@ -61,7 +61,7 @@ class CameraDialogs {
               const SizedBox(height: 20),
               Text(
                 'This usually happens when the model contains operations that aren\'t supported by tflite_flutter 0.11.0',
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.7)),
               ),
               const SizedBox(height: 20),
               Container(
@@ -95,7 +95,7 @@ class CameraDialogs {
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               'Close', 
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))
             ),
           ),
           ElevatedButton(
@@ -276,7 +276,7 @@ class CameraDialogs {
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               'Close', 
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.7))
             ),
           ),
           ElevatedButton(
