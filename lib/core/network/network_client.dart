@@ -37,7 +37,10 @@ class NetworkClient {
     bool requiresAuth = true,
     bool isMultipart = false,
   }) async {
-    final url = Uri.parse(ApiConstants.baseUrl + endpoint);
+    // Check if endpoint is already a full URL
+    final url = endpoint.startsWith('http') 
+        ? Uri.parse(endpoint)
+        : Uri.parse(ApiConstants.baseUrl + endpoint);
     final requestHeaders = {
       ...?headers,
     };

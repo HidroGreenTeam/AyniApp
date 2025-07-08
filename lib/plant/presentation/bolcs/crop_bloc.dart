@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:ayni/auth/domain/usecases/get_current_user_use_case.dart';
@@ -83,6 +84,7 @@ class CropBloc extends Bloc<CropEvent, CropState> {
       final user = _getCurrentUserUseCase();
       final int? profileId = user?.id != null ? int.tryParse(user!.id) : null;
       if (profileId != null) {
+        debugPrint('profileId: $profileId');
         final crops = await _cropRepository.fetchCrops(profileId);
         emit(state.copyWith(status: CropStatus.loaded, crops: crops));
       } else {
