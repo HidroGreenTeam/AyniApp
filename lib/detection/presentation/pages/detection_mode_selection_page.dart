@@ -91,14 +91,14 @@ class _DetectionModeSelectionPageState extends State<DetectionModeSelectionPage>
                     if (_hasInternetConnection) ...[
                       _buildDetectionOption(
                         title: 'Detección Online',
-                        subtitle: 'Modelo avanzado con mayor precisión',
+                        subtitle: 'Microservicio Azure con IA avanzada',
                         icon: Icons.cloud_queue,
                         color: AppColors.success,
                         onTap: () => _navigateToDetection(true),
                         features: [
-                          'Mayor precisión en la detección',
-                          'Modelo actualizado constantemente',
-                          'Análisis más detallado',
+                          'Modelo de IA más preciso y actualizado',
+                          'Análisis detallado con recomendaciones específicas',
+                          'Detección de necesidad de tratamiento',
                           'Requiere conexión a internet',
                         ],
                       ),
@@ -109,15 +109,15 @@ class _DetectionModeSelectionPageState extends State<DetectionModeSelectionPage>
                     if (_localModelAvailable) ...[
                       _buildDetectionOption(
                         title: 'Detección Local',
-                        subtitle: 'Modelo pequeño en el dispositivo',
+                        subtitle: 'Modelo TensorFlow Lite en el dispositivo',
                         icon: Icons.phone_android,
                         color: AppColors.warning,
                         onTap: () => _navigateToDetection(false),
                         features: [
                           'Funciona sin conexión a internet',
-                          'Análisis rápido',
-                          'Privacidad total',
-                          'Modelo más pequeño (menor precisión)',
+                          'Análisis rápido y privado',
+                          'Modelo TensorFlow Lite optimizado',
+                          'Ideal para uso offline',
                         ],
                       ),
                       const SizedBox(height: 16),

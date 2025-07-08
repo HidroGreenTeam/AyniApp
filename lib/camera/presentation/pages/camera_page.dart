@@ -368,6 +368,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                   else if (_isProcessing)
                     ProcessingWidget(
                       pulseAnimation: _pulseAnimation,
+                      detectionMode: widget.detectionMode,
                     )
                   else if (_image != null)
                     ImageResultWidget(
@@ -382,6 +383,7 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
                       fadeAnimation: _fadeAnimation,
                       onTakePhoto: () => _getImage(ImageSource.camera),
                       onSelectFromGallery: () => _getImage(ImageSource.gallery),
+                      detectionMode: widget.detectionMode,
                     ),
                 ],
               ),

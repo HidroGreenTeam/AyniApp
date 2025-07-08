@@ -4,13 +4,48 @@ class WelcomeWidget extends StatelessWidget {
   final Animation<double> fadeAnimation;
   final VoidCallback onTakePhoto;
   final VoidCallback onSelectFromGallery;
+  final bool? detectionMode; // true = online, false = local, null = auto
 
   const WelcomeWidget({
     super.key,
     required this.fadeAnimation,
     required this.onTakePhoto,
     required this.onSelectFromGallery,
+    this.detectionMode,
   });
+
+  String _getDetectionModeText() {
+    switch (detectionMode) {
+      case true:
+        return 'Modo Online - Microservicio Azure';
+      case false:
+        return 'Modo Local - TensorFlow Lite';
+      default:
+        return 'Modo Automático - Selección Inteligente';
+    }
+  }
+
+  IconData _getDetectionModeIcon() {
+    switch (detectionMode) {
+      case true:
+        return Icons.cloud_queue;
+      case false:
+        return Icons.phone_android;
+      default:
+        return Icons.auto_awesome;
+    }
+  }
+
+  Color _getDetectionModeColor(BuildContext context) {
+    switch (detectionMode) {
+      case true:
+        return Colors.green;
+      case false:
+        return Colors.orange;
+      default:
+        return Theme.of(context).colorScheme.primary;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +53,38 @@ class WelcomeWidget extends StatelessWidget {
       opacity: fadeAnimation,
       child: Column(
         children: [
+          // Detection mode indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: _getDetectionModeColor(context).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: _getDetectionModeColor(context).withValues(alpha: 0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  _getDetectionModeIcon(),
+                  size: 16,
+                  color: _getDetectionModeColor(context),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _getDetectionModeText(),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: _getDetectionModeColor(context),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          
           Container(
             padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
@@ -60,14 +127,14 @@ class WelcomeWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Plant Health Assistant',
+                  'Asistente de Salud Vegetal',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Take a photo or upload an image to detect plant diseases with AI-powered analysis.',
+                  'Toma una foto o sube una imagen para detectar enfermedades de plantas con análisis impulsado por IA.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.7),
@@ -102,14 +169,14 @@ class WelcomeWidget extends StatelessWidget {
                       Icon(Icons.speed, size: 32, color: Theme.of(context).colorScheme.secondary),
                       const SizedBox(height: 8),
                       Text(
-                        'Fast Detection',
+                        'Detección Rápida',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Results in seconds',
+                        'Resultados en segundos',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.7),
                         ),
@@ -139,14 +206,14 @@ class WelcomeWidget extends StatelessWidget {
                       Icon(Icons.psychology, size: 32, color: Theme.of(context).colorScheme.primary),
                       const SizedBox(height: 8),
                       Text(
-                        'AI Powered',
+                        'Impulsado por IA',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Advanced analysis',
+                        'Análisis avanzado',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha:0.7),
                         ),
@@ -190,7 +257,7 @@ class WelcomeWidget extends StatelessWidget {
               onPressed: onTakePhoto,
               icon: Icon(Icons.camera_alt, size: 28, color: Theme.of(context).colorScheme.onPrimary),
               label: Text(
-                'Take Photo',
+                'Tomar Foto',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onPrimary,
                   fontWeight: FontWeight.w600,
@@ -226,7 +293,7 @@ class WelcomeWidget extends StatelessWidget {
               onPressed: onSelectFromGallery,
               icon: Icon(Icons.photo_library, size: 28, color: Theme.of(context).colorScheme.onSurface),
               label: Text(
-                'Upload from Gallery',
+                'Subir desde Galería',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.w600,

@@ -20,16 +20,19 @@ import '../../auth/presentation/viewmodels/login_viewmodel.dart';
 import '../../profile/data/datasources/profile_data_source.dart';
 import '../../profile/data/datasources/payment_method_data_source.dart';
 import '../../profile/data/datasources/billing_data_source.dart';
+import '../../profile/data/datasources/subscription_data_source.dart';
 import '../../profile/domain/repositories/profile_repository.dart';
 import '../../profile/data/repositories/profile_repository_impl.dart';
 import '../../profile/data/repositories/payment_method_repository.dart';
 import '../../profile/data/repositories/billing_repository.dart';
+import '../../profile/data/repositories/subscription_repository.dart';
 import '../../auth/presentation/viewmodels/walkthrough_viewmodel.dart';
 import '../../profile/domain/usecases/profile_usecases.dart';
 import '../../profile/presentation/blocs/account_bloc.dart';
 import '../../profile/presentation/blocs/profile_bloc.dart';
 import '../../profile/presentation/blocs/payment_methods_bloc.dart';
 import '../../profile/presentation/blocs/billing_bloc.dart';
+import '../../profile/presentation/blocs/subscription_bloc.dart';
 import '../../profile/presentation/viewmodels/account_viewmodel.dart';
 import '../../profile/presentation/viewmodels/profile_viewmodel.dart';
 import '../../plant/data/datasources/crop_data_source.dart';
@@ -37,6 +40,7 @@ import '../../plant/data/repositories/crop_repository.dart';
 import '../../plant/domain/usecases/get_all_crops.dart';
 import '../../plant/presentation/bolcs/crop_bloc.dart';
 import '../../detection/services/hybrid_detection_service.dart';
+import '../../profile/domain/usecases/subscription_usecases.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -100,6 +104,11 @@ Future<void> initDependencies() async {
     BillingDataSourceImpl(serviceLocator<StorageService>()),
   );
 
+  // Subscription Data Source
+  serviceLocator.registerSingleton<SubscriptionDataSource>(
+    SubscriptionDataSourceImpl(serviceLocator<NetworkClient>()),
+  );
+
   // Repositories
   serviceLocator.registerSingleton<AuthRepository>(
     AuthRepository(
@@ -121,6 +130,10 @@ Future<void> initDependencies() async {
 
   serviceLocator.registerSingleton<BillingRepository>(
     BillingRepositoryImpl(serviceLocator<BillingDataSource>()),
+  );
+
+  serviceLocator.registerSingleton<SubscriptionRepository>(
+    SubscriptionRepositoryImpl(serviceLocator<SubscriptionDataSource>()),
   );
 
   serviceLocator.registerSingleton<CropRepository>(
@@ -190,6 +203,11 @@ Future<void> initDependencies() async {
   serviceLocator.registerFactory<GetAllCrops>(
     () => GetAllCrops(serviceLocator<CropDataSource>()),
   );
+
+  // Subscription Use Cases
+  serviceLocator.registerFactory<SubscriptionUseCases>(
+    () => SubscriptionUseCasesImpl(serviceLocator<SubscriptionRepository>()),
+  );
     // ViewModels
   serviceLocator.registerFactory<LoginViewModel>(() =>
     LoginViewModel(
@@ -254,5 +272,10 @@ Future<void> initDependencies() async {
   // Billing Bloc
   serviceLocator.registerFactory<BillingBloc>(() => 
     BillingBloc(repository: serviceLocator<BillingRepository>()),
+  );
+
+  // Subscription Bloc
+  serviceLocator.registerFactory<SubscriptionBloc>(() => 
+    SubscriptionBloc(serviceLocator<SubscriptionUseCases>()),
   );
 }

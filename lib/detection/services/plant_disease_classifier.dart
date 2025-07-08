@@ -193,9 +193,9 @@ class PlantDiseaseClassifier {
   // Format disease name for display
   String _formatDiseaseName(String diseaseName) {
     if (diseaseName == 'nodisease') {
-      return 'No Disease';
+      return 'Sin Enfermedad';
     } else if (diseaseName == 'unknown') {
-      return 'Unknown';
+      return 'Desconocido';
     }
     
     // Replace underscores with spaces and capitalize each word
@@ -209,19 +209,23 @@ class PlantDiseaseClassifier {
   String _getRecommendationForDisease(String disease) {
     switch (disease.toLowerCase()) {
       case 'nodisease':
-        return 'Your plant appears healthy! Continue with your current care routine.';
+        return 'Tu planta parece estar saludable! Continúa con tu rutina de cuidado actual.';
       case 'miner':
-        return 'Leaf miner detected. Consider removing affected leaves and applying appropriate insecticide.';
+      case 'leaf_miner':
+        return 'Minador de hojas detectado. Considera remover las hojas afectadas y aplicar insecticida apropiado.';
       case 'phoma':
-        return 'Phoma leaf spot detected. Avoid overhead watering and apply appropriate fungicide.';
+      case 'phoma_leaf_spot':
+        return 'Mancha foliar por Phoma detectada. Evita el riego por aspersión y aplica fungicida apropiado.';
       case 'redspider':
-        return 'Red spider mites detected. Increase humidity and consider applying insecticidal soap.';
+      case 'red_spider_mite':
+        return 'Ácaros rojos detectados. Aumenta la humedad y considera aplicar jabón insecticida.';
       case 'rust':
-        return 'Leaf rust detected. Remove affected parts and apply a copper-based fungicide.';
+      case 'leaf_rust':
+        return 'Roya foliar detectada. Remueve las partes afectadas y aplica fungicida a base de cobre.';
       case 'unknown':
-        return 'Could not identify the plant condition. Try taking a clearer photo with better lighting.';
+        return 'No se pudo identificar la condición de la planta. Intenta tomar una foto más clara con mejor iluminación.';
       default:
-        return 'Consult with a plant specialist for proper treatment options.';
+        return 'Consulta con un especialista en plantas para opciones de tratamiento apropiadas.';
     }
   }
 

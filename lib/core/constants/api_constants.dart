@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String baseUrl = 'https://ayni-backend-mono-d5akeuepdsgrauaa.canadacentral-01.azurewebsites.net/';
+  static const String baseUrl = 'https://api-gateway.thankfulwater-e8adfc7e.eastus.azurecontainerapps.io/';
   
   // Auth endpoints
   static const String signIn = 'api/v1/auth/sign-in';
@@ -11,4 +11,13 @@ class ApiConstants {
   
   // Detection endpoints
   static const String detectionAnalyze = 'api/v1/detection/analyze';
+  
+  // Microservicio de detección específico
+  static const String detectionServiceBaseUrl = 'https://detection-service.thankfulwater-e8adfc7e.eastus.azurecontainerapps.io/';
+  static const String detectionServicePredict = 'api/v1/detections/predict';
+  
+  // Microservicio de suscripciones
+  static const String subscriptionServiceBaseUrl = 'https://subscription-service.thankfulwater-e8adfc7e.eastus.azurecontainerapps.io/';
+  static const String subscriptions = 'api/v1/subscriptions';
+  static const String subscriptionPlans = 'api/v1/subscriptions/plans';
 }

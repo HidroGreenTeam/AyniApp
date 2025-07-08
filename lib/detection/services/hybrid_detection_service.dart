@@ -5,6 +5,8 @@ import '../../../core/services/connectivity_service.dart';
 import '../../../core/di/service_locator.dart';
 import 'plant_disease_classifier.dart';
 import '../../../core/constants/api_constants.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class DetectionResult {
   final String disease;
@@ -77,29 +79,49 @@ class HybridDetectionService {
   /// Detect using online model
   Future<DetectionResult?> _detectOnline(File imageFile) async {
     try {
-      final response = await _networkClient.request<Map<String, dynamic>>(
-        endpoint: ApiConstants.detectionAnalyze,
-        method: RequestMethod.post,
-        data: {'file': imageFile},
-        isMultipart: true,
-        requiresAuth: true,
-        fromJson: (json) => json,
-      );
-
-      if (response.success && response.data != null) {
-        final data = response.data!;
-        final disease = data['disease'] ?? 'unknown';
-        final confidence = (data['confidence'] ?? 0.0).toDouble();
+      // Usar el microservicio específico del usuario
+      final url = Uri.parse(ApiConstants.detectionServiceBaseUrl + ApiConstants.detectionServicePredict);
+      
+      final request = http.MultipartRequest('POST', url);
+      request.headers['accept'] = 'application/json';
+      
+      // Agregar el archivo de imagen
+      request.files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+      
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final jsonData = jsonDecode(response.body);
+        
+        // Mapear la respuesta del microservicio a nuestro formato
+        final predictedClass = jsonData['predicted_class'] ?? 'unknown';
+        final confidence = (jsonData['confidence'] ?? 0.0).toDouble();
+        final diseaseDetected = jsonData['disease_detected'] ?? false;
+        final requiresTreatment = jsonData['requires_treatment'] ?? false;
+        
+        // Convertir predicted_class a disease name
+        String disease = predictedClass;
+        if (predictedClass == 'miner') {
+          disease = 'leaf_miner';
+        } else if (predictedClass == 'phoma') {
+          disease = 'phoma_leaf_spot';
+        } else if (predictedClass == 'redspider') {
+          disease = 'red_spider_mite';
+        } else if (predictedClass == 'rust') {
+          disease = 'leaf_rust';
+        }
         
         return DetectionResult(
           disease: disease,
           confidence: confidence,
           formattedDiseaseName: _formatDiseaseName(disease),
-          recommendation: _getRecommendationForDisease(disease),
+          recommendation: _getRecommendationForDisease(disease, requiresTreatment),
           isOnlineDetection: true,
         );
       } else {
-        debugPrint('Online detection failed: ${response.error}');
+        debugPrint('Online detection failed with status: ${response.statusCode}');
+        debugPrint('Response body: ${response.body}');
         return null;
       }
     } catch (e) {
@@ -182,9 +204,9 @@ class HybridDetectionService {
   // Helper methods
   String _formatDiseaseName(String diseaseName) {
     if (diseaseName == 'nodisease') {
-      return 'No Disease';
+      return 'Sin Enfermedad';
     } else if (diseaseName == 'unknown') {
-      return 'Unknown';
+      return 'Desconocido';
     }
     
     return diseaseName.split('_').map((word) {
@@ -193,22 +215,41 @@ class HybridDetectionService {
     }).join(' ');
   }
 
-  String _getRecommendationForDisease(String disease) {
+  String _getRecommendationForDisease(String disease, [bool requiresTreatment = false]) {
     switch (disease.toLowerCase()) {
       case 'nodisease':
-        return 'Your plant appears healthy! Continue with your current care routine.';
+        return 'Tu planta parece estar saludable! Continúa con tu rutina de cuidado actual.';
+      case 'leaf_miner':
       case 'miner':
-        return 'Leaf miner detected. Consider removing affected leaves and applying appropriate insecticide.';
+        if (requiresTreatment) {
+          return 'Minador de hojas detectado. Se requiere tratamiento: remueve las hojas afectadas y aplica insecticida apropiado.';
+        }
+        return 'Minador de hojas detectado. Considera remover las hojas afectadas y aplicar insecticida apropiado.';
+      case 'phoma_leaf_spot':
       case 'phoma':
-        return 'Phoma leaf spot detected. Avoid overhead watering and apply appropriate fungicide.';
+        if (requiresTreatment) {
+          return 'Mancha foliar por Phoma detectada. Se requiere tratamiento: evita el riego por aspersión y aplica fungicida apropiado.';
+        }
+        return 'Mancha foliar por Phoma detectada. Evita el riego por aspersión y aplica fungicida apropiado.';
+      case 'red_spider_mite':
       case 'redspider':
-        return 'Red spider mites detected. Increase humidity and consider applying insecticidal soap.';
+        if (requiresTreatment) {
+          return 'Ácaros rojos detectados. Se requiere tratamiento: aumenta la humedad y considera aplicar jabón insecticida.';
+        }
+        return 'Ácaros rojos detectados. Aumenta la humedad y considera aplicar jabón insecticida.';
+      case 'leaf_rust':
       case 'rust':
-        return 'Leaf rust detected. Remove affected parts and apply a copper-based fungicide.';
+        if (requiresTreatment) {
+          return 'Roya foliar detectada. Se requiere tratamiento: remueve las partes afectadas y aplica fungicida a base de cobre.';
+        }
+        return 'Roya foliar detectada. Remueve las partes afectadas y aplica fungicida a base de cobre.';
       case 'unknown':
-        return 'Could not identify the plant condition. Try taking a clearer photo with better lighting.';
+        return 'No se pudo identificar la condición de la planta. Intenta tomar una foto más clara con mejor iluminación.';
       default:
-        return 'Consult with a plant specialist for proper treatment options.';
+        if (requiresTreatment) {
+          return 'Se requiere tratamiento. Consulta con un especialista en plantas para opciones de tratamiento apropiadas.';
+        }
+        return 'Consulta con un especialista en plantas para opciones de tratamiento apropiadas.';
     }
   }
 
