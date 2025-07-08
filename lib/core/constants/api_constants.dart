@@ -16,6 +16,11 @@ class ApiConstants {
   static const String detectionServiceBaseUrl = 'https://detection-service.thankfulwater-e8adfc7e.eastus.azurecontainerapps.io/';
   static const String detectionServicePredict = 'api/v1/detections/predict';
   
+  // Microservicio de cultivos
+  static const String cropServiceBaseUrl = 'https://crop-service.thankfulwater-e8adfc7e.eastus.azurecontainerapps.io/';
+  static const String crops = 'api/v1/crops';
+  static const String diagnosis = 'api/v1/diagnosis';
+  
   // Microservicio de suscripciones
   static const String subscriptionServiceBaseUrl = 'https://subscription-service.thankfulwater-e8adfc7e.eastus.azurecontainerapps.io/';
   static const String subscriptions = 'api/v1/subscriptions';

@@ -2,50 +2,60 @@ import '../../data/models/crop_model.dart';
 
 class Crop {
   final int id;
+  final int profileId;
   final String cropName;
-  final String irrigationType;
-  final int area;
   final String plantingDate;
-  final int farmerId;
-  final String? imageUrl;
+  final String location;
+  final String healthStatus;
+  final String notes;
+  final String createdAt;
+  final String updatedAt;
 
   Crop({
     required this.id,
+    required this.profileId,
     required this.cropName,
-    required this.irrigationType,
-    required this.area,
     required this.plantingDate,
-    required this.farmerId,
-    this.imageUrl,
+    required this.location,
+    required this.healthStatus,
+    required this.notes,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
   factory Crop.fromModel(CropModel model) => Crop(
         id: model.id,
+        profileId: model.profileId,
         cropName: model.cropName,
-        irrigationType: model.irrigationType,
-        area: model.area,
         plantingDate: model.plantingDate,
-        farmerId: model.farmerId,
-        imageUrl: model.imageUrl,
+        location: model.location,
+        healthStatus: model.healthStatus,
+        notes: model.notes,
+        createdAt: model.createdAt,
+        updatedAt: model.updatedAt,
       );
 
   factory Crop.fromJson(Map<String, dynamic> json) => Crop(
         id: json['id'],
+        profileId: json['profileId'],
         cropName: json['cropName'],
-        irrigationType: json['irrigationType'],
-        area: json['area'],
         plantingDate: json['plantingDate'],
-        farmerId: json['farmerId'],
-        imageUrl: json['imageUrl'],
+        location: json['location'] ?? '',
+        healthStatus: json['healthStatus'] ?? 'HEALTHY',
+        notes: json['notes'] ?? '',
+        createdAt: json['createdAt'] ?? '',
+        updatedAt: json['updatedAt'] ?? '',
       );
 
   Map<String, dynamic> toJson() => {
         'id': id,
+        'profileId': profileId,
         'cropName': cropName,
-        'irrigationType': irrigationType,
-        'area': area,
         'plantingDate': plantingDate,
-        'farmerId': farmerId,
-        'imageUrl': imageUrl,
+        'location': location,
+        'healthStatus': healthStatus,
+        'notes': notes,
+        'createdAt': createdAt,
+        'updatedAt': updatedAt,
       };
 }

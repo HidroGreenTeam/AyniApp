@@ -1,16 +1,12 @@
-import 'package:ayni/plant/data/datasources/crop_data_source.dart';
+import 'package:ayni/plant/data/repositories/crop_repository.dart';
+import 'package:ayni/plant/domain/entities/crop.dart';
 
 class GetAllCrops {
-  final CropDataSource _repository;
+  final CropRepository _repository;
 
   GetAllCrops(this._repository);
 
-  Future<List<Object>> call(int farmerId) async {
-    final response = await _repository.fetchCrops(farmerId);
-    if (response.success && response.data != null) {
-      return response.data!;
-    } else {
-      throw Exception(response.error ?? 'Unknown error');
-    }
+  Future<List<Crop>> call(int profileId) async {
+    return await _repository.fetchCrops(profileId);
   }
 }

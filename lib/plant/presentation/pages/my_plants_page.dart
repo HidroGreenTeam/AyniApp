@@ -128,23 +128,6 @@ class MyPlantsPage extends StatelessWidget {
                     elevation: 2,
                     child: Column(
                       children: [
-                        if (crop.imageUrl != null)
-                          ClipRRect(
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                            child: Image.network(
-                              crop.imageUrl!,
-                              height: 200,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  height: 200,
-                                  color: AppColors.grey200,
-                                  child: Icon(Icons.image_not_supported, size: 48, color: AppColors.grey400),
-                                );
-                              },
-                            ),
-                          ),
                         Padding(
                           padding: const EdgeInsets.all(16),
                           child: Column(
@@ -166,10 +149,19 @@ class MyPlantsPage extends StatelessWidget {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          'Área: ${crop.area} m² • ${crop.irrigationType}',
+                                          'Ubicación: ${crop.location.isNotEmpty ? crop.location : 'No especificada'}',
                                           style: TextStyle(
                                             fontSize: 14,
                                             color: AppColors.grey600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Estado: ${_getHealthStatusText(crop.healthStatus)}',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: _getHealthStatusColor(crop.healthStatus),
+                                            fontWeight: FontWeight.w500,
                                           ),
                                         ),
                                         const SizedBox(height: 4),
@@ -180,6 +172,16 @@ class MyPlantsPage extends StatelessWidget {
                                             color: AppColors.grey600,
                                           ),
                                         ),
+                                        if (crop.notes.isNotEmpty) ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Notas: ${crop.notes}',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: AppColors.grey600,
+                                            ),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),
@@ -198,30 +200,17 @@ class MyPlantsPage extends StatelessWidget {
                                             ),
                                           );
                                         }
-                                      } else if (value == 'delete') {
-                                        final confirm = await showDialog<bool>(
-                                          context: context,
-                                          builder: (ctx) => AlertDialog(
-                                            title: const Text('Eliminar Planta'),
-                                            content: const Text('¿Estás seguro de que quieres eliminar esta planta?'),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(ctx, false),
-                                                child: const Text('Cancelar'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(ctx, true),
-                                                style: TextButton.styleFrom(
-                                                  foregroundColor: Colors.red,
-                                                ),
-                                                child: const Text('Eliminar'),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                        if (confirm == true && context.mounted) {
-                                          context.read<CropBloc>().add(DeleteCrop(crop.id));
+                                      } else if (value == 'diagnose') {
+                                        // Navegar a la página de diagnóstico
+                                        if (context.mounted) {
+                                          Navigator.pushNamed(
+                                            context,
+                                            '/diagnose',
+                                            arguments: {'cropId': crop.id, 'cropName': crop.cropName},
+                                          );
                                         }
+                                      } else if (value == 'status') {
+                                        _showStatusUpdateDialog(context, crop);
                                       }
                                     },
                                     itemBuilder: (context) => [
@@ -236,12 +225,22 @@ class MyPlantsPage extends StatelessWidget {
                                         ),
                                       ),
                                       const PopupMenuItem(
-                                        value: 'delete',
+                                        value: 'diagnose',
                                         child: Row(
                                           children: [
-                                            Icon(Icons.delete, color: Colors.red),
+                                            Icon(Icons.camera_alt, color: Colors.green),
                                             SizedBox(width: 8),
-                                            Text('Eliminar'),
+                                            Text('Diagnosticar'),
+                                          ],
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'status',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.health_and_safety, color: Colors.orange),
+                                            SizedBox(width: 8),
+                                            Text('Actualizar Estado'),
                                           ],
                                         ),
                                       ),
@@ -263,131 +262,91 @@ class MyPlantsPage extends StatelessWidget {
       ),
     );
   }
-}
 
-class MyPlantsView extends StatelessWidget {
-  const MyPlantsView({super.key});
+  String _getHealthStatusText(String status) {
+    switch (status.toUpperCase()) {
+      case 'HEALTHY':
+        return 'Saludable';
+      case 'DISEASED':
+        return 'Enferma';
+      case 'RECOVERING':
+        return 'Recuperándose';
+      default:
+        return status;
+    }
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Plants'),
-        backgroundColor: AppColors.primaryGreen,
-        foregroundColor: AppColors.white,
-        elevation: 0,
+  Color _getHealthStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'HEALTHY':
+        return Colors.green;
+      case 'DISEASED':
+        return Colors.red;
+      case 'RECOVERING':
+        return Colors.orange;
+      default:
+        return AppColors.grey600;
+    }
+  }
+
+  void _showStatusUpdateDialog(BuildContext context, crop) {
+    String selectedStatus = crop.healthStatus;
+    final notesController = TextEditingController(text: crop.notes);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Actualizar Estado de la Planta'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DropdownButtonFormField<String>(
+              value: selectedStatus,
+              decoration: const InputDecoration(
+                labelText: 'Estado de Salud',
+                border: OutlineInputBorder(),
+              ),
+              items: const [
+                DropdownMenuItem(value: 'HEALTHY', child: Text('Saludable')),
+                DropdownMenuItem(value: 'DISEASED', child: Text('Enferma')),
+                DropdownMenuItem(value: 'RECOVERING', child: Text('Recuperándose')),
+              ],
+              onChanged: (value) {
+                selectedStatus = value!;
+              },
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: notesController,
+              decoration: const InputDecoration(
+                labelText: 'Notas',
+                border: OutlineInputBorder(),
+                hintText: 'Observaciones sobre el estado de la planta...',
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const PlantFormPage()),
-              );
-              if (result != null && context.mounted) {
-                context.read<CropBloc>().add(AddCrop(result));
-              }
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final statusData = {
+                'healthStatus': selectedStatus,
+                'notes': notesController.text,
+              };
+              context.read<CropBloc>().add(UpdateCropStatus(crop.id, statusData));
+              Navigator.pop(context);
             },
+            child: const Text('Guardar'),
           ),
         ],
-      ),
-      body: BlocBuilder<CropBloc, CropState>(
-        builder: (context, state) {
-          if (state.status == CropStatus.loading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state.status == CropStatus.error) {
-            return Center(child: Text(state.errorMessage ?? 'Error loading crops'));
-          } else if (state.crops.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.eco_outlined, size: 80, color: AppColors.grey400),
-                  const SizedBox(height: 16),
-                  Text('No Plants Added Yet', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.grey800)),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                    child: Text('Add plants to your collection to track their growth and get care reminders', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: AppColors.grey600)),
-                  ),
-                  const SizedBox(height: 40),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryGreen,
-                      foregroundColor: AppColors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    onPressed: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const PlantFormPage()),
-                      );
-                      if (result == true && context.mounted) {
-                        context.read<CropBloc>().add(FetchCrops());
-                      }
-                    },
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add Your First Plant', style: TextStyle(fontSize: 16)),
-                  ),
-                ],
-              ),
-            );
-          }
-          return ListView.builder(
-            itemCount: state.crops.length,
-            itemBuilder: (context, index) {
-              final crop = state.crops[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: ListTile(
-                  leading: crop.imageUrl != null
-                      ? Image.network(crop.imageUrl!, width: 48, height: 48, fit: BoxFit.cover)
-                      : Icon(Icons.eco, color: AppColors.primaryGreen),
-                  title: Text(crop.cropName),
-                  subtitle: Text('Area: ${crop.area} | Irrigation: ${crop.irrigationType}'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => PlantFormPage(crop: crop)),
-                          );
-                          if (result != null && context.mounted) {
-                            context.read<CropBloc>().add(UpdateCrop(crop.id, result));
-                          }
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () async {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              title: const Text('Delete Plant'),
-                              content: const Text('Are you sure you want to delete this plant?'),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
-                              ],
-                            ),
-                          );
-                          if (confirm == true && context.mounted) {
-                            context.read<CropBloc>().add(DeleteCrop(crop.id));
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        },
       ),
     );
   }
 }
+
+

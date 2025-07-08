@@ -1,104 +1,110 @@
-import 'dart:io';
 import 'package:ayni/plant/domain/entities/crop.dart';
-import 'package:ayni/core/network/network_client.dart';
+import 'package:ayni/plant/domain/entities/diagnosis.dart';
+import 'package:ayni/plant/data/datasources/crop_data_source.dart';
 
 class CropRepository {
-  final NetworkClient networkClient;
-  CropRepository({required this.networkClient});
+  final CropDataSource _cropDataSource;
 
-  Future<List<Crop>> fetchCrops(int farmerId) async {
-    final response = await networkClient.request<List<Crop>>(
-      endpoint: 'api/v1/crops/farmer/$farmerId/crops',
-      method: RequestMethod.get,
-      fromJson: (json) {        // Permitir respuesta tipo List o Map con 'data'
-        if (json is List) {
-          return json
-              .map((e) => Crop.fromJson(e as Map<String, dynamic>))
-              .toList();
-        } else if (json['data'] is List) {
-          return (json['data'] as List)
-              .map((e) => Crop.fromJson(e as Map<String, dynamic>))
-              .toList();
-        }
-        return [];
-      },
-      requiresAuth: true,
-    );
+  CropRepository({required CropDataSource cropDataSource}) 
+      : _cropDataSource = cropDataSource;
+
+  Future<List<Crop>> fetchCrops(int profileId) async {
+    final response = await _cropDataSource.fetchCrops(profileId);
     if (response.success && response.data != null) {
-      return response.data!;
+      return response.data!.map((model) => Crop.fromModel(model)).toList();
     } else {
-      throw Exception(response.error ?? 'Unknown error');
+      throw Exception(response.error ?? 'Error al obtener cultivos');
+    }
+  }
+
+  Future<Crop> getCropById(int cropId) async {
+    final response = await _cropDataSource.getCropById(cropId);
+    if (response.success && response.data != null) {
+      return Crop.fromModel(response.data!);
+    } else {
+      throw Exception(response.error ?? 'Error al obtener cultivo');
     }
   }
 
   Future<Crop> createCrop(Map<String, dynamic> cropData) async {
-    final response = await networkClient.request<Crop>(
-      endpoint: 'api/v1/crops',
-      method: RequestMethod.post,
-      data: cropData,
-      fromJson: (json) => Crop.fromJson(json),
-      requiresAuth: true,
-    );
+    final response = await _cropDataSource.createCrop(cropData);
     if (response.success && response.data != null) {
-      return response.data!;
+      return Crop.fromModel(response.data!);
     } else {
-      throw Exception(response.error ?? 'Unknown error');
+      throw Exception(response.error ?? 'Error al crear cultivo');
     }
   }
 
-  Future<Crop> updateCrop(int cropId, Map<String, dynamic> cropData) async {
-    final response = await networkClient.request<Crop>(
-      endpoint: 'api/v1/crops/$cropId',
-      method: RequestMethod.put,
-      data: cropData,
-      fromJson: (json) => Crop.fromJson(json),
-      requiresAuth: true,
-    );
+  Future<Crop> updateCropStatus(int cropId, Map<String, dynamic> statusData) async {
+    final response = await _cropDataSource.updateCropStatus(cropId, statusData);
     if (response.success && response.data != null) {
-      return response.data!;
+      return Crop.fromModel(response.data!);
     } else {
-      throw Exception(response.error ?? 'Unknown error');
+      throw Exception(response.error ?? 'Error al actualizar estado del cultivo');
     }
   }
 
-  Future<void> deleteCrop(int cropId) async {
-    final response = await networkClient.request(
-      endpoint: 'api/v1/crops/$cropId',
-      method: RequestMethod.delete,
-      requiresAuth: true,
-    );
-    if (!response.success) {
-      throw Exception(response.error ?? 'Unknown error');
+  Future<List<Crop>> getCropsWithActiveDisease(int profileId) async {
+    final response = await _cropDataSource.getCropsWithActiveDisease(profileId);
+    if (response.success && response.data != null) {
+      return response.data!.map((model) => Crop.fromModel(model)).toList();
+    } else {
+      throw Exception(response.error ?? 'Error al obtener cultivos con enfermedades');
     }
   }
 
-  Future<Crop> updateCropImage(int cropId, File imageFile) async {
-    final response = await networkClient.request<Crop>(
-      endpoint: 'api/v1/crops/$cropId/cropImage',
-      method: RequestMethod.put,
-      data: {'file': imageFile},
-      fromJson: (json) => Crop.fromJson(json),
-      requiresAuth: true,
-      isMultipart: true,
-    );
+  // Métodos para diagnósticos
+  Future<List<Diagnosis>> getDiagnosesByCropId(int cropId) async {
+    final response = await _cropDataSource.getDiagnosesByCropId(cropId);
     if (response.success && response.data != null) {
-      return response.data!;
+      return response.data!.map((model) => Diagnosis.fromModel(model)).toList();
     } else {
-      throw Exception(response.error ?? 'Unknown error');
+      throw Exception(response.error ?? 'Error al obtener diagnósticos del cultivo');
     }
   }
 
-  Future<Crop> deleteCropImage(int cropId) async {
-    final response = await networkClient.request<Crop>(
-      endpoint: 'api/v1/crops/$cropId/cropImage',
-      method: RequestMethod.delete,
-      fromJson: (json) => Crop.fromJson(json),
-      requiresAuth: true,
-    );
+  Future<Diagnosis> startDiagnosis(Map<String, dynamic> diagnosisData) async {
+    final response = await _cropDataSource.startDiagnosis(diagnosisData);
+    if (response.success && response.data != null) {
+      return Diagnosis.fromModel(response.data!);
+    } else {
+      throw Exception(response.error ?? 'Error al iniciar diagnóstico');
+    }
+  }
+
+  Future<Diagnosis> getDiagnosisById(int diagnosisId) async {
+    final response = await _cropDataSource.getDiagnosisById(diagnosisId);
+    if (response.success && response.data != null) {
+      return Diagnosis.fromModel(response.data!);
+    } else {
+      throw Exception(response.error ?? 'Error al obtener diagnóstico');
+    }
+  }
+
+  Future<List<Diagnosis>> getDiagnosesByProfileId(int profileId) async {
+    final response = await _cropDataSource.getDiagnosesByProfileId(profileId);
+    if (response.success && response.data != null) {
+      return response.data!.map((model) => Diagnosis.fromModel(model)).toList();
+    } else {
+      throw Exception(response.error ?? 'Error al obtener diagnósticos del perfil');
+    }
+  }
+
+  Future<List<Diagnosis>> getPendingDiagnoses() async {
+    final response = await _cropDataSource.getPendingDiagnoses();
+    if (response.success && response.data != null) {
+      return response.data!.map((model) => Diagnosis.fromModel(model)).toList();
+    } else {
+      throw Exception(response.error ?? 'Error al obtener diagnósticos pendientes');
+    }
+  }
+
+  Future<Map<String, dynamic>> getDetectionServiceStatus() async {
+    final response = await _cropDataSource.getDetectionServiceStatus();
     if (response.success && response.data != null) {
       return response.data!;
     } else {
-      throw Exception(response.error ?? 'Unknown error');
+      throw Exception(response.error ?? 'Error al obtener estado del servicio de detección');
     }
   }
 }

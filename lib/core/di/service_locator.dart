@@ -38,6 +38,8 @@ import '../../profile/presentation/viewmodels/profile_viewmodel.dart';
 import '../../plant/data/datasources/crop_data_source.dart';
 import '../../plant/data/repositories/crop_repository.dart';
 import '../../plant/domain/usecases/get_all_crops.dart';
+import '../../plant/domain/usecases/start_diagnosis_usecase.dart';
+import '../../plant/domain/usecases/get_diagnoses_by_crop_usecase.dart';
 import '../../plant/presentation/bolcs/crop_bloc.dart';
 import '../../detection/services/hybrid_detection_service.dart';
 import '../../profile/domain/usecases/subscription_usecases.dart';
@@ -138,7 +140,7 @@ Future<void> initDependencies() async {
 
   serviceLocator.registerSingleton<CropRepository>(
     CropRepository(
-      networkClient: serviceLocator<NetworkClient>(),
+      cropDataSource: serviceLocator<CropDataSource>(),
     ),
   );
   
@@ -201,7 +203,15 @@ Future<void> initDependencies() async {
 
   // Plant Use Cases
   serviceLocator.registerFactory<GetAllCrops>(
-    () => GetAllCrops(serviceLocator<CropDataSource>()),
+    () => GetAllCrops(serviceLocator<CropRepository>()),
+  );
+
+  serviceLocator.registerFactory<StartDiagnosisUseCase>(
+    () => StartDiagnosisUseCase(serviceLocator<CropRepository>()),
+  );
+
+  serviceLocator.registerFactory<GetDiagnosesByCropUseCase>(
+    () => GetDiagnosesByCropUseCase(serviceLocator<CropRepository>()),
   );
 
   // Subscription Use Cases

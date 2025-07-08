@@ -1,63 +1,75 @@
 class CropModel {
   final int id;
+  final int profileId;
   final String cropName;
-  final String irrigationType;
-  final int area;
   final String plantingDate;
-  final int farmerId;
-  final String? imageUrl;
+  final String location;
+  final String healthStatus;
+  final String notes;
+  final String createdAt;
+  final String updatedAt;
 
   CropModel({
     required this.id,
+    required this.profileId,
     required this.cropName,
-    required this.irrigationType,
-    required this.area,
     required this.plantingDate,
-    required this.farmerId,
-    this.imageUrl,
+    required this.location,
+    required this.healthStatus,
+    required this.notes,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
   factory CropModel.fromJson(Map<String, dynamic> json) {
     return CropModel(
       id: json['id'],
+      profileId: json['profileId'],
       cropName: json['cropName'],
-      irrigationType: json['irrigationType'],
-      area: json['area'],
       plantingDate: json['plantingDate'],
-      farmerId: json['farmerId'],
-      imageUrl: json['imageUrl'],
+      location: json['location'] ?? '',
+      healthStatus: json['healthStatus'] ?? 'HEALTHY',
+      notes: json['notes'] ?? '',
+      createdAt: json['createdAt'] ?? '',
+      updatedAt: json['updatedAt'] ?? '',
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'profileId': profileId,
       'cropName': cropName,
-      'irrigationType': irrigationType,
-      'area': area,
       'plantingDate': plantingDate,
-      'farmerId': farmerId,
-      'imageUrl': imageUrl,
+      'location': location,
+      'healthStatus': healthStatus,
+      'notes': notes,
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
     };
   }
 
   CropModel copyWith({
     int? id,
+    int? profileId,
     String? cropName,
-    String? irrigationType,
-    int? area,
     String? plantingDate,
-    int? farmerId,
-    String? imageUrl,
+    String? location,
+    String? healthStatus,
+    String? notes,
+    String? createdAt,
+    String? updatedAt,
   }) {
     return CropModel(
       id: id ?? this.id,
+      profileId: profileId ?? this.profileId,
       cropName: cropName ?? this.cropName,
-      irrigationType: irrigationType ?? this.irrigationType,
-      area: area ?? this.area,
       plantingDate: plantingDate ?? this.plantingDate,
-      farmerId: farmerId ?? this.farmerId,
-      imageUrl: imageUrl ?? this.imageUrl,
+      location: location ?? this.location,
+      healthStatus: healthStatus ?? this.healthStatus,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

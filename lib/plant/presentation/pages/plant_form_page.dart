@@ -18,56 +18,27 @@ class PlantFormPage extends StatefulWidget {
 class _PlantFormPageState extends State<PlantFormPage> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
-  late TextEditingController _areaController;
-  late TextEditingController _irrigationTypeController;
+  late TextEditingController _locationController;
   late TextEditingController _plantingDateController;
-  File? _selectedImage;
-  final _imagePicker = ImagePicker();
+  late TextEditingController _notesController;
   bool _isLoading = false;
-
-  final List<String> _irrigationTypes = [
-    'Goteo',
-    'Aspersión',
-    'Manual',
-    'Otro'
-  ];
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.crop?.cropName ?? '');
-    _areaController = TextEditingController(text: widget.crop?.area.toString() ?? '');
-    _irrigationTypeController = TextEditingController(text: widget.crop?.irrigationType ?? '');
+    _locationController = TextEditingController(text: widget.crop?.location ?? '');
     _plantingDateController = TextEditingController(text: widget.crop?.plantingDate ?? '');
+    _notesController = TextEditingController(text: widget.crop?.notes ?? '');
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _areaController.dispose();
-    _irrigationTypeController.dispose();
+    _locationController.dispose();
     _plantingDateController.dispose();
+    _notesController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickImage() async {
-    try {
-      final pickedFile = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 80,
-      );
-      if (pickedFile != null) {
-        setState(() {
-          _selectedImage = File(pickedFile.path);
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al seleccionar la imagen')),
-        );
-      }
-    }
   }
 
   Future<void> _selectDate() async {
@@ -101,19 +72,20 @@ class _PlantFormPageState extends State<PlantFormPage> {
     if (_formKey.currentState?.validate() ?? false) {
       final cropData = {
         'cropName': _nameController.text,
-        'area': int.tryParse(_areaController.text) ?? 0,
-        'irrigationType': _irrigationTypeController.text,
+        'location': _locationController.text,
         'plantingDate': _plantingDateController.text,
+        'notes': _notesController.text,
       };
 
       if (widget.crop != null) {
-        context.read<CropBloc>().add(
-          UpdateCrop(widget.crop!.id, cropData, imageFile: _selectedImage),
-        );
+        // Para editar, solo actualizamos el estado
+        final statusData = {
+          'healthStatus': widget.crop!.healthStatus,
+          'notes': _notesController.text,
+        };
+        context.read<CropBloc>().add(UpdateCropStatus(widget.crop!.id, statusData));
       } else {
-        context.read<CropBloc>().add(
-          AddCrop(cropData, imageFile: _selectedImage),
-        );
+        context.read<CropBloc>().add(AddCrop(cropData));
       }
     }
   }
@@ -149,48 +121,6 @@ class _PlantFormPageState extends State<PlantFormPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Imagen
-                  GestureDetector(
-                    onTap: _pickImage,
-                    child: Container(
-                      height: 200,
-                      decoration: BoxDecoration(
-                        color: AppColors.grey200,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.grey400),
-                      ),
-                      child: _selectedImage != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.file(
-                                _selectedImage!,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          : widget.crop?.imageUrl != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.network(
-                                    widget.crop!.imageUrl!,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.add_photo_alternate,
-                                        size: 48, color: AppColors.grey600),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Toca para añadir una imagen',
-                                      style: TextStyle(color: AppColors.grey600),
-                                    ),
-                                  ],
-                                ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
                   // Nombre
                   TextFormField(
                     controller: _nameController,
@@ -199,79 +129,69 @@ class _PlantFormPageState extends State<PlantFormPage> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      prefixIcon: const Icon(Icons.eco),
+                      prefixIcon: Icon(Icons.eco, color: AppColors.primaryGreen),
                     ),
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Campo requerido' : null,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Área
-                  TextFormField(
-                    controller: _areaController,
-                    decoration: InputDecoration(
-                      labelText: 'Área (m²)',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      prefixIcon: const Icon(Icons.square_foot),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Campo requerido' : null,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Tipo de Irrigación
-                  DropdownButtonFormField<String>(
-                    value: _irrigationTypeController.text.isEmpty
-                        ? null
-                        : _irrigationTypeController.text,
-                    decoration: InputDecoration(
-                      labelText: 'Tipo de Irrigación',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      prefixIcon: const Icon(Icons.water_drop),
-                    ),
-                    items: _irrigationTypes.map((String type) {
-                      return DropdownMenuItem<String>(
-                        value: type,
-                        child: Text(type),
-                      );
-                    }).toList(),
-                    onChanged: (String? value) {
-                      if (value != null) {
-                        _irrigationTypeController.text = value;
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor ingresa el nombre de la planta';
                       }
+                      return null;
                     },
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Campo requerido' : null,
                   ),
                   const SizedBox(height: 16),
 
-                  // Fecha de Plantación
+                  // Ubicación
+                  TextFormField(
+                    controller: _locationController,
+                    decoration: InputDecoration(
+                      labelText: 'Ubicación',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      prefixIcon: Icon(Icons.location_on, color: AppColors.primaryGreen),
+                      hintText: 'Ej: Jardín trasero, Balcón, Invernadero...',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Fecha de plantación
                   TextFormField(
                     controller: _plantingDateController,
+                    readOnly: true,
+                    onTap: _selectDate,
                     decoration: InputDecoration(
                       labelText: 'Fecha de Plantación',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      prefixIcon: const Icon(Icons.calendar_today),
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.calendar_month),
-                        onPressed: _selectDate,
-                      ),
+                      prefixIcon: Icon(Icons.calendar_today, color: AppColors.primaryGreen),
+                      suffixIcon: Icon(Icons.date_range, color: AppColors.primaryGreen),
                     ),
-                    readOnly: true,
-                    onTap: _selectDate,
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Campo requerido' : null,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor selecciona la fecha de plantación';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Notas
+                  TextFormField(
+                    controller: _notesController,
+                    decoration: InputDecoration(
+                      labelText: 'Notas',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      prefixIcon: Icon(Icons.note, color: AppColors.primaryGreen),
+                      hintText: 'Observaciones sobre la planta...',
+                    ),
+                    maxLines: 3,
                   ),
                   const SizedBox(height: 24),
 
-                  // Botón de Guardar
+                  // Botón de guardar
                   ElevatedButton(
                     onPressed: _isLoading ? null : _submit,
                     style: ElevatedButton.styleFrom(
@@ -283,10 +203,17 @@ class _PlantFormPageState extends State<PlantFormPage> {
                       ),
                     ),
                     child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+                            ),
+                          )
                         : Text(
-                            widget.crop == null ? 'Añadir Planta' : 'Actualizar Planta',
-                            style: const TextStyle(fontSize: 16),
+                            widget.crop == null ? 'Añadir Planta' : 'Guardar Cambios',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                   ),
                 ],
