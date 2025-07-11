@@ -7,9 +7,9 @@ class SubscriptionStatusPage extends StatelessWidget {
   final int userId;
 
   const SubscriptionStatusPage({
-    Key? key,
+    super.key,
     required this.userId,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

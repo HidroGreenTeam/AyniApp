@@ -4,7 +4,7 @@ import '../../data/models/subscription_api_models.dart';
 import '../blocs/subscription_bloc.dart';
 
 class SubscriptionPlansPage extends StatelessWidget {
-  const SubscriptionPlansPage({Key? key}) : super(key: key);
+  const SubscriptionPlansPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -313,8 +313,7 @@ class SubscriptionPlansPage extends StatelessWidget {
             Text('Plan: ${subscription.subscriptionPlanName}'),
             Text('Estado: ${subscription.status.toString().split('.').last}'),
             Text('Días restantes: ${subscription.daysRemaining}'),
-            if (subscription.endDate != null)
-              Text('Válido hasta: ${_formatDate(subscription.endDate)}'),
+            Text('Válido hasta: ${_formatDate(subscription.endDate)}'),
           ],
         ),
         actions: [

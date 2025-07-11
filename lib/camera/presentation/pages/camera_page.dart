@@ -205,6 +205,19 @@ class _CameraPageState extends State<CameraPage> with TickerProviderStateMixin {
     }
 
     try {
+      // Si estamos en modo diagnóstico (navegamos desde DiagnosePage), 
+      // solo retornamos la imagen sin procesar
+      if (Navigator.of(context).canPop()) {
+        setState(() {
+          _isProcessing = false;
+        });
+        
+        // Retornar la imagen al DiagnosePage
+        Navigator.of(context).pop(_image);
+        return;
+      }
+
+      // Procesamiento normal para detección independiente
       if (_initError != null) {
         bool success = await _hybridService.initialize();
         if (!success) {

@@ -7,6 +7,8 @@ class ImageResultWidget extends StatelessWidget {
   final double? confidence;
   final VoidCallback onTakePhoto;
   final VoidCallback onSelectFromGallery;
+  final VoidCallback? onConfirm;
+  final bool isDiagnosisMode;
 
   const ImageResultWidget({
     super.key,
@@ -15,6 +17,8 @@ class ImageResultWidget extends StatelessWidget {
     this.confidence,
     required this.onTakePhoto,
     required this.onSelectFromGallery,
+    this.onConfirm,
+    this.isDiagnosisMode = false,
   });
 
   String _formatDiseaseName(String diseaseName) {

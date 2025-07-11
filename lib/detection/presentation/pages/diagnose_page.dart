@@ -1,11 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:ayni/core/di/service_locator.dart';
-import 'package:ayni/plant/data/repositories/crop_repository.dart';
 import 'package:ayni/plant/domain/entities/diagnosis.dart';
 import 'package:ayni/plant/domain/usecases/start_diagnosis_usecase.dart';
 import 'package:ayni/plant/domain/usecases/get_diagnoses_by_crop_usecase.dart';
 import 'package:ayni/auth/domain/usecases/get_current_user_use_case.dart';
 import 'package:ayni/camera/presentation/pages/camera_page.dart';
+import 'package:ayni/core/services/image_upload_service.dart';
 import '../../../core/theme/app_theme.dart';
 
 class DiagnosePage extends StatefulWidget {
@@ -22,6 +23,7 @@ class _DiagnosePageState extends State<DiagnosePage> {
   final StartDiagnosisUseCase _startDiagnosisUseCase = serviceLocator<StartDiagnosisUseCase>();
   final GetDiagnosesByCropUseCase _getDiagnosesUseCase = serviceLocator<GetDiagnosesByCropUseCase>();
   final GetCurrentUserUseCase _getCurrentUserUseCase = serviceLocator<GetCurrentUserUseCase>();
+  final ImageUploadService _imageUploadService = serviceLocator<ImageUploadService>();
   
   List<Diagnosis> _diagnoses = [];
   bool _isLoading = false;
@@ -79,9 +81,59 @@ class _DiagnosePageState extends State<DiagnosePage> {
       ),
     );
 
-    if (result != null && result is String) {
-      // La imagen se subió y tenemos la URL
-      await _processDiagnosis(result);
+    if (result != null && result is File) {
+      // Tenemos el archivo de imagen, ahora lo subimos
+      await _uploadImageAndProcessDiagnosis(result);
+    }
+  }
+
+  Future<void> _uploadImageAndProcessDiagnosis(File imageFile) async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      // Mostrar progreso de subida
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              CircularProgressIndicator(strokeWidth: 2),
+              SizedBox(width: 16),
+              Text('Subiendo imagen...'),
+            ],
+          ),
+          duration: Duration(seconds: 30),
+        ),
+      );
+
+      // Subir imagen al servidor
+      final imageUrl = await _imageUploadService.uploadImage(imageFile);
+      
+      // Procesar el diagnóstico con la URL de la imagen
+      await _processDiagnosis(imageUrl);
+      
+      // Ocultar el snackbar de progreso
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+      
+      // Ocultar el snackbar de progreso
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al subir imagen: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

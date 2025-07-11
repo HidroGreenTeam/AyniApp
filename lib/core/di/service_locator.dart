@@ -6,6 +6,7 @@ import '../services/storage_service.dart';
 import '../services/connectivity_service.dart';
 import '../services/theme_service.dart';
 import '../services/localization_service.dart';
+import '../services/image_upload_service.dart';
 import '../../auth/data/datasources/auth_data_source.dart';
 import '../../auth/data/repositories/auth_repository.dart';
 import '../../auth/domain/usecases/sign_in_use_case.dart';
@@ -75,6 +76,10 @@ Future<void> initDependencies() async {
 
   serviceLocator.registerSingleton<LocalizationService>(
     LocalizationService(serviceLocator<StorageService>()),
+  );
+
+  serviceLocator.registerSingleton<ImageUploadService>(
+    ImageUploadService(),
   );
 
   serviceLocator.registerSingleton<HybridDetectionService>(
