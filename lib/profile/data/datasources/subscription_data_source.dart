@@ -7,6 +7,7 @@ abstract class SubscriptionDataSource {
   Future<SubscriptionResource?> getSubscriptionById(int subscriptionId);
   Future<SubscriptionResource?> getSubscriptionByUserId(int userId);
   Future<SubscriptionResource> createSubscription(CreateSubscriptionResource request);
+  Future<Map<String, dynamic>> activateSubscription(int subscriptionId, ActivateSubscriptionResource request);
   Future<SubscriptionResource> renewSubscription(int subscriptionId, SubscriptionType newSubscriptionType, String? paymentReference);
   Future<SubscriptionResource> cancelSubscription(int subscriptionId, String reason);
   Future<Map<String, dynamic>> testNotification(TestNotificationRequest request);
@@ -88,6 +89,9 @@ class SubscriptionDataSourceImpl implements SubscriptionDataSource {
   @override
   Future<SubscriptionResource> createSubscription(CreateSubscriptionResource request) async {
     try {
+      print('Creating subscription with data: ${request.toJson()}');
+      print('Endpoint: ${ApiConstants.subscriptionServiceBaseUrl}${ApiConstants.subscriptions}');
+      
       final response = await _networkClient.request<SubscriptionResource>(
         endpoint: '${ApiConstants.subscriptionServiceBaseUrl}${ApiConstants.subscriptions}',
         method: RequestMethod.post,
@@ -96,13 +100,51 @@ class SubscriptionDataSourceImpl implements SubscriptionDataSource {
         requiresAuth: false,
       );
 
+      print('Subscription creation response: ${response.success ? 'SUCCESS' : 'FAILED'}');
+      if (response.error != null) {
+        print('Error: ${response.error}');
+      }
+
       if (response.success && response.data != null) {
+        print('Subscription created successfully: ID ${response.data!.id}');
         return response.data!;
       } else {
         throw Exception('Failed to create subscription: ${response.error}');
       }
     } catch (e) {
+      print('Exception creating subscription: $e');
       throw Exception('Error creating subscription: $e');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> activateSubscription(int subscriptionId, ActivateSubscriptionResource request) async {
+    try {
+      print('Activating subscription ID: $subscriptionId with data: ${request.toJson()}');
+      print('Endpoint: ${ApiConstants.subscriptionServiceBaseUrl}${ApiConstants.subscriptions}/$subscriptionId/activate');
+      
+      final response = await _networkClient.request<Map<String, dynamic>>(
+        endpoint: '${ApiConstants.subscriptionServiceBaseUrl}${ApiConstants.subscriptions}/$subscriptionId/activate',
+        method: RequestMethod.put,
+        data: request.toJson(),
+        fromJson: (json) => json as Map<String, dynamic>,
+        requiresAuth: false,
+      );
+
+      print('Subscription activation response: ${response.success ? 'SUCCESS' : 'FAILED'}');
+      if (response.error != null) {
+        print('Activation Error: ${response.error}');
+      }
+
+      if (response.success && response.data != null) {
+        print('Subscription activated successfully');
+        return response.data!;
+      } else {
+        throw Exception('Failed to activate subscription: ${response.error}');
+      }
+    } catch (e) {
+      print('Exception activating subscription: $e');
+      throw Exception('Error activating subscription: $e');
     }
   }
 

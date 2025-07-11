@@ -40,6 +40,16 @@ class CreateSubscription extends SubscriptionEvent {
   List<Object?> get props => [request];
 }
 
+class ActivateSubscription extends SubscriptionEvent {
+  final int subscriptionId;
+  final ActivateSubscriptionResource request;
+
+  const ActivateSubscription(this.subscriptionId, this.request);
+
+  @override
+  List<Object?> get props => [subscriptionId, request];
+}
+
 class RenewSubscription extends SubscriptionEvent {
   final int subscriptionId;
   final SubscriptionType newSubscriptionType;
@@ -165,6 +175,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     on<LoadSubscriptionByUserId>(_onLoadSubscriptionByUserId);
     on<LoadSubscriptionById>(_onLoadSubscriptionById);
     on<CreateSubscription>(_onCreateSubscription);
+    on<ActivateSubscription>(_onActivateSubscription);
     on<RenewSubscription>(_onRenewSubscription);
     on<CancelSubscription>(_onCancelSubscription);
     on<TestNotification>(_onTestNotification);
@@ -223,11 +234,48 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     CreateSubscription event,
     Emitter<SubscriptionState> emit,
   ) async {
+    print('SubscriptionBloc: Starting subscription creation...');
     emit(SubscriptionLoading());
     try {
+      print('SubscriptionBloc: Calling createSubscription use case...');
       final subscription = await _useCases.createSubscription(event.request);
+      print('SubscriptionBloc: Subscription created successfully, emitting SubscriptionCreated state');
       emit(SubscriptionCreated(subscription));
     } catch (e) {
+      print('SubscriptionBloc: Error creating subscription: $e');
+      emit(SubscriptionError(e.toString()));
+    }
+  }
+
+  Future<void> _onActivateSubscription(
+    ActivateSubscription event,
+    Emitter<SubscriptionState> emit,
+  ) async {
+    print('SubscriptionBloc: Starting subscription activation...');
+    emit(SubscriptionLoading());
+    try {
+      print('SubscriptionBloc: Calling activateSubscription use case...');
+      // Activar la suscripción
+      final result = await _useCases.activateSubscription(
+        event.subscriptionId,
+        event.request,
+      );
+      
+      print('Activation result: $result');
+      print('SubscriptionBloc: Loading updated subscription...');
+      
+      // Después de activar, cargar la suscripción actualizada
+      final updatedSubscription = await _useCases.getSubscriptionById(event.subscriptionId);
+      
+      if (updatedSubscription != null) {
+        print('SubscriptionBloc: Subscription loaded successfully, emitting SubscriptionLoaded state');
+        emit(SubscriptionLoaded(updatedSubscription));
+      } else {
+        print('SubscriptionBloc: Failed to load updated subscription');
+        emit(const SubscriptionError('Failed to load updated subscription after activation'));
+      }
+    } catch (e) {
+      print('SubscriptionBloc: Error activating subscription: $e');
       emit(SubscriptionError(e.toString()));
     }
   }

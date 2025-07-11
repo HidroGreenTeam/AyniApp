@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../blocs/billing_bloc.dart';
-import '../blocs/payment_methods_bloc.dart';
+import '../blocs/subscription_bloc.dart';
 import '../../data/models/subscription_model.dart';
+import '../../data/models/subscription_api_models.dart';
+import 'subscription_plans_page.dart';
 
 class BillingPage extends StatelessWidget {
   const BillingPage({super.key});
@@ -17,7 +19,7 @@ class BillingPage extends StatelessWidget {
           create: (_) => serviceLocator<BillingBloc>()..add(const BillingLoad()),
         ),
         BlocProvider(
-          create: (_) => serviceLocator<PaymentMethodsBloc>()..add(const PaymentMethodsLoad()),
+          create: (_) => serviceLocator<SubscriptionBloc>()..add(LoadSubscriptionPlans()),
         ),
       ],
       child: const BillingView(),
@@ -105,11 +107,39 @@ class BillingView extends StatelessWidget {
                   // Current Subscription Section
                   if (state.currentSubscription != null)
                     _buildCurrentSubscriptionSection(context, state.currentSubscription!),
-
+                  
                   const SizedBox(height: 30),
-
-                  // Subscription Plans Section
-                  _buildSubscriptionPlansSection(context, state),
+                  
+                  // Subscription Plans Section - Now using real API data
+                  BlocBuilder<SubscriptionBloc, SubscriptionState>(
+                    builder: (context, subscriptionState) {
+                      if (subscriptionState is SubscriptionLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (subscriptionState is SubscriptionPlansLoaded) {
+                        return _buildSubscriptionPlansSection(context, subscriptionState.plans);
+                      } else if (subscriptionState is SubscriptionError) {
+                        return Center(
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                size: 64,
+                                color: Colors.red,
+                              ),
+                              const SizedBox(height: 16),
+                              Text('Error: ${subscriptionState.message}'),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: () => context.read<SubscriptionBloc>().add(LoadSubscriptionPlans()),
+                                child: const Text('Reintentar'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
 
                   const SizedBox(height: 30),
 
@@ -130,7 +160,7 @@ class BillingView extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.primaryGreen, Color(0xFF2E7D32)],
+          colors: [AppColors.primaryGreen, AppColors.secondaryGreen],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -138,7 +168,7 @@ class BillingView extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: AppColors.primaryGreen.withValues(alpha: 0.3),
-            blurRadius: 10,
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -147,42 +177,27 @@ class BillingView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  color: AppColors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.verified,
-                  color: AppColors.primaryGreen,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      subscription.plan.name,
-                      style: const TextStyle(
-                        color: AppColors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    subscription.plan.name,
+                    style: const TextStyle(
+                      color: AppColors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                    Text(
-                      'Suscripción Activa',
-                      style: TextStyle(
-                        color: AppColors.white.withValues(alpha: 0.9),
-                        fontSize: 14,
-                      ),
+                  ),
+                  Text(
+                    'Suscripción Activa',
+                    style: TextStyle(
+                      color: AppColors.white.withValues(alpha: 0.9),
+                      fontSize: 14,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -194,9 +209,35 @@ class BillingView extends StatelessWidget {
                   '\$${subscription.amount.toStringAsFixed(2)}/${subscription.billingCycle == BillingCycle.monthly ? 'mes' : 'año'}',
                   style: const TextStyle(
                     color: AppColors.white,
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              const Icon(
+                Icons.calendar_today,
+                color: AppColors.white,
+                size: 16,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Próxima facturación: ',
+                style: TextStyle(
+                  color: AppColors.white.withValues(alpha: 0.9),
+                  fontSize: 14,
+                ),
+              ),
+              Text(
+                _formatDate(subscription.nextBillingDate),
+                style: const TextStyle(
+                  color: AppColors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -205,27 +246,25 @@ class BillingView extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Próximo cobro',
-                      style: TextStyle(
-                        color: AppColors.white.withValues(alpha: 0.8),
-                        fontSize: 12,
-                      ),
+                child: TextButton(
+                  onPressed: () => _showUpgradeDialog(context),
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppColors.white.withValues(alpha: 0.2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    Text(
-                      _formatDate(subscription.nextBillingDate),
-                      style: const TextStyle(
-                        color: AppColors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  ),
+                  child: const Text(
+                    'Actualizar',
+                    style: TextStyle(
+                      color: AppColors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
-                  ],
+                  ),
                 ),
               ),
+              const SizedBox(width: 12),
               TextButton(
                 onPressed: () => _showCancelSubscriptionDialog(context),
                 style: TextButton.styleFrom(
@@ -250,17 +289,33 @@ class BillingView extends StatelessWidget {
     );
   }
 
-  Widget _buildSubscriptionPlansSection(BuildContext context, BillingState state) {
+  Widget _buildSubscriptionPlansSection(BuildContext context, List<SubscriptionPlanResource> plans) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Planes de Suscripción',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Planes de Suscripción',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SubscriptionPlansPage(),
+                  ),
+                );
+              },
+              child: const Text('Ver todos'),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         const Text(
@@ -271,179 +326,128 @@ class BillingView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20),
-        ...state.subscriptionPlans.map((plan) => _buildPlanCard(context, plan, state.currentSubscription)),
+        ...plans.take(3).map((plan) => _buildPlanCard(context, plan)),
       ],
     );
   }
 
-  Widget _buildPlanCard(BuildContext context, SubscriptionPlan plan, Subscription? currentSubscription) {
-    final isCurrentPlan = currentSubscription?.plan.id == plan.id;
-    final isFreePlan = plan.type == SubscriptionPlanType.free;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isCurrentPlan ? AppColors.primaryGreen : AppColors.border,
-          width: isCurrentPlan ? 2 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          if (plan.isPopular)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: const BoxDecoration(
-                color: AppColors.primaryGreen,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+  Widget _buildPlanCard(BuildContext context, SubscriptionPlanResource plan) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        plan.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (plan.planType == SubscriptionType.BASIC)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.orange,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Text(
+                            'Popular',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    plan.description,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        '\$${plan.price.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryGreen,
+                        ),
+                      ),
+                      Text(
+                        '/${plan.durationDays} días',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '• ${plan.maxCrops == -1 ? 'Cultivos ilimitados' : '${plan.maxCrops} cultivos'}',
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  ),
+                  Text(
+                    '• ${plan.maxReports == -1 ? 'Reportes ilimitados' : '${plan.maxReports} reportes'}',
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  ),
+                  if (plan.hasPrioritySupport)
+                    const Text(
+                      '• Soporte prioritario',
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    ),
+                  if (plan.hasAdvancedAnalytics)
+                    const Text(
+                      '• Analíticas avanzadas',
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    ),
+                ],
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SubscriptionPlansPage(),
+                  ),
+                );
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Text(
-                'MÁS POPULAR',
-                textAlign: TextAlign.center,
+                'Seleccionar',
                 style: TextStyle(
                   color: AppColors.white,
                   fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            plan.name,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          Text(
-                            plan.description,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (isCurrentPlan)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryGreen,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          'ACTUAL',
-                          style: TextStyle(
-                            color: AppColors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Text(
-                      isFreePlan ? 'Gratis' : '\$${plan.monthlyPrice.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primaryGreen,
-                      ),
-                    ),
-                    if (!isFreePlan) ...[
-                      const Text(
-                        '/mes',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Text(
-                        'o \$${plan.yearlyPrice.toStringAsFixed(2)}/año',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 16),
-                ...plan.features.map((feature) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.check_circle,
-                        color: AppColors.primaryGreen,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          feature,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )),
-                const SizedBox(height: 20),
-                if (!isCurrentPlan)
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: () => _showSubscribeDialog(context, plan),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Suscribirse',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -478,7 +482,7 @@ class BillingView extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'No hay historial de facturación',
+                  'No hay historial de facturación disponible.',
                   style: TextStyle(
                     fontSize: 16,
                     color: AppColors.grey600,
@@ -494,239 +498,53 @@ class BillingView extends StatelessWidget {
   }
 
   Widget _buildBillingHistoryItem(BuildContext context, BillingHistoryItem item) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.primaryGreen.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.receipt,
-              color: AppColors.primaryGreen,
-              size: 20,
-            ),
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: AppColors.primaryGreen.withValues(alpha: 0.1),
+          child: Icon(
+            Icons.receipt,
+            color: AppColors.primaryGreen,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.description,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                Text(
-                  _formatDate(item.date),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
+        ),
+        title: Text(
+          item.description,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '\$${item.amount.toStringAsFixed(2)}',
+        ),
+        subtitle: Text(_formatDate(item.date)),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '\$${item.amount.toStringAsFixed(2)}',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryGreen,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: item.status == 'paid' ? AppColors.success : AppColors.warning,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                item.status == 'paid' ? 'Pagado' : 'Pendiente',
                 style: const TextStyle(
-                  fontSize: 16,
+                  color: AppColors.white,
+                  fontSize: 10,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(item.status).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  item.status.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: _getStatusColor(item.status),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSubscribeDialog(BuildContext context, SubscriptionPlan plan) {
-    BillingCycle selectedCycle = BillingCycle.monthly;
-    String? selectedPaymentMethodId;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text('Suscribirse a ${plan.name}'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Billing Cycle Selection
-                  const Text(
-                    'Ciclo de facturación:',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RadioListTile<BillingCycle>(
-                          title: Text('Mensual (\$${plan.monthlyPrice.toStringAsFixed(2)})'),
-                          value: BillingCycle.monthly,
-                          groupValue: selectedCycle,
-                          onChanged: (BillingCycle? value) {
-                            setState(() {
-                              selectedCycle = value!;
-                            });
-                          },
-                        ),
-                      ),
-                      Expanded(
-                        child: RadioListTile<BillingCycle>(
-                          title: Text('Anual (\$${plan.yearlyPrice.toStringAsFixed(2)})'),
-                          value: BillingCycle.yearly,
-                          groupValue: selectedCycle,
-                          onChanged: (BillingCycle? value) {
-                            setState(() {
-                              selectedCycle = value!;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Payment Method Selection
-                  BlocBuilder<PaymentMethodsBloc, PaymentMethodsState>(
-                    builder: (context, paymentState) {
-                      if (paymentState.status == PaymentMethodsStatus.loaded) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Método de pago:',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            if (paymentState.paymentMethods.isEmpty)
-                              const Text(
-                                'No hay métodos de pago disponibles',
-                                style: TextStyle(
-                                  color: AppColors.error,
-                                  fontSize: 14,
-                                ),
-                              )
-                            else
-                              ...paymentState.paymentMethods.map((method) => RadioListTile<String>(
-                                title: Text(method.displayName),
-                                value: method.id,
-                                groupValue: selectedPaymentMethodId,
-                                onChanged: (String? value) {
-                                  setState(() {
-                                    selectedPaymentMethodId = value;
-                                  });
-                                },
-                              )),
-                          ],
-                        );
-                      }
-                      return const CircularProgressIndicator();
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancelar'),
-                ),
-                ElevatedButton(
-                  onPressed: selectedPaymentMethodId != null
-                      ? () {
-                          Navigator.of(dialogContext).pop();
-                          context.read<BillingBloc>().add(BillingSubscribeToPlan(
-                            planId: plan.id,
-                            billingCycle: selectedCycle,
-                            paymentMethodId: selectedPaymentMethodId,
-                          ));
-                        }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGreen,
-                  ),
-                  child: const Text(
-                    'Suscribirse',
-                    style: TextStyle(color: AppColors.white),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showCancelSubscriptionDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Cancelar Suscripción'),
-          content: const Text(
-            '¿Estás seguro de que quieres cancelar tu suscripción? '
-            'Podrás seguir usando los servicios hasta el final del período facturado.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Mantener'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                context.read<BillingBloc>().add(const BillingCancelSubscription());
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.error,
-              ),
-              child: const Text('Cancelar Suscripción'),
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -735,16 +553,107 @@ class BillingView extends StatelessWidget {
     return '${date.day}/${date.month}/${date.year}';
   }
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return AppColors.primaryGreen;
-      case 'pending':
-        return Colors.orange;
-      case 'failed':
-        return AppColors.error;
-      default:
-        return AppColors.grey600;
-    }
+  void _showSubscribeDialog(BuildContext context, SubscriptionPlan plan) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Suscribirse a ${plan.name}'),
+        content: Text(
+          '¿Deseas suscribirte al plan ${plan.name} por \$${plan.monthlyPrice}/mes?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+                         onPressed: () {
+               Navigator.of(context).pop();
+               context.read<BillingBloc>().add(
+                 BillingSubscribeToPlan(
+                   planId: plan.id,
+                   billingCycle: BillingCycle.monthly,
+                   paymentMethodId: null, // No payment method selected
+                 ),
+               );
+             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+            ),
+            child: const Text(
+              'Confirmar',
+              style: TextStyle(color: AppColors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showUpgradeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Actualizar Plan'),
+        content: const Text(
+          'Serás redirigido a la página de planes para seleccionar una nueva suscripción.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const SubscriptionPlansPage(),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+            ),
+            child: const Text(
+              'Continuar',
+              style: TextStyle(color: AppColors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCancelSubscriptionDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancelar Suscripción'),
+        content: const Text(
+          '¿Estás seguro de que deseas cancelar tu suscripción? Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('No, mantener'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              context.read<BillingBloc>().add(const BillingCancelSubscription());
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+            ),
+            child: const Text(
+              'Sí, cancelar',
+              style: TextStyle(color: AppColors.white),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 } 

@@ -6,6 +6,7 @@ abstract class SubscriptionRepository {
   Future<SubscriptionResource?> getSubscriptionById(int subscriptionId);
   Future<SubscriptionResource?> getSubscriptionByUserId(int userId);
   Future<SubscriptionResource> createSubscription(CreateSubscriptionResource request);
+  Future<Map<String, dynamic>> activateSubscription(int subscriptionId, ActivateSubscriptionResource request);
   Future<SubscriptionResource> renewSubscription(int subscriptionId, SubscriptionType newSubscriptionType, String? paymentReference);
   Future<SubscriptionResource> cancelSubscription(int subscriptionId, String reason);
   Future<Map<String, dynamic>> testNotification(TestNotificationRequest request);
@@ -56,6 +57,20 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
       return await _dataSource.createSubscription(request);
     } catch (e) {
       throw Exception('Error creating subscription: $e');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> activateSubscription(int subscriptionId, ActivateSubscriptionResource request) async {
+    try {
+      // Validaciones básicas
+      if (subscriptionId <= 0) {
+        throw Exception('Subscription ID must be valid');
+      }
+
+      return await _dataSource.activateSubscription(subscriptionId, request);
+    } catch (e) {
+      throw Exception('Error activating subscription: $e');
     }
   }
 

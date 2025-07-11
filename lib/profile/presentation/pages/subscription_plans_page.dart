@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/models/subscription_api_models.dart';
 import '../blocs/subscription_bloc.dart';
+import '../../../auth/domain/usecases/get_current_user_use_case.dart';
+import '../../../core/services/payment_service.dart';
+import '../../../core/di/service_locator.dart';
 
-class SubscriptionPlansPage extends StatelessWidget {
+class SubscriptionPlansPage extends StatefulWidget {
   const SubscriptionPlansPage({super.key});
 
+  @override
+  State<SubscriptionPlansPage> createState() => _SubscriptionPlansPageState();
+}
+
+class _SubscriptionPlansPageState extends State<SubscriptionPlansPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -15,7 +23,7 @@ class SubscriptionPlansPage extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
       body: BlocProvider(
-        create: (context) => context.read<SubscriptionBloc>()
+        create: (context) => serviceLocator<SubscriptionBloc>()
           ..add(LoadSubscriptionPlans()),
         child: BlocBuilder<SubscriptionBloc, SubscriptionState>(
           builder: (context, state) {
@@ -234,19 +242,19 @@ class SubscriptionPlansPage extends StatelessWidget {
   void _selectPlan(BuildContext context, SubscriptionPlanResource plan) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text('Confirmar ${plan.name}'),
         content: Text(
           '¿Estás seguro de que quieres suscribirte al plan ${plan.name} por \$${plan.price.toStringAsFixed(2)}?',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.of(context).pop();
+              Navigator.of(dialogContext).pop();
               _createSubscription(context, plan);
             },
             style: ElevatedButton.styleFrom(
@@ -260,67 +268,372 @@ class SubscriptionPlansPage extends StatelessWidget {
     );
   }
 
-  void _createSubscription(BuildContext context, SubscriptionPlanResource plan) {
-    // Aquí deberías obtener el userId del usuario actual
-    // Por ahora usamos un ID de ejemplo
-    final userId = 1; // Esto debería venir del servicio de autenticación
+  Future<void> _createSubscription(BuildContext context, SubscriptionPlanResource plan) async {
+    // Obtener el usuario autenticado actual
+    final getCurrentUserUseCase = serviceLocator<GetCurrentUserUseCase>();
+    final currentUser = getCurrentUserUseCase();
     
-    final request = CreateSubscriptionResource(
-      userId: userId,
-      subscriptionType: plan.planType,
-      autoRenew: plan.planType != SubscriptionType.FREE,
-      paymentReference: plan.planType == SubscriptionType.FREE ? null : 'PAYMENT_REF_${DateTime.now().millisecondsSinceEpoch}',
-    );
+    if (currentUser == null) {
+      _showErrorDialogSafe(context, 'Error: Usuario no autenticado');
+      return;
+    }
+    
+    final userId = int.parse(currentUser.id);
+    String? paymentReference;
 
-    context.read<SubscriptionBloc>().add(CreateSubscription(request));
+    // Solo intentar pago para planes que no sean gratuitos
+    if (plan.planType != SubscriptionType.FREE) {
+      // Mostrar diálogo de carga para el pago
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Iniciando pago...'),
+            ],
+          ),
+        ),
+      );
+      
+      try {
+        final paymentService = serviceLocator<PaymentService>();
+        paymentReference = await paymentService.pay(
+          amount: plan.price,
+          currencyCode: 'USD',
+          label: plan.name,
+        );
+      } catch (e) {
+        print('Error en el pago: $e');
+      }
 
-    // Mostrar loading
+      Navigator.of(context).pop(); // Cerrar diálogo de carga
+
+      if (paymentReference == null) {
+        // El usuario canceló o falló el pago - preguntar qué hacer
+        if (mounted) {
+          _showPaymentFailedDialog(context, plan, userId);
+        }
+        return;
+      }
+    }
+
+    // Crear la suscripción
+    _proceedWithSubscriptionCreation(context, plan, userId, paymentReference);
+  }
+
+  void _showPaymentFailedDialog(BuildContext context, SubscriptionPlanResource plan, int userId) {
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        content: Row(
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 16),
-            Text('Creando suscripción...'),
+      builder: (dialogContext) => BlocProvider.value(
+        value: context.read<SubscriptionBloc>(),
+        child: AlertDialog(
+          title: const Text('Pago Cancelado'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('El pago fue cancelado o falló.'),
+              const SizedBox(height: 16),
+              const Text('¿Qué deseas hacer?'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Volver'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                // Reintentar el pago
+                _createSubscription(context, plan);
+              },
+              child: const Text('Reintentar Pago'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                // Crear suscripción sin referencia de pago (pendiente de pago)
+                _proceedWithSubscriptionCreation(context, plan, userId, null);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Crear sin Pago'),
+            ),
           ],
         ),
       ),
     );
-
-    // Escuchar el resultado
-    context.read<SubscriptionBloc>().stream.listen((state) {
-      if (state is SubscriptionCreated) {
-        Navigator.of(context).pop(); // Cerrar loading
-        _showSuccessDialog(context, state.subscription);
-      } else if (state is SubscriptionError) {
-        Navigator.of(context).pop(); // Cerrar loading
-        _showErrorDialog(context, state.message);
-      }
-    });
   }
 
-  void _showSuccessDialog(BuildContext context, SubscriptionResource subscription) {
+  void _proceedWithSubscriptionCreation(BuildContext context, SubscriptionPlanResource plan, int userId, String? paymentReference) {
+    final request = CreateSubscriptionResource(
+      userId: userId,
+      subscriptionType: plan.planType,
+      autoRenew: plan.planType != SubscriptionType.FREE,
+      paymentReference: paymentReference,
+    );
+
+    // Despachar el evento
+    context.read<SubscriptionBloc>().add(CreateSubscription(request));
+
+    // Mostrar loading con BlocListener
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      barrierDismissible: false,
+      builder: (dialogContext) => BlocProvider.value(
+        value: context.read<SubscriptionBloc>(),
+        child: BlocListener<SubscriptionBloc, SubscriptionState>(
+          listener: (listenerContext, state) {
+            if (state is SubscriptionCreated) {
+              // Cerrar loading de forma segura
+              if (Navigator.canPop(dialogContext)) {
+                Navigator.of(dialogContext).pop();
+              }
+              
+              // Verificar que el widget sigue montado antes de continuar
+              if (!mounted) return;
+              
+              // Si hay paymentReference, activar la suscripción automáticamente
+              if (paymentReference != null && paymentReference.isNotEmpty) {
+                _activateSubscription(context, state.subscription, paymentReference);
+              } else {
+                _showSuccessDialogSafe(context, state.subscription);
+              }
+            } else if (state is SubscriptionError) {
+              // Cerrar loading de forma segura
+              if (Navigator.canPop(dialogContext)) {
+                Navigator.of(dialogContext).pop();
+              }
+              
+              // Verificar que el widget sigue montado
+              if (!mounted) return;
+              
+              _showErrorDialogSafe(context, state.message);
+            }
+          },
+          child: const AlertDialog(
+            content: Row(
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Text('Creando suscripción...'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _activateSubscription(BuildContext context, SubscriptionResource subscription, String paymentReference) {
+    // Crear el request de activación
+    final activateRequest = ActivateSubscriptionResource(
+      paymentReference: paymentReference,
+    );
+
+    // Despachar el evento
+    context.read<SubscriptionBloc>().add(
+      ActivateSubscription(subscription.id, activateRequest)
+    );
+
+    // Mostrar loading con BlocListener
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => BlocProvider.value(
+        value: context.read<SubscriptionBloc>(),
+        child: BlocListener<SubscriptionBloc, SubscriptionState>(
+          listener: (listenerContext, state) {
+            if (state is SubscriptionLoaded) {
+              // Cerrar loading de forma segura
+              if (Navigator.canPop(dialogContext)) {
+                Navigator.of(dialogContext).pop();
+              }
+              
+              // Verificar que el widget sigue montado
+              if (!mounted) return;
+              
+              _showSuccessDialogSafe(context, state.subscription);
+            } else if (state is SubscriptionError) {
+              // Cerrar loading de forma segura
+              if (Navigator.canPop(dialogContext)) {
+                Navigator.of(dialogContext).pop();
+              }
+              
+              // Verificar que el widget sigue montado
+              if (!mounted) return;
+              
+              _showActivationErrorDialogSafe(context, subscription, state.message);
+            }
+          },
+          child: const AlertDialog(
+            content: Row(
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Text('Activando suscripción...'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showActivationErrorDialogSafe(BuildContext context, SubscriptionResource subscription, String error) {
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) => BlocProvider.value(
+        value: context.read<SubscriptionBloc>(),
+        child: AlertDialog(
+          icon: const Icon(
+            Icons.warning,
+            color: Colors.orange,
+            size: 64,
+          ),
+          title: const Text('Suscripción Creada'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('La suscripción fue creada exitosamente, pero no se pudo activar automáticamente.'),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange),
+                ),
+                child: Column(
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.error_outline, color: Colors.orange, size: 20),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Error de activación:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      error,
+                      style: const TextStyle(fontSize: 12, color: Colors.orange),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Puedes intentar activarla manualmente desde la página de estado de suscripción.',
+                style: TextStyle(fontSize: 14),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                if (Navigator.canPop(dialogContext)) {
+                  Navigator.of(dialogContext).pop();
+                }
+                if (mounted) {
+                  _activateSubscription(context, subscription, subscription.paymentReference ?? '');
+                }
+              },
+              child: const Text('Reintentar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (Navigator.canPop(dialogContext)) {
+                  Navigator.of(dialogContext).pop();
+                }
+                if (mounted && Navigator.canPop(context)) {
+                  Navigator.of(context).pop();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Continuar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSuccessDialogSafe(BuildContext context, SubscriptionResource subscription) {
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(
+          Icons.check_circle,
+          color: Colors.green,
+          size: 64,
+        ),
         title: const Text('¡Suscripción Creada!'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Plan: ${subscription.subscriptionPlanName}'),
-            Text('Estado: ${subscription.status.toString().split('.').last}'),
-            Text('Días restantes: ${subscription.daysRemaining}'),
-            Text('Válido hasta: ${_formatDate(subscription.endDate)}'),
+            _buildInfoRow('Plan', subscription.subscriptionPlanName),
+            _buildInfoRow('Estado', _getStatusText(subscription.status)),
+            _buildInfoRow('Días restantes', '${subscription.daysRemaining} días'),
+            _buildInfoRow('Válido hasta', _formatDate(subscription.endDate)),
+            if (subscription.paymentReference != null)
+              _buildInfoRow('Ref. Pago', subscription.paymentReference!),
+            const SizedBox(height: 16),
+            if (subscription.status == SubscriptionStatus.PENDING_PAYMENT)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.warning, color: Colors.orange, size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Suscripción pendiente de pago. Completa el pago para activarla.',
+                        style: TextStyle(fontSize: 12, color: Colors.orange),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
         actions: [
           ElevatedButton(
             onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pop(); // Volver a la página anterior
+              // Cerrar el diálogo actual de forma segura
+              if (Navigator.canPop(dialogContext)) {
+                Navigator.of(dialogContext).pop();
+              }
+              
+              // Navegar hacia atrás de forma segura
+              if (mounted && Navigator.canPop(context)) {
+                Navigator.of(context).pop();
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
@@ -333,15 +646,63 @@ class SubscriptionPlansPage extends StatelessWidget {
     );
   }
 
-  void _showErrorDialog(BuildContext context, String message) {
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getStatusText(SubscriptionStatus status) {
+    switch (status) {
+      case SubscriptionStatus.ACTIVE:
+        return 'Activa ✓';
+      case SubscriptionStatus.PENDING_PAYMENT:
+        return 'Pendiente de Pago ⏳';
+      case SubscriptionStatus.EXPIRED:
+        return 'Expirada ❌';
+      case SubscriptionStatus.CANCELLED:
+        return 'Cancelada ❌';
+      case SubscriptionStatus.SUSPENDED:
+        return 'Suspendida ⚠️';
+    }
+  }
+
+  void _showErrorDialogSafe(BuildContext context, String message) {
+    if (!mounted) return;
+    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Error'),
         content: Text(message),
         actions: [
           ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              if (Navigator.canPop(dialogContext)) {
+                Navigator.of(dialogContext).pop();
+              }
+            },
             child: const Text('Aceptar'),
           ),
         ],

@@ -6,6 +6,7 @@ abstract class SubscriptionUseCases {
   Future<SubscriptionResource?> getSubscriptionById(int subscriptionId);
   Future<SubscriptionResource?> getSubscriptionByUserId(int userId);
   Future<SubscriptionResource> createSubscription(CreateSubscriptionResource request);
+  Future<Map<String, dynamic>> activateSubscription(int subscriptionId, ActivateSubscriptionResource request);
   Future<SubscriptionResource> renewSubscription(int subscriptionId, SubscriptionType newSubscriptionType, String? paymentReference);
   Future<SubscriptionResource> cancelSubscription(int subscriptionId, String reason);
   Future<Map<String, dynamic>> testNotification(TestNotificationRequest request);
@@ -66,6 +67,15 @@ class SubscriptionUseCasesImpl implements SubscriptionUseCases {
       return await _repository.createSubscription(request);
     } catch (e) {
       throw Exception('Error creating subscription: $e');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> activateSubscription(int subscriptionId, ActivateSubscriptionResource request) async {
+    try {
+      return await _repository.activateSubscription(subscriptionId, request);
+    } catch (e) {
+      throw Exception('Error activating subscription: $e');
     }
   }
 

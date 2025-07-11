@@ -44,6 +44,7 @@ import '../../plant/domain/usecases/get_diagnoses_by_crop_usecase.dart';
 import '../../plant/presentation/bolcs/crop_bloc.dart';
 import '../../detection/services/hybrid_detection_service.dart';
 import '../../profile/domain/usecases/subscription_usecases.dart';
+import '../services/payment_service.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -80,6 +81,11 @@ Future<void> initDependencies() async {
 
   serviceLocator.registerSingleton<ImageUploadService>(
     ImageUploadService(),
+  );
+
+  // Registrar PaymentService
+  serviceLocator.registerSingleton<PaymentService>(
+    PaymentService(),
   );
 
   serviceLocator.registerSingleton<HybridDetectionService>(

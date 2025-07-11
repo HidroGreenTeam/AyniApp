@@ -287,4 +287,27 @@ class TestNotificationRequest extends Equatable {
         email,
         notificationType,
       ];
+}
+
+class ActivateSubscriptionResource extends Equatable {
+  final String paymentReference;
+
+  const ActivateSubscriptionResource({
+    required this.paymentReference,
+  });
+
+  factory ActivateSubscriptionResource.fromJson(Map<String, dynamic> json) {
+    return ActivateSubscriptionResource(
+      paymentReference: json['paymentReference'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'paymentReference': paymentReference,
+    };
+  }
+
+  @override
+  List<Object?> get props => [paymentReference];
 } 

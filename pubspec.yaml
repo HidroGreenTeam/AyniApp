@@ -44,6 +44,8 @@ dependencies:
   path_provider: ^2.1.2
   path: ^1.9.0
   
+  # Pagos
+  pay: ^3.2.1
   # For local storage (tokens, user data)
   shared_preferences: ^2.5.3
     # For dependency injection
@@ -102,6 +104,8 @@ flutter:
     - assets/icons/
     - assets/model/model.tflite
     - assets/model/labels.txt
+    - assets/payments/google_pay_config.json
+    - assets/payments/apple_pay_config.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

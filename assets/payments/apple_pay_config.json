@@ -1,0 +1,11 @@
+{
+  "provider": "apple_pay",
+  "data": {
+    "merchantIdentifier": "merchant.com.hidrogreen.example",
+    "displayName": "HidroGreen",
+    "merchantCapabilities": ["3DS", "credit", "debit"],
+    "supportedNetworks": ["visa", "masterCard"],
+    "countryCode": "PE",
+    "currencyCode": "USD"
+  }
+} 

@@ -2,17 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/models/subscription_api_models.dart';
 import '../blocs/subscription_bloc.dart';
+import '../../../auth/domain/usecases/get_current_user_use_case.dart';
+import '../../../core/di/service_locator.dart';
+import '../../domain/usecases/subscription_usecases.dart';
 
 class SubscriptionStatusPage extends StatelessWidget {
-  final int userId;
-
   const SubscriptionStatusPage({
     super.key,
-    required this.userId,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Obtener el usuario autenticado actual
+    final getCurrentUserUseCase = serviceLocator<GetCurrentUserUseCase>();
+    final currentUser = getCurrentUserUseCase();
+    
+    if (currentUser == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Mi Suscripción')),
+        body: const Center(
+          child: Text('Error: Usuario no autenticado'),
+        ),
+      );
+    }
+    
+    final userId = int.parse(currentUser.id);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mi Suscripción'),
@@ -28,7 +43,7 @@ class SubscriptionStatusPage extends StatelessWidget {
         ],
       ),
       body: BlocProvider(
-        create: (context) => context.read<SubscriptionBloc>()
+        create: (context) => serviceLocator<SubscriptionBloc>()
           ..add(LoadSubscriptionByUserId(userId)),
         child: BlocBuilder<SubscriptionBloc, SubscriptionState>(
           builder: (context, state) {
@@ -373,11 +388,17 @@ class SubscriptionStatusPage extends StatelessWidget {
   }
 
   void _showCancelDialog(BuildContext context, SubscriptionResource subscription) {
+    // Validar que la suscripción se puede cancelar
+    if (subscription.status != SubscriptionStatus.ACTIVE) {
+      _showErrorDialog(context, 'Solo se pueden cancelar suscripciones activas. Estado actual: ${_getStatusText(subscription.status)}');
+      return;
+    }
+    
     final reasonController = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Cancelar Suscripción'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -398,20 +419,20 @@ class SubscriptionStatusPage extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
             onPressed: () {
               if (reasonController.text.trim().isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
                   const SnackBar(
                     content: Text('Por favor ingresa un motivo de cancelación'),
                   ),
                 );
                 return;
               }
-              Navigator.of(context).pop();
+              Navigator.of(dialogContext).pop();
               _cancelSubscription(context, subscription.id, reasonController.text.trim());
             },
             style: ElevatedButton.styleFrom(
@@ -425,9 +446,9 @@ class SubscriptionStatusPage extends StatelessWidget {
     );
   }
 
-  void _cancelSubscription(BuildContext context, int subscriptionId, String reason) {
-    context.read<SubscriptionBloc>().add(CancelSubscription(subscriptionId, reason));
-
+  void _cancelSubscription(BuildContext context, int subscriptionId, String reason) async {
+    print('Intentando cancelar suscripción ID: $subscriptionId con motivo: $reason');
+    
     // Mostrar loading
     showDialog(
       context: context,
@@ -443,33 +464,56 @@ class SubscriptionStatusPage extends StatelessWidget {
       ),
     );
 
-    // Escuchar el resultado
-    context.read<SubscriptionBloc>().stream.listen((state) {
-      if (state is SubscriptionCancelled) {
+    // Obtener userId para usar en callbacks
+    final getCurrentUserUseCase = serviceLocator<GetCurrentUserUseCase>();
+    final currentUser = getCurrentUserUseCase();
+    final userId = currentUser != null ? int.parse(currentUser.id) : 0;
+
+    try {
+      // Cancelar suscripción directamente con el use case
+      final subscriptionUseCases = serviceLocator<SubscriptionUseCases>();
+      print('Llamando a cancelSubscription...');
+      final cancelledSubscription = await subscriptionUseCases.cancelSubscription(subscriptionId, reason);
+      print('Suscripción cancelada exitosamente: ${cancelledSubscription.id}');
+      
+      if (context.mounted) {
         Navigator.of(context).pop(); // Cerrar loading
-        _showCancellationSuccessDialog(context, state.subscription);
-      } else if (state is SubscriptionError) {
-        Navigator.of(context).pop(); // Cerrar loading
-        _showErrorDialog(context, state.message);
+        _showCancellationSuccessDialog(context, cancelledSubscription, userId);
       }
-    });
+    } catch (e) {
+      print('Error al cancelar suscripción: $e');
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Cerrar loading
+        _showErrorDialog(context, e.toString());
+      }
+    }
   }
 
-  void _showCancellationSuccessDialog(BuildContext context, SubscriptionResource subscription) {
+  void _showCancellationSuccessDialog(BuildContext context, SubscriptionResource subscription, int userId) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Suscripción Cancelada'),
+        icon: const Icon(
+          Icons.check_circle,
+          color: Colors.green,
+          size: 48,
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Tu suscripción ha sido cancelada exitosamente.'),
+            const Text('Tu suscripción ha sido cancelada exitosamente.'),
             const SizedBox(height: 8),
             if (subscription.cancellationReason != null)
               Text('Motivo: ${subscription.cancellationReason}'),
             const SizedBox(height: 8),
             Text('Estado: ${_getStatusText(subscription.status)}'),
+            const SizedBox(height: 8),
+            const Text(
+              'La información se actualizará automáticamente.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
           ],
         ),
         actions: [
