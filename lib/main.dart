@@ -8,6 +8,7 @@ import 'core/services/localization_service.dart';
 import 'auth/presentation/pages/splash_page.dart';
 import 'treatment/presentation/pages/treatments_page.dart';
 import 'treatment/presentation/pages/treatment_detail_page.dart';
+import 'treatment/presentation/pages/add_treatment_step_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,6 +65,20 @@ class MyApp extends StatelessWidget {
                   return const SizedBox.shrink();
                 }
                 return TreatmentDetailPage(treatmentId: treatmentId);
+              },
+              '/add-treatment-step': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+                final treatmentId = args?['treatmentId'] as int?;
+                final treatmentTitle = args?['treatmentTitle'] as String?;
+                if (treatmentId == null || treatmentTitle == null) {
+                  // Si no hay datos necesarios, regresar a la página anterior
+                  Navigator.pop(context);
+                  return const SizedBox.shrink();
+                }
+                return AddTreatmentStepPage(
+                  treatmentId: treatmentId,
+                  treatmentTitle: treatmentTitle,
+                );
               },
             },
           );

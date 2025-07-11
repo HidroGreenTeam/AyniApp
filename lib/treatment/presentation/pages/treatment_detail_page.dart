@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ayni/core/di/service_locator.dart';
 import 'package:ayni/treatment/domain/repositories/treatment_repository.dart';
 import 'package:ayni/treatment/data/models/treatment_models.dart';
+import 'package:ayni/treatment/presentation/pages/add_treatment_step_page.dart';
 import '../../../core/theme/app_theme.dart';
 
 class TreatmentDetailPage extends StatefulWidget {
@@ -483,6 +484,24 @@ class _TreatmentDetailPageState extends State<TreatmentDetailPage> {
     );
   }
 
+  void _navigateToAddStep() async {
+    if (_treatment == null) return;
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddTreatmentStepPage(
+          treatmentId: widget.treatmentId,
+          treatmentTitle: _treatment!.title,
+        ),
+      ),
+    );
+
+    if (result == true) {
+      _loadTreatmentDetails(); // Recargar datos si se agregó un paso
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -497,6 +516,13 @@ class _TreatmentDetailPageState extends State<TreatmentDetailPage> {
             tooltip: 'Actualizar',
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _navigateToAddStep,
+        backgroundColor: AppColors.primaryGreen,
+        foregroundColor: AppColors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('Agregar Paso'),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
