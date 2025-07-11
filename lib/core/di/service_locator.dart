@@ -48,6 +48,7 @@ import '../services/payment_service.dart';
 import '../../detection/data/datasources/detection_api_data_source.dart';
 import '../../treatment/data/datasources/treatment_data_source.dart';
 import '../../treatment/domain/repositories/treatment_repository.dart';
+import '../../treatment/services/treatment_service.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -119,6 +120,11 @@ Future<void> initDependencies() async {
   // Hybrid Detection Service (después de sus dependencias)
   serviceLocator.registerSingleton<HybridDetectionService>(
     HybridDetectionService(),
+  );
+
+  // Treatment Service
+  serviceLocator.registerSingleton<TreatmentService>(
+    TreatmentService(),
   );
 
   // Payment Methods Data Source

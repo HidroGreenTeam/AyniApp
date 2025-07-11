@@ -6,6 +6,8 @@ import 'core/theme/app_theme.dart';
 import 'core/services/theme_service.dart';
 import 'core/services/localization_service.dart';
 import 'auth/presentation/pages/splash_page.dart';
+import 'treatment/presentation/pages/treatments_page.dart';
+import 'treatment/presentation/pages/treatment_detail_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,6 +50,22 @@ class MyApp extends StatelessWidget {
               GlobalCupertinoLocalizations.delegate,
             ],
             home: const SplashPage(),
+            routes: {
+              '/treatments': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+                return TreatmentsPage(arguments: args);
+              },
+              '/treatment-detail': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+                final treatmentId = args?['treatmentId'] as int?;
+                if (treatmentId == null) {
+                  // Si no hay ID, regresar a la página anterior
+                  Navigator.pop(context);
+                  return const SizedBox.shrink();
+                }
+                return TreatmentDetailPage(treatmentId: treatmentId);
+              },
+            },
           );
         },
       ),

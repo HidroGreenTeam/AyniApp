@@ -241,6 +241,19 @@ class _DiagnosePageState extends State<DiagnosePage> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _navigateToTreatments(diagnosis),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.medical_services),
+                    label: const Text('Ver Tratamientos'),
+                  ),
+                ),
               ],
               if (diagnosis.recommendations != null) ...[
                 const SizedBox(height: 16),
@@ -332,6 +345,18 @@ class _DiagnosePageState extends State<DiagnosePage> {
       if (word.isEmpty) return '';
       return word[0].toUpperCase() + word.substring(1);
     }).join(' ');
+  }
+
+  void _navigateToTreatments(DiagnosisApiResponse diagnosis) {
+    Navigator.pushNamed(
+      context,
+      '/treatments',
+      arguments: {
+        'diagnosisId': diagnosis.diagnosisId,
+        'cropId': diagnosis.cropId,
+        'diseaseType': diagnosis.predictedClass,
+      },
+    );
   }
 
   void _showSnackBar(String message, {bool isError = false, Duration? duration}) {
