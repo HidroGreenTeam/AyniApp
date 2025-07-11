@@ -1,12 +1,10 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import '../../../core/network/network_client.dart';
 import '../../../core/services/connectivity_service.dart';
 import '../../../core/di/service_locator.dart';
 import 'plant_disease_classifier.dart';
-import '../../../core/constants/api_constants.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../data/datasources/detection_api_data_source.dart';
+import '../data/models/detection_api_models.dart';
 
 class DetectionResult {
   final String disease;
@@ -15,6 +13,8 @@ class DetectionResult {
   final String recommendation;
   final bool isOnlineDetection;
   final String? warningMessage;
+  final bool diseaseDetected;
+  final bool requiresTreatment;
 
   DetectionResult({
     required this.disease,
@@ -23,16 +23,18 @@ class DetectionResult {
     required this.recommendation,
     required this.isOnlineDetection,
     this.warningMessage,
+    required this.diseaseDetected,
+    required this.requiresTreatment,
   });
 }
 
 class HybridDetectionService {
   final PlantDiseaseClassifier _localClassifier = PlantDiseaseClassifier();
   final ConnectivityService _connectivityService = ConnectivityService();
-  late final NetworkClient _networkClient;
+  late final DetectionApiDataSource _detectionApiDataSource;
 
   HybridDetectionService() {
-    _networkClient = serviceLocator<NetworkClient>();
+    _detectionApiDataSource = serviceLocator<DetectionApiDataSource>();
   }
 
   /// Initialize the detection service
@@ -76,52 +78,138 @@ class HybridDetectionService {
     }
   }
 
+  /// Create a complete diagnosis using the microservice
+  Future<DiagnosisApiResponse?> createDiagnosis({
+    required File imageFile,
+    int? cropId,
+    int? profileId,
+  }) async {
+    try {
+      final hasInternet = await _connectivityService.hasInternetConnection();
+      
+      if (!hasInternet) {
+        throw Exception('Conexión a internet requerida para crear diagnóstico completo');
+      }
+
+      final response = await _detectionApiDataSource.createDiagnosis(
+        imageFile: imageFile,
+        cropId: cropId,
+        profileId: profileId,
+      );
+
+      if (response.success && response.data != null) {
+        return response.data;
+      } else {
+        throw Exception(response.error ?? 'Error al crear diagnóstico');
+      }
+    } catch (e) {
+      debugPrint('Error creating diagnosis: $e');
+      rethrow;
+    }
+  }
+
+  /// Get diagnosis by ID
+  Future<DiagnosisApiResponse?> getDiagnosisById(int diagnosisId) async {
+    try {
+      final response = await _detectionApiDataSource.getDiagnosisById(diagnosisId);
+      
+      if (response.success && response.data != null) {
+        return response.data;
+      } else {
+        throw Exception(response.error ?? 'Error al obtener diagnóstico');
+      }
+    } catch (e) {
+      debugPrint('Error getting diagnosis by ID: $e');
+      return null;
+    }
+  }
+
+  /// Get diagnoses by crop ID
+  Future<List<DiagnosisApiResponse>> getDiagnosesByCrop(int cropId) async {
+    try {
+      final response = await _detectionApiDataSource.getDiagnosesByCrop(cropId);
+      
+      if (response.success && response.data != null) {
+        return response.data!;
+      } else {
+        throw Exception(response.error ?? 'Error al obtener diagnósticos del cultivo');
+      }
+    } catch (e) {
+      debugPrint('Error getting diagnoses by crop: $e');
+      return [];
+    }
+  }
+
+  /// Get farmer diagnosis history
+  Future<List<DiagnosisApiResponse>> getFarmerDiagnosisHistory(int farmerId) async {
+    try {
+      final response = await _detectionApiDataSource.getFarmerDiagnosisHistory(farmerId);
+      
+      if (response.success && response.data != null) {
+        return response.data!;
+      } else {
+        throw Exception(response.error ?? 'Error al obtener historial de diagnósticos');
+      }
+    } catch (e) {
+      debugPrint('Error getting farmer diagnosis history: $e');
+      return [];
+    }
+  }
+
+  /// Get detection statistics
+  Future<DetectionStatisticsResponse?> getStatistics() async {
+    try {
+      final response = await _detectionApiDataSource.getStatistics();
+      
+      if (response.success && response.data != null) {
+        return response.data;
+      } else {
+        throw Exception(response.error ?? 'Error al obtener estadísticas');
+      }
+    } catch (e) {
+      debugPrint('Error getting statistics: $e');
+      return null;
+    }
+  }
+
+  /// Health check
+  Future<HealthCheckResponse?> healthCheck() async {
+    try {
+      final response = await _detectionApiDataSource.healthCheck();
+      
+      if (response.success && response.data != null) {
+        return response.data;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      debugPrint('Error in health check: $e');
+      return null;
+    }
+  }
+
   /// Detect using online model
   Future<DetectionResult?> _detectOnline(File imageFile) async {
     try {
-      // Usar el microservicio específico del usuario
-      final url = Uri.parse(ApiConstants.detectionServiceBaseUrl + ApiConstants.detectionServicePredict);
+      final response = await _detectionApiDataSource.predictDisease(imageFile);
       
-      final request = http.MultipartRequest('POST', url);
-      request.headers['accept'] = 'application/json';
-      
-      // Agregar el archivo de imagen
-      request.files.add(await http.MultipartFile.fromPath('file', imageFile.path));
-      
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-      
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final jsonData = jsonDecode(response.body);
-        
-        // Mapear la respuesta del microservicio a nuestro formato
-        final predictedClass = jsonData['predicted_class'] ?? 'unknown';
-        final confidence = (jsonData['confidence'] ?? 0.0).toDouble();
-        final diseaseDetected = jsonData['disease_detected'] ?? false;
-        final requiresTreatment = jsonData['requires_treatment'] ?? false;
-        
-        // Convertir predicted_class a disease name
-        String disease = predictedClass;
-        if (predictedClass == 'miner') {
-          disease = 'leaf_miner';
-        } else if (predictedClass == 'phoma') {
-          disease = 'phoma_leaf_spot';
-        } else if (predictedClass == 'redspider') {
-          disease = 'red_spider_mite';
-        } else if (predictedClass == 'rust') {
-          disease = 'leaf_rust';
-        }
+      if (response.success && response.data != null) {
+        final prediction = response.data!;
         
         return DetectionResult(
-          disease: disease,
-          confidence: confidence,
-          formattedDiseaseName: _formatDiseaseName(disease),
-          recommendation: _getRecommendationForDisease(disease, requiresTreatment),
+          disease: prediction.predictedClass,
+          confidence: prediction.confidence,
+          formattedDiseaseName: _formatDiseaseName(prediction.predictedClass),
+          recommendation: _getRecommendationForDisease(
+            prediction.predictedClass, 
+            prediction.requiresTreatment
+          ),
           isOnlineDetection: true,
+          diseaseDetected: prediction.diseaseDetected,
+          requiresTreatment: prediction.requiresTreatment,
         );
       } else {
-        debugPrint('Online detection failed with status: ${response.statusCode}');
-        debugPrint('Response body: ${response.body}');
+        debugPrint('Online detection failed: ${response.error}');
         return null;
       }
     } catch (e) {
@@ -143,6 +231,8 @@ class HybridDetectionService {
           recommendation: result.recommendation,
           isOnlineDetection: false,
           warningMessage: 'Modelo local usado - menor precisión',
+          diseaseDetected: result.disease != 'nodisease',
+          requiresTreatment: result.disease != 'nodisease' && result.disease != 'unknown',
         );
       }
       
@@ -166,6 +256,8 @@ class HybridDetectionService {
           recommendation: result.recommendation,
           isOnlineDetection: false,
           warningMessage: 'Modo offline - modelo local',
+          diseaseDetected: result.disease != 'nodisease',
+          requiresTreatment: result.disease != 'nodisease' && result.disease != 'unknown',
         );
       }
       

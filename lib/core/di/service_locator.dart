@@ -45,6 +45,9 @@ import '../../plant/presentation/bolcs/crop_bloc.dart';
 import '../../detection/services/hybrid_detection_service.dart';
 import '../../profile/domain/usecases/subscription_usecases.dart';
 import '../services/payment_service.dart';
+import '../../detection/data/datasources/detection_api_data_source.dart';
+import '../../treatment/data/datasources/treatment_data_source.dart';
+import '../../treatment/domain/repositories/treatment_repository.dart';
 
 final GetIt serviceLocator = GetIt.instance;
 
@@ -88,10 +91,6 @@ Future<void> initDependencies() async {
     PaymentService(),
   );
 
-  serviceLocator.registerSingleton<HybridDetectionService>(
-    HybridDetectionService(),
-  );
-
   // Data sources
   serviceLocator.registerSingleton<AuthDataSource>(
     AuthDataSource(serviceLocator<NetworkClient>()),
@@ -105,6 +104,21 @@ Future<void> initDependencies() async {
 
   serviceLocator.registerSingleton<CropDataSource>(
     CropDataSource(serviceLocator<NetworkClient>()),
+  );
+
+  // Detection API Data Source
+  serviceLocator.registerSingleton<DetectionApiDataSource>(
+    DetectionApiDataSource(serviceLocator<NetworkClient>()),
+  );
+
+  // Treatment Data Source
+  serviceLocator.registerSingleton<TreatmentDataSource>(
+    TreatmentDataSource(serviceLocator<NetworkClient>()),
+  );
+
+  // Hybrid Detection Service (después de sus dependencias)
+  serviceLocator.registerSingleton<HybridDetectionService>(
+    HybridDetectionService(),
   );
 
   // Payment Methods Data Source
@@ -152,6 +166,13 @@ Future<void> initDependencies() async {
   serviceLocator.registerSingleton<CropRepository>(
     CropRepository(
       cropDataSource: serviceLocator<CropDataSource>(),
+    ),
+  );
+
+  // Treatment Repository
+  serviceLocator.registerSingleton<TreatmentRepository>(
+    TreatmentRepository(
+      dataSource: serviceLocator<TreatmentDataSource>(),
     ),
   );
   
